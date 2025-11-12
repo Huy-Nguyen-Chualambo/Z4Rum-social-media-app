@@ -18,10 +18,26 @@ router.get("/", async (req, res) => {
   const limit = Number(req.query.limit || 10);
   const cursor = (req.query.cursor as string) || undefined;
   const authorId = (req.query.authorId as string) || undefined;
+  const searchRaw = typeof req.query.search === "string" ? req.query.search : "";
+  const search = searchRaw.trim();
+
+  const conditions: any[] = [];
+  if (authorId) conditions.push({ authorId });
+  if (search) {
+    conditions.push({
+      OR: [
+        { content: { contains: search, mode: "insensitive" } },
+        { author: { username: { contains: search, mode: "insensitive" } } },
+      ],
+    });
+  }
+
+  const where = conditions.length ? { AND: conditions } : undefined;
+
   const posts = await prisma.post.findMany({
     take: limit + 1,
     ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-    ...(authorId ? { where: { authorId } } : {}),
+    ...(where ? { where } : {}),
     orderBy: { createdAt: "desc" },
     include: { author: { select: { id: true, username: true, avatarUrl: true } }, _count: { select: { likes: true, comments: true } } },
   });
@@ -33,6 +49,19 @@ router.get("/:id", async (req, res) => {
   const post = await prisma.post.findUnique({ where: { id: req.params.id } });
   if (!post) return res.status(404).json({ error: "Not found" });
   res.json(post);
+});
+
+router.put("/:id", async (req, res) => {
+  const userId = (req as any).userId as string;
+  const post = await prisma.post.findUnique({ where: { id: req.params.id } });
+  if (!post) return res.status(404).json({ error: "Not found" });
+  if (post.authorId !== userId) return res.status(403).json({ error: "Forbidden" });
+  const { content, imageUrl } = req.body as { content?: string; imageUrl?: string };
+  const updateData: { content?: string; imageUrl?: string } = {};
+  if (content !== undefined) updateData.content = content;
+  if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
+  const updated = await prisma.post.update({ where: { id: req.params.id }, data: updateData });
+  res.json(updated);
 });
 
 router.delete("/:id", async (req, res) => {

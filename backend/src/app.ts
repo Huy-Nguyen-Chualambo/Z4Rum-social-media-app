@@ -7,6 +7,7 @@ import postRoutes from "./modules/post/post.routes";
 import friendRoutes from "./modules/friend/friend.routes";
 import messageRoutes from "./modules/message/message.routes";
 import matchRoutes from "./modules/match/match.routes";
+import voteRoutes from "./modules/vote/vote.routes";
 
 dotenv.config();
 
@@ -21,5 +22,6 @@ app.use("/posts", postRoutes);
 app.use("/friends", friendRoutes);
 app.use("/messages", messageRoutes);
 app.use("/match", matchRoutes);
+app.use("/votes", voteRoutes);
 
 export default app;

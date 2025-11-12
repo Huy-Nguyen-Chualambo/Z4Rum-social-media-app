@@ -1,5 +1,8 @@
 "use client";
-import { Search, Sparkles, TrendingUp } from "lucide-react";
+import { Search, Sparkles, TrendingUp, BarChart3 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { voteApi, VoteTopic } from "@/lib/api/voteApi";
+import Link from "next/link";
 
 const suggestions = [
   { name: "John Doe", handle: "@johndoe", avatar: "https://randomuser.me/api/portraits/men/32.jpg" },
@@ -8,6 +11,30 @@ const suggestions = [
 ];
 
 export default function RightRail() {
+  const [trendingTopics, setTrendingTopics] = useState<VoteTopic[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadTrending = async () => {
+      try {
+        const data = await voteApi.trending(5);
+        setTrendingTopics(data);
+      } catch (error) {
+        console.error("Failed to load trending topics:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadTrending();
+    // Refresh every 30 seconds
+    const interval = setInterval(loadTrending, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const getTotalVotes = (topic: VoteTopic) => {
+    return topic.options.reduce((sum, opt) => sum + (opt._count?.votes || 0), 0);
+  };
+
   return (
     <aside className="hidden lg:block w-80 min-w-[20rem] p-6 h-screen sticky top-0 overflow-y-auto">
       <div className="mb-6">
@@ -45,22 +72,38 @@ export default function RightRail() {
       <div className="bg-gradient-to-br from-[#0f1e30] to-[#0a1628] border border-[#1e3a52] p-5 rounded-2xl">
         <div className="flex items-center gap-2 mb-4">
           <TrendingUp size={18} className="text-[#60A5FA]" />
-          <h4 className="text-white font-semibold text-sm">What's trending</h4>
+          <h4 className="text-white font-semibold text-sm">Trending Votes</h4>
         </div>
-        <ul className="flex flex-col gap-3">
-          <li className="hover:bg-[#1e293b] p-3 rounded-lg transition-colors cursor-pointer group">
-            <div className="text-[#60A5FA] text-sm font-medium group-hover:text-[#93C5FD]">#tech</div>
-            <div className="text-[#64748b] text-xs mt-1">12.4k posts</div>
-          </li>
-          <li className="hover:bg-[#1e293b] p-3 rounded-lg transition-colors cursor-pointer group">
-            <div className="text-[#60A5FA] text-sm font-medium group-hover:text-[#93C5FD]">#music</div>
-            <div className="text-[#64748b] text-xs mt-1">8.9k posts</div>
-          </li>
-          <li className="hover:bg-[#1e293b] p-3 rounded-lg transition-colors cursor-pointer group">
-            <div className="text-[#60A5FA] text-sm font-medium group-hover:text-[#93C5FD]">#photography</div>
-            <div className="text-[#64748b] text-xs mt-1">15.2k posts</div>
-          </li>
-        </ul>
+        {loading ? (
+          <div className="text-[#64748b] text-sm py-4 text-center">Đang tải...</div>
+        ) : trendingTopics.length === 0 ? (
+          <div className="text-[#64748b] text-sm py-4 text-center">Chưa có topic nào</div>
+        ) : (
+          <ul className="flex flex-col gap-3">
+            {trendingTopics.map((topic) => {
+              const totalVotes = getTotalVotes(topic);
+              return (
+                <Link key={topic.id} href="/vote">
+                  <li className="hover:bg-[#1e293b] p-3 rounded-lg transition-colors cursor-pointer group">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[#60A5FA] text-sm font-medium group-hover:text-[#93C5FD] line-clamp-2">
+                          {topic.title}
+                        </div>
+                        <div className="flex items-center gap-3 mt-1">
+                          <div className="flex items-center gap-1 text-[#64748b] text-xs">
+                            <BarChart3 size={12} />
+                            <span>{totalVotes} votes</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </li>
+                </Link>
+              );
+            })}
+          </ul>
+        )}
       </div>
     </aside>
   );

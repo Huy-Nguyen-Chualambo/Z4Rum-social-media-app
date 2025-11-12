@@ -64,7 +64,7 @@ export default function PostModal({ isOpen, onClose, onPostCreated }: PostModalP
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="What's happening in Z4rum?"
+              placeholder={`Chia sẻ gì đó nhé, ${user?.username || "bạn"}?`}
               className="bg-transparent w-full outline-none text-[#cbd5e1] placeholder:text-[#475569] mb-3 resize-none min-h-[120px]"
             />
             <input
