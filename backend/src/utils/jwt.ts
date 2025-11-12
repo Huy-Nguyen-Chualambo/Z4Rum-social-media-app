@@ -1,4 +1,4 @@
-import jwt from "jsonwebtoken";
+import jwt, { SignOptions } from "jsonwebtoken";
 import { Request, Response, NextFunction } from "express";
 
 const JWT_SECRET = process.env.JWT_SECRET || "z4rum_secret_dev";
@@ -6,7 +6,8 @@ const JWT_SECRET = process.env.JWT_SECRET || "z4rum_secret_dev";
 export type JwtPayload = { id: string };
 
 export function signToken(payload: JwtPayload, expiresIn = "7d") {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn });
+  const options: SignOptions = { expiresIn };
+  return jwt.sign(payload, JWT_SECRET, options);
 }
 
 export function verifyToken(token: string): JwtPayload {
