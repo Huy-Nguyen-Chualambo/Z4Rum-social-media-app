@@ -297,50 +297,6 @@ export default function VotePage() {
 
                     {expandedTopics.has(topic.id) && (
                       <div className="space-y-4">
-                        {/* Comment Input */}
-                        <div className="bg-[#091427] border border-[#1e3a52] rounded-xl p-4 space-y-3">
-                          <textarea
-                            value={commentInputs[topic.id]?.content || ""}
-                            onChange={(e) =>
-                              setCommentInputs((prev) => ({
-                                ...prev,
-                                [topic.id]: { ...(prev[topic.id] || { content: "", imageUrl: "" }), content: e.target.value },
-                              }))
-                            }
-                            placeholder="Viết bình luận..."
-                            rows={3}
-                            className="w-full bg-transparent border border-[#1e3a52] rounded-lg px-3 py-2 text-[#cbd5e1] placeholder:text-[#475569] outline-none focus:border-[#3B82F6] transition-colors resize-none"
-                          />
-                          <div className="flex items-center gap-2">
-                            <ImageIcon size={18} className="text-[#64748b]" />
-                            <input
-                              value={commentInputs[topic.id]?.imageUrl || ""}
-                              onChange={(e) =>
-                                setCommentInputs((prev) => ({
-                                  ...prev,
-                                  [topic.id]: { ...(prev[topic.id] || { content: "", imageUrl: "" }), imageUrl: e.target.value },
-                                }))
-                              }
-                              placeholder="URL ảnh (tùy chọn)"
-                              className="flex-1 bg-transparent border-b border-[#1e3a52] px-2 py-1 text-[#cbd5e1] placeholder:text-[#475569] outline-none focus:border-[#3B82F6] transition-colors"
-                            />
-                          </div>
-                          <button
-                            onClick={() => handleAddComment(topic.id)}
-                            disabled={sendingComment[topic.id]}
-                            className="w-full px-4 py-2 bg-gradient-to-r from-[#3B82F6] to-[#6366F1] text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                          >
-                            {sendingComment[topic.id] ? (
-                              <Loader2 size={18} className="animate-spin" />
-                            ) : (
-                              <>
-                                <Send size={18} />
-                                Gửi bình luận
-                              </>
-                            )}
-                          </button>
-                        </div>
-
                         {/* Comments List */}
                         {loadingComments[topic.id] ? (
                           <div className="flex items-center justify-center py-8">
@@ -384,6 +340,50 @@ export default function VotePage() {
                             ))}
                           </div>
                         )}
+
+                        {/* Comment Input */}
+                        <div className="bg-[#091427] border border-[#1e3a52] rounded-xl p-4 space-y-3">
+                          <textarea
+                            value={commentInputs[topic.id]?.content || ""}
+                            onChange={(e) =>
+                              setCommentInputs((prev) => ({
+                                ...prev,
+                                [topic.id]: { ...(prev[topic.id] || { content: "", imageUrl: "" }), content: e.target.value },
+                              }))
+                            }
+                            placeholder="Viết bình luận..."
+                            rows={3}
+                            className="w-full bg-transparent border border-[#1e3a52] rounded-lg px-3 py-2 text-[#cbd5e1] placeholder:text-[#475569] outline-none focus:border-[#3B82F6] transition-colors resize-none"
+                          />
+                          <div className="flex items-center gap-2">
+                            <ImageIcon size={18} className="text-[#64748b]" />
+                            <input
+                              value={commentInputs[topic.id]?.imageUrl || ""}
+                              onChange={(e) =>
+                                setCommentInputs((prev) => ({
+                                  ...prev,
+                                  [topic.id]: { ...(prev[topic.id] || { content: "", imageUrl: "" }), imageUrl: e.target.value },
+                                }))
+                              }
+                              placeholder="URL ảnh (tùy chọn)"
+                              className="flex-1 bg-transparent border-b border-[#1e3a52] px-2 py-1 text-[#cbd5e1] placeholder:text-[#475569] outline-none focus:border-[#3B82F6] transition-colors"
+                            />
+                          </div>
+                          <button
+                            onClick={() => handleAddComment(topic.id)}
+                            disabled={sendingComment[topic.id]}
+                            className="w-full px-4 py-2 bg-gradient-to-r from-[#3B82F6] to-[#6366F1] text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                          >
+                            {sendingComment[topic.id] ? (
+                              <Loader2 size={18} className="animate-spin" />
+                            ) : (
+                              <>
+                                <Send size={18} />
+                                Gửi bình luận
+                              </>
+                            )}
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>

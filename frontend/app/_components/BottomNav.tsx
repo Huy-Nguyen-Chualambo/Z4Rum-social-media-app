@@ -1,17 +1,18 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Search, MessageCircle, Heart, User, Plus } from "lucide-react";
+import { Home, Search, MessageCircle, Heart, User, Plus, HomeIcon,Vote } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import PostModal from "./PostModal";
 
 const items = [
-  { href: "/home", icon: Home, label: "Home" },
-  { href: "/explore", icon: Search, label: "Explore" },
-  { href: "/messages", icon: MessageCircle, label: "Messages" },
-  { href: "/matches", icon: Heart, label: "Matches" },
-  { href: "/profile", icon: User, label: "Profile" },
+  { name: "Trang chủ", icon: HomeIcon, href: "/home" },
+  { name: "Tìm kiếm", icon: Search, href: "/explore" },
+  { name: "Nhắn tin", icon: MessageCircle, href: "/messages" },
+  { name: "Chat với người lạ", icon: Heart, href: "/match" },
+  { name: "Bình chọn - Thảo luận", icon: Vote, href: "/vote" },
+  { name: "Hồ sơ của tôi", icon: User, href: "/profile" },
 ];
 
 export default function BottomNav() {
@@ -32,7 +33,7 @@ export default function BottomNav() {
             return (
               <Link key={i.href} href={i.href} className="flex flex-col items-center gap-1 px-3 py-1">
                 <Icon size={22} className={active ? "text-[#60A5FA]" : "text-[#94a3b8]"} />
-                <span className={`text-xs ${active ? "text-white" : "text-[#94a3b8]"}`}>{i.label}</span>
+             {/*   <span className={`text-xs ${active ? "text-white" : "text-[#94a3b8]"}`}>{i.name}</span> */}
               </Link>
             );
           })}
@@ -51,7 +52,7 @@ export default function BottomNav() {
             return (
               <Link key={i.href} href={i.href} className="flex flex-col items-center gap-1 px-3 py-1">
                 <Icon size={22} className={active ? "text-[#60A5FA]" : "text-[#94a3b8]"} />
-                <span className={`text-xs ${active ? "text-white" : "text-[#94a3b8]"}`}>{i.label}</span>
+              {/*   <span className={`text-xs ${active ? "text-white" : "text-[#94a3b8]"}`}>{i.name}</span> */}
               </Link>
             );
           })}
