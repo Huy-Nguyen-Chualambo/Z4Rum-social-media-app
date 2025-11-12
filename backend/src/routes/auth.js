@@ -18,10 +18,10 @@ router.post("/register", async (req, res) => {
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
   const user = await prisma.user.findUnique({ where: { username } });
-  if (!user) return res.status(404).json({ error: "User not found" });
+  if (!user) return res.status(404).json({ error: "Người dùng không tồn tại" });
 
   const valid = await bcrypt.compare(password, user.password);
-  if (!valid) return res.status(401).json({ error: "Invalid password" });
+  if (!valid) return res.status(401).json({ error: "Mật khẩu không chính xác" });
 
   const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET);
   res.json({ token });

@@ -416,12 +416,17 @@ export default function HomePage() {
       <div className="mb-6">
         <div className="bg-gradient-to-br from-[#0f1e30] to-[#0a1628] border border-[#1e3a52] p-5 rounded-2xl">
           <div className="flex items-start gap-4">
-            <img src="https://randomuser.me/api/portraits/men/12.jpg" className="w-12 h-12 rounded-full ring-2 ring-[#1e3a52]" alt="profile" />
+          {user?.avatarUrl ? (
+            <img src={user.avatarUrl} className="w-12 h-12 rounded-full ring-2 ring-[#1e3a52]" alt="profile" />): (
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#3B82F6] via-[#6366F1] to-[#8B5CF6] flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-blue-500/30">
+                Z
+              </div>
+            )}
             <div className="flex-1">
               <input
                 value={newContent}
                 onChange={(e) => setNewContent(e.target.value)}
-                placeholder="What's happening in Z4rum?"
+                placeholder="Chia sẻ gì đó..."
                 className="bg-transparent w-full outline-none text-[#cbd5e1] placeholder:text-[#475569] mb-3"
               />
               <input
@@ -444,7 +449,7 @@ export default function HomePage() {
                   disabled={creating}
                   className="px-5 py-2 bg-gradient-to-r from-[#3B82F6] to-[#6366F1] text-white text-sm font-semibold rounded-lg hover:shadow-lg hover:shadow-blue-500/30 transition-all hover:scale-105 disabled:opacity-60"
                 >
-                  {creating ? "Đang đăng..." : "Post"}
+                  {creating ? "Đang đăng..." : "Đăng"}
                 </button>
               </div>
             </div>

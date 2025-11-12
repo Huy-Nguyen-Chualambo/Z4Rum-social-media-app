@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import {
   Home as HomeIcon,
@@ -8,43 +8,30 @@ import {
   MessageCircle,
   Heart,
   User,
-  Settings,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import PostModal from "./PostModal";
 
 const navItems = [
-  { name: "Home", icon: HomeIcon, href: "/home" },
-  { name: "Explore", icon: Search, href: "/explore" },
-  { name: "Messages", icon: MessageCircle, href: "/messages" },
-  { name: "Matches", icon: Heart, href: "/matches" },
-  { name: "Profile", icon: User, href: "/profile" },
-  { name: "Settings", icon: Settings, href: "/settings" },
+  { name: "Trang chủ", icon: HomeIcon, href: "/home" },
+  { name: "Tìm kiếm", icon: Search, href: "/explore" },
+  { name: "Nhắn tin", icon: MessageCircle, href: "/messages" },
+  { name: "Chat với người lạ", icon: Heart, href: "/matches" },
+  { name: "Hồ sơ của tôi", icon: User, href: "/profile" },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const router = useRouter();
-  const { user, token, logout } = useAuthStore();
+  const { token } = useAuthStore();
   const [mounted, setMounted] = useState(false);
+  const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+  
   useEffect(() => setMounted(true), []);
-  if (!mounted) return null;
+  
   return (
-    <aside className="w-72 min-w-[18rem] bg-gradient-to-br from-[#0a1628] to-[#071029] border-r border-[#1e293b] p-6 h-screen sticky top-0">
-      <div className="flex items-center gap-3 mb-10">
-        {user?.avatarUrl ? (
-          <img src={user.avatarUrl} className="w-12 h-12 rounded-xl object-cover ring-2 ring-[#1e3a52]" alt="avatar" />
-        ) : (
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#3B82F6] via-[#6366F1] to-[#8B5CF6] flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-blue-500/30">
-            Z
-          </div>
-        )}
-        <div>
-          <h1 className="text-white text-xl font-bold tracking-tight">Z4rum</h1>
-          {user ? <div className="text-[#94a3b8] text-xs">Người dùng: {user.username}</div> : <div className="text-[#94a3b8] text-xs">Welcome</div>}
-        </div>
-      </div>
+    <aside className="w-72 min-w-[18rem] bg-gradient-to-br from-[#0a1628] to-[#071029] border-r border-[#1e293b] p-6 h-[calc(100vh-73px)] fixed top-[73px] left-0 overflow-hidden flex flex-col z-30">
 
-      <nav className="flex flex-col gap-2 mb-8">
+      <nav className="flex flex-col gap-2 mb-8 flex-1 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = pathname?.startsWith(item.href);
           const Icon = item.icon;
@@ -63,22 +50,29 @@ export default function Sidebar() {
             </Link>
           );
         })}
+        {mounted && token && (
+          <button
+            onClick={() => setIsPostModalOpen(true)}
+            className="hidden md:flex items-center gap-4 py-3 px-4 rounded-xl transition-all duration-200 w-full bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] text-white font-semibold shadow-lg shadow-blue-500/40 hover:shadow-blue-500/60 hover:scale-[1.02] mt-2"
+          >
+            Đăng bài viết
+          </button>
+        )}
       </nav>
-      {token ? (
-        <div className="flex flex-col gap-3">
-          <button className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] text-white font-semibold shadow-lg shadow-blue-500/40 hover:shadow-blue-500/60 hover:scale-[1.02] transition-all duration-200">
-            Post
-          </button>
-          <button onClick={() => { logout(); router.replace("/login"); }} className="w-full py-2 rounded-xl border border-[#1e3a52] text-[#cbd5e1] hover:bg-[#1e293b] transition-colors">
-            Logout
-          </button>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-2">
-          <Link href="/login" className="w-full text-center py-2 rounded-xl bg-gradient-to-r from-[#3B82F6] to-[#6366F1] text-white font-semibold">Sign in</Link>
-          <Link href="/register" className="w-full text-center py-2 rounded-xl border border-[#1e3a52] text-[#cbd5e1] hover:bg-[#1e293b] transition-colors">Sign up</Link>
-        </div>
-      )}
+      <div className="mt-auto">
+        {!mounted ? (
+          <div className="flex flex-col gap-2">
+            <div className="w-full text-center py-2 rounded-xl bg-gradient-to-r from-[#3B82F6] to-[#6366F1] text-white font-semibold opacity-50">Đăng nhập</div>
+            <div className="w-full text-center py-2 rounded-xl border border-[#1e3a52] text-[#cbd5e1] opacity-50">Đăng ký</div>
+          </div>
+        ) : !token ? (
+          <div className="flex flex-col gap-2">
+            <Link href="/login" className="w-full text-center py-2 rounded-xl bg-gradient-to-r from-[#3B82F6] to-[#6366F1] text-white font-semibold">Đăng nhập</Link>
+            <Link href="/register" className="w-full text-center py-2 rounded-xl border border-[#1e3a52] text-[#cbd5e1] hover:bg-[#1e293b] transition-colors">Đăng ký</Link>
+          </div>
+        ) : null}
+      </div>
+      <PostModal isOpen={isPostModalOpen} onClose={() => setIsPostModalOpen(false)} />
     </aside>
   );
 }

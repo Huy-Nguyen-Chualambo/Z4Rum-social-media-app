@@ -16,7 +16,7 @@ export function verifyToken(token: string): JwtPayload {
 export function authMiddleware(req: Request, res: Response, next: NextFunction) {
   const header = req.headers["authorization"] || "";
   const token = header.startsWith("Bearer ") ? header.slice(7) : undefined;
-  if (!token) return res.status(401).json({ error: "Unauthorized" });
+  if (!token) return res.status(401).json({ error: "Bạn phải đăng nhập để truy cập" });
   try {
     const decoded = verifyToken(token);
     (req as any).userId = decoded.id;
