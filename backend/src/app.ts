@@ -24,4 +24,13 @@ app.use("/messages", messageRoutes);
 app.use("/match", matchRoutes);
 app.use("/votes", voteRoutes);
 
+// Basic landing + health
+app.get("/", (_req, res) => {
+  res.type("text/plain").send("Z4rum API is running. See /auth, /users, /posts, /messages, /match, /votes");
+});
+
+app.get("/healthz", (_req, res) => {
+  res.json({ ok: true, uptime: process.uptime() });
+});
+
 export default app;
