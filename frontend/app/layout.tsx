@@ -21,8 +21,9 @@ export const metadata: Metadata = {
   title: "Z4rum",
   description: "Z4rum Social App",
   icons: {
-    icon: "/icon.png",
-  },  
+    icon: [
+      { url: "/icon.png", type: "image/png", sizes: "512x512" },
+    ],},  
 };
 
 export default function RootLayout({
