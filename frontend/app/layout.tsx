@@ -20,6 +20,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Z4rum",
   description: "Z4rum Social App",
+  icons: {
+    icon: "/icon.png",
+  },  
 };
 
 export default function RootLayout({
