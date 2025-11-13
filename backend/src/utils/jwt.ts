@@ -5,13 +5,14 @@ const JWT_SECRET = process.env.JWT_SECRET ?? "z4rum_secret_dev";
 
 export type JwtPayload = { id: string };
 
-export function signToken(payload: JwtPayload, expiresIn = "7d") {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn });
+export function signToken(payload: JwtPayload, expiresIn: string = "7d") {
+  return jwt.sign(payload, JWT_SECRET as string, { expiresIn: expiresIn as any });
 }
 
 export function verifyToken(token: string): JwtPayload {
-  return jwt.verify(token, JWT_SECRET) as JwtPayload;
+  return jwt.verify(token, JWT_SECRET as string) as JwtPayload;
 }
+
 
 export function authMiddleware(req: Request, res: Response, next: NextFunction) {
   const header = req.headers["authorization"] || "";
