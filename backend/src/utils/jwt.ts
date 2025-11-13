@@ -6,21 +6,13 @@ const JWT_SECRET = process.env.JWT_SECRET || 'z4rum_secret_dev';
 export type JwtPayload = { id: string };
 
 export function signToken(payload: JwtPayload, expiresIn = '7d') {
-  // Sửa lỗi: Khai báo tường minh kiểu của đối tượng options là SignOptions
-  // để TypeScript không bị nhầm lẫn.
-  const options: SignOptions = {
-    expiresIn,
-  };
+  const options: SignOptions = { expiresIn };
   return jwt.sign(payload, JWT_SECRET, options);
 }
 
-export function verifyToken(token: string): JwtPayload | null {
-  try {
-    return jwt.verify(token, JWT_SECRET) as JwtPayload;
-  } catch (error) {
-    // Trả về null nếu token không hợp lệ thay vì throw lỗi
-    return null;
-  }
+export function verifyToken(token: string): JwtPayload {
+  // Throw error instead of returning null to be caught by try/catch blocks
+  return jwt.verify(token, JWT_SECRET) as JwtPayload;
 }
 
 export function authMiddleware(
@@ -37,12 +29,11 @@ export function authMiddleware(
       .json({ error: 'Bạn phải đăng nhập để truy cập' });
   }
 
-  const decoded = verifyToken(token);
-
-  if (!decoded) {
+  try {
+    const decoded = verifyToken(token);
+    (req as any).userId = decoded.id;
+    next();
+  } catch (error) {
     return res.status(401).json({ error: 'Token không hợp lệ hoặc đã hết hạn' });
   }
-
-  (req as any).userId = decoded.id;
-  next();
 }
