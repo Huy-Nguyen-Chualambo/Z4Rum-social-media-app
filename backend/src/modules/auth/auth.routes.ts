@@ -44,5 +44,14 @@ router.get("/me", authMiddleware, async (req, res) => {
   if (!user) return res.status(404).json({ error: "Người dùng không tồn tại" });
   res.json({ id: user.id, username: user.username, email: user.email, avatarUrl: user.avatarUrl, bio: user.bio, gender: user.gender });
 });
-
+router.get("/", (_req, res) => {
+  res.json({
+    ok: true,
+    routes: [
+      "POST /auth/register",
+      "POST /auth/login",
+      "GET /auth/me (Authorization: Bearer <token>)",
+    ],
+  });
+});
 export default router;
