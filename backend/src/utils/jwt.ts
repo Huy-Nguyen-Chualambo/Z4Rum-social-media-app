@@ -6,8 +6,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'z4rum_secret_dev';
 export type JwtPayload = { id: string };
 
 export function signToken(payload: JwtPayload, expiresIn = '7d') {
-  const options: SignOptions = { expiresIn };
-  return jwt.sign(payload, JWT_SECRET, options);
+  return jwt.sign(payload, JWT_SECRET, { expiresIn });
 }
 
 export function verifyToken(token: string): JwtPayload {
