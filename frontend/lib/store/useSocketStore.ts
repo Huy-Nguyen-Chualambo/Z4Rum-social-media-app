@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { io, Socket } from "socket.io-client";
+import { SOCKET_BASE_URL } from "@/lib/utils/url";
 
 interface SocketState {
   socket: Socket | null;
@@ -10,8 +11,11 @@ interface SocketState {
 export const useSocketStore = create<SocketState>((set, get) => ({
   socket: null,
   connect: (token: string) => {
-    const url = process.env.NEXT_PUBLIC_SOCKET_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-    const socket = io(url, { auth: { token } });
+    const socket = io(SOCKET_BASE_URL, {
+      auth: { token },
+      transports: ["websocket", "polling"], // fallback an toàn
+      withCredentials: false,
+    });
     set({ socket });
   },
   disconnect: () => {
