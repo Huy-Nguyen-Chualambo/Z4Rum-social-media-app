@@ -4,6 +4,6 @@ services:
     env: node
     plan: free
     rootDir: backend
-    buildCommand: npm install
+    buildCommand: npm ci --include=dev && npm run build
     startCommand: npm run start
     autoDeploy: true
