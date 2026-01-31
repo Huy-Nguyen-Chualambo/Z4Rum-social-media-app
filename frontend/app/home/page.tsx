@@ -51,7 +51,7 @@ function PostCard({
       const counts: Record<string, number> = countsRaw ? JSON.parse(countsRaw) : {};
       const initial = counts[post.id] ?? likesCount ?? 0;
       setLocalLikes(initial);
-    } catch {}
+    } catch { }
   }, [post.id, likesCount]);
 
   const handleLike = (e?: React.MouseEvent) => {
@@ -110,7 +110,7 @@ function PostCard({
           const counts: Record<string, number> = countsRaw ? JSON.parse(countsRaw) : {};
           counts[post.id] = r.likes;
           localStorage.setItem("z4rum_like_counts", JSON.stringify(counts));
-        } catch {}
+        } catch { }
       })
       .catch(() => {
         // rollback to previous state on failure
@@ -130,7 +130,7 @@ function PostCard({
           }
           counts[post.id] = prevCount;
           localStorage.setItem("z4rum_like_counts", JSON.stringify(counts));
-        } catch {}
+        } catch { }
       })
       .finally(() => setLiking(false));
   };
@@ -247,12 +247,12 @@ function PostCard({
             <MessageCircle size={20} className="group-hover:scale-110 transition-transform" />
             <span className="text-sm font-medium">{commentCount}</span>
           </button>
-        <button className="flex items-center gap-2 hover:text-green-400 transition-colors group">
-           <Send onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }} size={20} className="group-hover:scale-110 transition-transform" />
-     {/*   <span className="text-sm font-medium">0</span>*/}
-          </button> 
+          <button className="flex items-center gap-2 hover:text-green-400 transition-colors group">
+            <Send onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }} size={20} className="group-hover:scale-110 transition-transform" />
+            {/*   <span className="text-sm font-medium">0</span>*/}
+          </button>
         </div>
-      {/*   <button className="text-[#64748b] hover:text-white">
+        {/*   <button className="text-[#64748b] hover:text-white">
           <Bookmark size={20} />
         </button> */}
       </footer>
@@ -282,6 +282,7 @@ export default function HomePage() {
   const [newContent, setNewContent] = useState("");
   const [newImageUrl, setNewImageUrl] = useState("");
   const [creating, setCreating] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [commentsByPost, setCommentsByPost] = useState<Record<string, { id: string; content: string; createdAt: string }[]>>({});
   const [commentDeltaByPost, setCommentDeltaByPost] = useState<Record<string, number>>({});
   const [selectedPost, setSelectedPost] = useState<FeedPost | null>(null);
@@ -416,8 +417,8 @@ export default function HomePage() {
       <div className="mb-6">
         <div className="bg-gradient-to-br from-[#0f1e30] to-[#0a1628] border border-[#1e3a52] p-5 rounded-2xl">
           <div className="flex items-start gap-4">
-          {user?.avatarUrl ? (
-            <img src={user.avatarUrl} className="w-12 h-12 rounded-full ring-2 ring-[#1e3a52]" alt="profile" />): (
+            {user?.avatarUrl ? (
+              <img src={user.avatarUrl} className="w-12 h-12 rounded-full ring-2 ring-[#1e3a52]" alt="profile" />) : (
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#3B82F6] via-[#6366F1] to-[#8B5CF6] flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-blue-500/30">
                 Z
               </div>
@@ -429,15 +430,80 @@ export default function HomePage() {
                 placeholder="Chia sẻ gì đó..."
                 className="bg-transparent w-full outline-none text-[#cbd5e1] placeholder:text-[#475569] mb-3"
               />
+
+              {/* Hidden File Input */}
               <input
-                value={newImageUrl}
-                onChange={(e) => setNewImageUrl(e.target.value)}
-                placeholder="Image URL (tuỳ chọn)"
-                className="bg-transparent w-full outline-none text-[#cbd5e1] placeholder:text-[#475569] mb-4"
+                type="file"
+                id="home-file-upload"
+                className="hidden"
+                accept="image/*"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+
+                  if (file.size > 5 * 1024 * 1024) {
+                    push("Ảnh quá lớn (chỉ hỗ trợ < 5MB)", "error");
+                    return;
+                  }
+
+                  setIsUploading(true);
+                  const formData = new FormData();
+                  formData.append("file", file);
+                  formData.append("upload_preset", "Z4rum_assets");
+                  formData.append("cloud_name", "djm2wewi2");
+
+                  try {
+                    const res = await fetch("https://api.cloudinary.com/v1_1/djm2wewi2/image/upload", {
+                      method: "POST",
+                      body: formData,
+                    });
+
+                    const data = await res.json();
+                    if (data.secure_url) {
+                      setNewImageUrl(data.secure_url);
+                      push("Ảnh đã sẵn sàng!", "success");
+                    } else {
+                      throw new Error("Upload failed");
+                    }
+                  } catch (error) {
+                    console.error(error);
+                    push("Lỗi khi tải ảnh lên Cloudinary", "error");
+                  } finally {
+                    setIsUploading(false);
+                  }
+                }}
               />
+
+              {/* Image Preview */}
+              {(newImageUrl || isUploading) && (
+                <div className="mb-4 relative group w-fit">
+                  {isUploading ? (
+                    <div className="w-48 h-32 bg-[#1e293b] rounded-xl flex flex-col items-center justify-center animate-pulse border border-[#1e3a52]">
+                      <div className="w-6 h-6 border-2 border-[#3B82F6] border-t-transparent rounded-full animate-spin mb-2"></div>
+                      <span className="text-[#64748b] text-xs">Đang tải...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <img src={newImageUrl} alt="preview" className="max-w-full rounded-xl max-h-48 object-cover" />
+                      <button
+                        onClick={() => setNewImageUrl("")}
+                        className="absolute top-1 right-1 p-1 bg-black/50 rounded-full text-white hover:bg-black/70 transition-colors opacity-0 group-hover:opacity-100"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <button className="text-[#60A5FA] hover:bg-[#1e293b] p-2 rounded-lg transition-colors" type="button">
+                  <button
+                    className="text-[#60A5FA] hover:bg-[#1e293b] p-2 rounded-lg transition-colors"
+                    type="button"
+                    onClick={() => document.getElementById("home-file-upload")?.click()}
+                    disabled={isUploading}
+                  >
                     <ImageIcon size={18} />
                   </button>
                   <button className="text-[#60A5FA] hover:bg-[#1e293b] p-2 rounded-lg transition-colors" type="button">
@@ -446,7 +512,7 @@ export default function HomePage() {
                 </div>
                 <button
                   onClick={handleCreate}
-                  disabled={creating}
+                  disabled={creating || !newContent.trim() || isUploading}
                   className="px-5 py-2 bg-gradient-to-r from-[#3B82F6] to-[#6366F1] text-white text-sm font-semibold rounded-lg hover:shadow-lg hover:shadow-blue-500/30 transition-all hover:scale-105 disabled:opacity-60"
                 >
                   {creating ? "Đang đăng..." : "Đăng"}

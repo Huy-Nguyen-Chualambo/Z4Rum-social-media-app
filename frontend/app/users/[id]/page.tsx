@@ -73,7 +73,7 @@ function PostCardItem({
       const counts: Record<string, number> = countsRaw ? JSON.parse(countsRaw) : {};
       const initial = counts[post.id] ?? likesCount ?? 0;
       setLocalLikes(initial);
-    } catch {}
+    } catch { }
   }, [post.id, likesCount]);
 
   const handleLike = (e?: React.MouseEvent) => {
@@ -128,7 +128,7 @@ function PostCardItem({
           const counts: Record<string, number> = countsRaw ? JSON.parse(countsRaw) : {};
           counts[post.id] = r.likes;
           localStorage.setItem("z4rum_like_counts", JSON.stringify(counts));
-        } catch {}
+        } catch { }
       })
       .catch(() => {
         setLiked(prevLiked);
@@ -147,7 +147,7 @@ function PostCardItem({
           }
           counts[post.id] = prevCount;
           localStorage.setItem("z4rum_like_counts", JSON.stringify(counts));
-        } catch {}
+        } catch { }
       })
       .finally(() => setLiking(false));
   };
@@ -353,7 +353,44 @@ export default function UserProfilePage() {
   const [commentsLoadingByPost, setCommentsLoadingByPost] = useState<Record<string, boolean>>({});
   const [modalCommentText, setModalCommentText] = useState("");
   const [liveLikesByPost, setLiveLikesByPost] = useState<Record<string, number>>({});
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const { socket } = useSocketStore();
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      push("Ảnh quá lớn (chỉ hỗ trợ < 5MB)", "error");
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", "Z4rum_assets");
+    formData.append("cloud_name", "djm2wewi2");
+
+    try {
+      const res = await fetch("https://api.cloudinary.com/v1_1/djm2wewi2/image/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (data.secure_url) {
+        setAvatarUrl(data.secure_url);
+        push("Đã tải ảnh lên thành công!", "success");
+      } else {
+        throw new Error("Upload failed");
+      }
+    } catch (error) {
+      console.error(error);
+      push("Lỗi khi tải ảnh avatar", "error");
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
 
   const formatDateTime = (iso: string) => new Date(iso).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
   const formatTime = (iso: string) => new Date(iso).toLocaleTimeString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
@@ -435,11 +472,11 @@ export default function UserProfilePage() {
   const saveEdit = async () => {
     if (!profile) return;
     try {
-      const updated = await userApi.update(profile.id, { 
+      const updated = await userApi.update(profile.id, {
         username: username.trim() || undefined,
-        avatarUrl: avatarUrl.trim() || undefined, 
-        bio: bio.trim(), 
-        gender: gender as any 
+        avatarUrl: avatarUrl.trim() || undefined,
+        bio: bio.trim(),
+        gender: gender as any
       });
       setProfile((prev) => (prev ? { ...prev, username: updated.username, avatarUrl: updated.avatarUrl, bio: updated.bio, gender: (updated as any).gender } : prev));
       push("Đã cập nhật hồ sơ", "success");
@@ -555,9 +592,9 @@ export default function UserProfilePage() {
       ) : profile ? (
         <>
           <div className="bg-gradient-to-br from-[#0f1e30] to-[#0a1628] border border-[#1e3a52] rounded-2xl p-5 mb-6">
-            <div className="flex items-start gap-4">
-              <img src={profile.avatarUrl || "https://avatars.githubusercontent.com/u/0?v=4"} className="w-20 h-20 rounded-full ring-2 ring-[#1e3a52]" alt="avatar" />
-              <div className="flex-1">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
+              <img src={profile.avatarUrl || "https://avatars.githubusercontent.com/u/0?v=4"} className="w-20 h-20 rounded-full ring-2 ring-[#1e3a52] shrink-0" alt="avatar" />
+              <div className="flex-1 w-full text-center sm:text-left">
                 <h1 className="text-white text-lg font-semibold">{profile.username}</h1>
                 {!editing ? (
                   <>
@@ -566,18 +603,48 @@ export default function UserProfilePage() {
                   </>
                 ) : (
                   <div className="mt-2 space-y-2">
-                    <input 
-                      value={username} 
-                      onChange={(e) => setUsername(e.target.value)} 
-                      placeholder="Tên người dùng" 
-                      className="w-full bg-transparent outline-none text-[#cbd5e1] placeholder:text-[#475569] border border-[#1e3a52] rounded-lg p-2" 
+                    <input
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="Tên người dùng"
+                      className="w-full bg-transparent outline-none text-[#cbd5e1] placeholder:text-[#475569] border border-[#1e3a52] rounded-lg p-2"
                     />
-                    <div className="flex items-center gap-2">
-                      <ImageIcon size={16} className="text-[#60A5FA]" />
-                      <input value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} placeholder="Avatar URL" className="bg-transparent flex-1 outline-none text-[#cbd5e1] placeholder:text-[#475569] border-b border-[#1e3a52]" />
+                    <div className="flex items-center justify-center sm:justify-start gap-4">
+                      {/* Avatar Preview & Upload Trigger */}
+                      <div className="relative group cursor-pointer hover:opacity-80 transition-opacity" onClick={() => document.getElementById("avatar-upload")?.click()}>
+                        {avatarUrl ? (
+                          <img src={avatarUrl} className="w-16 h-16 rounded-full object-cover ring-2 ring-[#60A5FA]" alt="avatar preview" />
+                        ) : (
+                          <div className="w-16 h-16 rounded-full bg-[#1e293b] flex items-center justify-center ring-2 ring-[#1e3a52]">
+                            <ImageIcon size={24} className="text-[#64748b]" />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Edit3 size={20} className="text-white" />
+                        </div>
+                        {isUploadingAvatar && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full">
+                            <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Hidden File Input */}
+                      <input
+                        type="file"
+                        id="avatar-upload"
+                        className="hidden"
+                        accept="image/*"
+                        onChange={handleAvatarUpload}
+                        disabled={isUploadingAvatar}
+                      />
+
+                      <div className="text-sm text-[#94a3b8]">
+                        Click vào ảnh này để thay đổi<br />(Tối đa 5MB)
+                      </div>
                     </div>
                     <textarea value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Giới thiệu ngắn" className="w-full bg-transparent outline-none text-[#cbd5e1] placeholder:text-[#475569] border border-[#1e3a52] rounded-lg p-2 min-h-[80px]" />
-                    <div className="flex items-center gap-6 text-[#cbd5e1]">
+                    <div className="flex items-center justify-center sm:justify-start gap-6 text-[#cbd5e1]">
                       <label className="flex items-center gap-2 cursor-pointer">
                         <input type="radio" name="gender" checked={gender === "male"} onChange={() => setGender("male")} /> Nam
                       </label>
@@ -589,7 +656,7 @@ export default function UserProfilePage() {
                 )}
               </div>
               {isOwner && (
-                <div className="flex flex-col items-end gap-2">
+                <div className="flex flex-col items-center sm:items-end gap-2 w-full sm:w-auto mt-2 sm:mt-0">
                   <div className="flex items-center gap-2">
                     {!editing ? (
                       <>
@@ -617,11 +684,11 @@ export default function UserProfilePage() {
                         <Settings size={16} /> Cài đặt
                       </h3>
                       <div className="space-y-3">
-                        <div className="text-[#cbd5e1] text-sm">
+                        <div className="text-[#cbd5e1] text-sm text-left">
                           <div className="text-[#94a3b8] mb-1">Tên người dùng:</div>
                           <div className="text-white">{profile.username}</div>
                         </div>
-                        <div className="text-[#cbd5e1] text-sm">
+                        <div className="text-[#cbd5e1] text-sm text-left">
                           <div className="text-[#94a3b8] mb-1">ID:</div>
                           <div className="text-white font-mono text-xs">{profile.id}</div>
                         </div>
@@ -639,7 +706,7 @@ export default function UserProfilePage() {
                 </div>
               )}
               {!isOwner && (
-                <a href={`/messages/${userId}`} className="px-3 py-2 text-sm bg-[#12304a] text-white rounded-lg hover:bg-[#163b59]">Nhắn tin</a>
+                <a href={`/messages/${userId}`} className="px-3 py-2 text-sm bg-[#12304a] text-white rounded-lg hover:bg-[#163b59] w-full sm:w-auto text-center mt-2 sm:mt-0">Nhắn tin</a>
               )}
             </div>
           </div>

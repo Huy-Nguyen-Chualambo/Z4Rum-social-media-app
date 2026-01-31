@@ -10,10 +10,16 @@ export default function LoginPage() {
   const { push } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (token) {
-      loadMe().then(() => router.replace("/home"));
+      setIsLoading(true);
+      loadMe().then(() => {
+        router.replace("/home");
+      }).finally(() => {
+        setIsLoading(false);
+      });
     }
   }, [token, loadMe, router]);
 
@@ -35,11 +41,14 @@ export default function LoginPage() {
           }
           try {
             setError(null);
+            setIsLoading(true);
             await login(email, password);
             push("Đăng nhập thành công", "success");
           } catch (err: any) {
             setError(err?.response?.data?.error || "Đăng nhập thất bại");
             push(err?.response?.data?.error || "Đăng nhập thất bại", "error");
+          } finally {
+            setIsLoading(false);
           }
         }}
       >
@@ -53,10 +62,21 @@ export default function LoginPage() {
         <a href="/register" className="text-[#3B82F6] hover:underline">
           Đăng ký ngay
         </a>
-        </p>
-        <a href="/" className="text-[#94a3b8] hover:text-white underline transition-colors duration-300 flex items-center gap-2">
-          Quay về trang chính
-        </a>
+      </p>
+      <a href="/" className="text-[#94a3b8] hover:text-white underline transition-colors duration-300 flex items-center gap-2">
+        Quay về trang chính
+      </a>
+
+      {/* Loading Overlay */}
+      {isLoading && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[999] flex flex-col items-center justify-center">
+          <div className="bg-[#0f1e30] border border-[#1e3a52] p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4">
+            <div className="w-12 h-12 border-4 border-[#3B82F6] border-t-transparent rounded-full animate-spin"></div>
+            <div className="text-white font-medium text-lg animate-pulse">Đang kết nối tới máy chủ...</div>
+            <p className="text-[#64748b] text-sm italic">"Vui lòng đợi giây lát"</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

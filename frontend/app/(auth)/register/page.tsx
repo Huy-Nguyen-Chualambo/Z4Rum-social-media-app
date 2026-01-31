@@ -13,6 +13,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState(""); // Thêm state cho nhập lại mật khẩu
   const [gender, setGender] = useState<"male" | "female">("male");
+  const [isLoading, setIsLoading] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
   return (
@@ -40,12 +41,15 @@ export default function RegisterPage() {
           }
           try {
             setError(null);
+            setIsLoading(true);
             await register(username, email, password, gender);
             push("Tạo tài khoản thành công", "success");
             router.replace("/home");
           } catch (err: any) {
             setError(err?.response?.data?.error || "Đăng ký thất bại");
             push(err?.response?.data?.error || "Đăng ký thất bại", "error");
+          } finally {
+            setIsLoading(false);
           }
         }}
       >
@@ -70,9 +74,20 @@ export default function RegisterPage() {
           Đăng nhập ngay
         </a>
       </p>
-        <a href="/" className="text-[#94a3b8] hover:text-white underline transition-colors duration-300 flex items-center gap-2">
-          Quay về trang chính 
-        </a>
+      <a href="/" className="text-[#94a3b8] hover:text-white underline transition-colors duration-300 flex items-center gap-2">
+        Quay về trang chính
+      </a>
+
+      {/* Loading Overlay */}
+      {isLoading && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[999] flex flex-col items-center justify-center">
+          <div className="bg-[#0f1e30] border border-[#1e3a52] p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4">
+            <div className="w-12 h-12 border-4 border-[#3B82F6] border-t-transparent rounded-full animate-spin"></div>
+            <div className="text-white font-medium text-lg animate-pulse">Đang thiết lập tài khoản...</div>
+            <p className="text-[#64748b] text-sm italic">"Chờ xíu nhé, sắp xong then!"</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -15,8 +15,45 @@ export default function PostModal({ isOpen, onClose, onPostCreated }: PostModalP
   const [content, setContent] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [creating, setCreating] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const { push } = useToast();
   const { user } = useAuthStore();
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      push("Ảnh quá lớn (chỉ hỗ trợ < 5MB)", "error");
+      return;
+    }
+
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", "Z4rum_assets");
+    formData.append("cloud_name", "djm2wewi2");
+
+    try {
+      const res = await fetch("https://api.cloudinary.com/v1_1/djm2wewi2/image/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (data.secure_url) {
+        setImageUrl(data.secure_url);
+        push("Ảnh đã sẵn sàng!", "success");
+      } else {
+        throw new Error("Upload failed");
+      }
+    } catch (error) {
+      console.error(error);
+      push("Lỗi khi tải ảnh lên Cloudinary", "error");
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -67,22 +104,46 @@ export default function PostModal({ isOpen, onClose, onPostCreated }: PostModalP
               placeholder={`Chia sẻ gì đó nhé, ${user?.username || "bạn"}?`}
               className="bg-transparent w-full outline-none text-[#cbd5e1] placeholder:text-[#475569] mb-3 resize-none min-h-[120px]"
             />
+
+            {/* Hidden File Input */}
             <input
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              placeholder="Image URL (tuỳ chọn)"
-              className="bg-transparent w-full outline-none text-[#cbd5e1] placeholder:text-[#475569] mb-4 border-b border-[#1e3a52]"
+              type="file"
+              id="file-upload"
+              className="hidden"
+              accept="image/*"
+              onChange={handleImageUpload}
             />
-            {imageUrl && (
-              <div className="mb-4">
-                <img src={imageUrl} alt="preview" className="max-w-full rounded-xl max-h-64 object-cover" onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                }} />
+
+            {/* Image Preview */}
+            {(imageUrl || isUploading) && (
+              <div className="mb-4 relative group">
+                {isUploading ? (
+                  <div className="w-full h-48 bg-[#1e293b] rounded-xl flex flex-col items-center justify-center animate-pulse border border-[#1e3a52]">
+                    <div className="w-8 h-8 border-4 border-[#3B82F6] border-t-transparent rounded-full animate-spin mb-2"></div>
+                    <span className="text-[#64748b] text-sm">Đang tải ảnh lên...</span>
+                  </div>
+                ) : (
+                  <>
+                    <img src={imageUrl} alt="preview" className="max-w-full rounded-xl max-h-64 object-cover" />
+                    <button
+                      onClick={() => setImageUrl("")}
+                      className="absolute top-2 right-2 p-1 bg-black/50 rounded-full text-white hover:bg-black/70 transition-colors opacity-0 group-hover:opacity-100"
+                    >
+                      <X size={16} />
+                    </button>
+                  </>
+                )}
               </div>
             )}
+
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <button className="text-[#60A5FA] hover:bg-[#1e293b] p-2 rounded-lg transition-colors" type="button">
+                <button
+                  className="text-[#60A5FA] hover:bg-[#1e293b] p-2 rounded-lg transition-colors"
+                  type="button"
+                  onClick={() => document.getElementById("file-upload")?.click()}
+                  disabled={isUploading}
+                >
                   <ImageIcon size={18} />
                 </button>
                 <button className="text-[#60A5FA] hover:bg-[#1e293b] p-2 rounded-lg transition-colors" type="button">
@@ -91,7 +152,7 @@ export default function PostModal({ isOpen, onClose, onPostCreated }: PostModalP
               </div>
               <button
                 onClick={handleCreate}
-                disabled={creating || !content.trim()}
+                disabled={creating || !content.trim() || isUploading}
                 className="px-5 py-2 bg-gradient-to-r from-[#3B82F6] to-[#6366F1] text-white text-sm font-semibold rounded-lg hover:shadow-lg hover:shadow-blue-500/30 transition-all hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {creating ? "Đang đăng..." : "Post"}
