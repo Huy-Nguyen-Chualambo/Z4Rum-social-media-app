@@ -145,10 +145,10 @@ export default function MovieDetailPage() {
                     </div>
 
                     <div className="flex flex-wrap gap-6 py-6 border-y border-[#1e3a52]">
-                        <InfoItem icon={<Clock size={16} />} label="Thời lượng" value={movie.time || "Đang cập nhật"} />
-                        <InfoItem icon={<Tv size={16} />} label="Tình trạng" value={movie.status === "completed" ? "Hoàn thành" : movie.episode_current} />
-                        <InfoItem icon={<Globe size={16} />} label="Quốc gia" value={movie.country.map(c => c.name).join(", ")} />
-                        <InfoItem icon={<Star size={16} />} label="Năm" value={movie.year.toString()} />
+                        <InfoItem icon={<Clock size={16} />} label="Thời lượng" value={movie?.time || "Đang cập nhật"} />
+                        <InfoItem icon={<Tv size={16} />} label="Tình trạng" value={movie?.status === "completed" ? "Hoàn thành" : movie?.episode_current} />
+                        <InfoItem icon={<Globe size={16} />} label="Quốc gia" value={movie?.country?.map(c => c.name).join(", ") || "Đang cập nhật"} />
+                        <InfoItem icon={<Star size={16} />} label="Năm" value={movie?.year?.toString() || "Đang cập nhật"} />
                     </div>
 
                     <div>
@@ -166,14 +166,14 @@ export default function MovieDetailPage() {
                             <h3 className="text-lg font-bold mb-3 flex items-center gap-2 text-white">
                                 <Users size={16} className="text-blue-500" /> Diễn viên
                             </h3>
-                            <p className="text-[#94a3b8] text-sm">{movie.actor.filter(a => a !== "").join(", ") || "Đang cập nhật"}</p>
+                            <p className="text-[#94a3b8] text-sm">{movie?.actor?.filter(a => a !== "").join(", ") || "Đang cập nhật"}</p>
                         </div>
                         <div>
                             <h3 className="text-lg font-bold mb-3 flex items-center gap-2 text-white">
                                 <List size={16} className="text-blue-500" /> Thể loại
                             </h3>
                             <div className="flex flex-wrap gap-2">
-                                {movie.category.map(cat => (
+                                {movie?.category?.map(cat => (
                                     <span key={cat.name} className="px-3 py-1 bg-[#0f1e30] border border-[#1e3a52] rounded-full text-xs text-[#cbd5e1]">
                                         {cat.name}
                                     </span>

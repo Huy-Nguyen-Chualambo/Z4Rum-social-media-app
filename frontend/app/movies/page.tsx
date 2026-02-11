@@ -24,7 +24,7 @@ export default function MoviesPage() {
         const fetchData = async () => {
             try {
                 const res = await movieApi.getNewUpdates();
-                setNewMovies(res.items);
+                setNewMovies(res?.items || []);
             } catch (error) {
                 console.error("Error fetching movies:", error);
             } finally {
@@ -44,7 +44,7 @@ export default function MoviesPage() {
         setLoading(true);
         try {
             const res = await movieApi.search(searchKey);
-            setSearchResults(res.data.items);
+            setSearchResults(res?.data?.items || []);
         } catch (error) {
             console.error("Search error:", error);
         } finally {
@@ -101,9 +101,9 @@ export default function MoviesPage() {
                             <div className="flex justify-center py-20">
                                 <div className="w-10 h-10 border-4 border-[#3B82F6] border-t-transparent rounded-full animate-spin"></div>
                             </div>
-                        ) : searchResults.length > 0 ? (
+                        ) : (searchResults?.length || 0) > 0 ? (
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-                                {searchResults.map((movie) => (
+                                {searchResults?.map((movie) => (
                                     <MovieCard key={movie.slug} movie={movie} getImageUrl={getImageUrl} />
                                 ))}
                             </div>

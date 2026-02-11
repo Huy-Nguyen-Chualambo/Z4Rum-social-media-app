@@ -14,14 +14,9 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (token) {
-      setIsLoading(true);
-      loadMe().then(() => {
-        router.replace("/home");
-      }).finally(() => {
-        setIsLoading(false);
-      });
+      router.replace("/home");
     }
-  }, [token, loadMe, router]);
+  }, [token, router]);
 
   const [error, setError] = useState<string | null>(null);
   return (
