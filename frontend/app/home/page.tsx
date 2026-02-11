@@ -449,11 +449,11 @@ export default function HomePage() {
                   setIsUploading(true);
                   const formData = new FormData();
                   formData.append("file", file);
-                  formData.append("upload_preset", "Z4rum_assets");
-                  formData.append("cloud_name", "djm2wewi2");
+                  formData.append("upload_preset", process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "");
+                  formData.append("cloud_name", process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "");
 
                   try {
-                    const res = await fetch("https://api.cloudinary.com/v1_1/djm2wewi2/image/upload", {
+                    const res = await fetch(`https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`, {
                       method: "POST",
                       body: formData,
                     });
