@@ -10,6 +10,7 @@ import {
   User,
   TrendingUp,
   Vote,
+  Film,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import PostModal from "./PostModal";
@@ -19,6 +20,7 @@ const navItems = [
   { name: "Tìm kiếm", icon: Search, href: "/explore" },
   { name: "Nhắn tin", icon: MessageCircle, href: "/messages" },
   { name: "Chat với người lạ", icon: Heart, href: "/match" },
+  { name: "Xem phim", icon: Film, href: "/movies" },
   { name: "Bình chọn - Thảo luận", icon: Vote, href: "/vote" },
   { name: "Hồ sơ của tôi", icon: User, href: "/profile" },
 ];
@@ -28,9 +30,9 @@ export default function Sidebar() {
   const { token } = useAuthStore();
   const [mounted, setMounted] = useState(false);
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
-  
+
   useEffect(() => setMounted(true), []);
-  
+
   return (
     <aside className="w-72 min-w-[18rem] bg-gradient-to-br from-[#0a1628] to-[#071029] border-r border-[#1e293b] p-6 h-[calc(100vh-73px)] fixed top-[73px] left-0 overflow-hidden flex flex-col z-30">
 
@@ -42,11 +44,10 @@ export default function Sidebar() {
             <Link
               key={item.name}
               href={item.href}
-              className={`flex items-center gap-4 py-3 px-4 rounded-xl transition-all duration-200 group ${
-                isActive
+              className={`flex items-center gap-4 py-3 px-4 rounded-xl transition-all duration-200 group ${isActive
                   ? "bg-gradient-to-r from-[#3B82F6]/20 to-[#8B5CF6]/20 text-white border border-[#3B82F6]/30"
                   : "text-[#94a3b8] hover:bg-[#1e293b] hover:text-white"
-              }`}
+                }`}
             >
               <Icon size={20} className={isActive ? "text-[#60A5FA]" : "group-hover:text-[#60A5FA] transition-colors"} />
               <span className="font-medium">{item.name}</span>
