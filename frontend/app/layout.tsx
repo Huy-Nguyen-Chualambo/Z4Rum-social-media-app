@@ -6,6 +6,7 @@ import RightRail from "./_components/RightRail";
 import BottomNav from "./_components/BottomNav";
 import Navbar from "./_components/Navbar";
 import Providers from "./providers";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -47,6 +48,7 @@ export default function RootLayout({
             <BottomNav />
           </div>
         </Providers>
+        <SpeedInsights />
       </body>
     </html>
   );
