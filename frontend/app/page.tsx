@@ -1,197 +1,138 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { Heart, MessageCircle, Users, Zap, Shield, Sparkles, ArrowRight, Star } from 'lucide-react';
+import React from 'react';
+import { motion } from 'framer-motion';
+import { Sparkles, ArrowRight, LogIn, UserPlus } from 'lucide-react';
+import Link from 'next/link';
+
+// Simple Floating Particle Component
+const Particle = ({ delay }: { delay: number }) => (
+  <motion.div
+    initial={{ y: "110vh", x: Math.random() * 100 + "%", opacity: 0 }}
+    animate={{ 
+      y: "-10vh", 
+      opacity: [0, 1, 1, 0],
+      x: (Math.random() * 20 - 10) + "%" 
+    }}
+    transition={{ 
+      duration: Math.random() * 10 + 15, 
+      repeat: Infinity, 
+      delay: delay,
+      ease: "linear" 
+    }}
+    className="absolute w-1 h-1 bg-white/40 rounded-full blur-[1px] pointer-events-none"
+  />
+);
 
 export default function LandingPage() {
-  const [scrollY, setScrollY] = useState(0);
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    setIsVisible(true);
-    const handleScroll = () => setScrollY(window.scrollY);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const features = [
-    {
-      icon: <Heart className="w-6 h-6" />,
-      title: "Chat với người lạ",
-      description: "Kết nối với mọi người thông qua các cuộc trò chuyện ngẫu nhiên"
-    },
-    {
-      icon: <MessageCircle className="w-6 h-6" />,
-      title: "Nhắn tin real-time",
-      description: "Trò chuyện mượt mà với giao diện trực quan"
-    },
-    {
-      icon: <Users className="w-6 h-6" />,
-      title: "Cộng đồng sôi động",
-      description: "Chia sẻ và kết nối với những người có cùng sở thích"
-    },
-    {
-      icon: <Shield className="w-6 h-6" />,
-      title: "Bảo mật tuyệt đối",
-      description: "Thông tin của bạn được bảo vệ an toàn"
-    }
-  ];
-
-  const stats = [
-    { number: "A", label: "As" },
-    { number: "S", label: "Soon" },
-    { number: "A", label: "As"},
-    { number: "P", label: "Possible" }
-  ];
-
   return (
-    <div className="min-h-screen bg-[#0f172a] overflow-hidden">
-      {/* Animated Background */}
-      <div className="fixed inset-0 opacity-20">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-[#3B82F6] rounded-full mix-blend-multiply filter blur-xl animate-pulse" 
-             style={{ transform: `translateY(${scrollY * 0.1}px)` }}></div>
-        <div className="absolute top-40 right-10 w-72 h-72 bg-[#6366F1] rounded-full mix-blend-multiply filter blur-xl animate-pulse" 
-             style={{ animationDelay: '700ms', transform: `translateY(${scrollY * 0.15}px)` }}></div>
-        <div className="absolute -bottom-8 left-1/2 w-72 h-72 bg-[#8B5CF6] rounded-full mix-blend-multiply filter blur-xl animate-pulse"
-             style={{ animationDelay: '1000ms', transform: `translateY(${scrollY * 0.2}px)` }}></div>
-      </div>
+    <div className="fixed inset-0 z-[100] h-screen w-screen bg-[#0a0c16] overflow-hidden selection:bg-purple-500/30">
+      {/* Immersive Chill Background */}
+      <motion.div 
+        initial={{ scale: 1.1 }}
+        animate={{ scale: 1 }}
+        transition={{ duration: 15, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
+        className="absolute inset-0 z-0 bg-cover bg-center brightness-[0.7] contrast-[1.1]"
+        style={{ backgroundImage: 'url("/chill-bg.png")' }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0a0c16]/30 to-[#0a0c16]" />
+      </motion.div>
 
-      {/* Hero Section */}
-      <div className={`relative flex flex-col items-center text-center px-4 pt-20 pb-16 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-        {/* Logo with glow effect */}
-        <div className="relative mb-6 group">
-          <div className="absolute inset-0 bg-gradient-to-r from-[#3B82F6] via-[#6366F1] to-[#8B5CF6] rounded-2xl blur-lg opacity-75 group-hover:opacity-100 transition-opacity animate-pulse"></div>
-          <div className="relative w-20 h-20 rounded-2xl bg-gradient-to-br from-[#3B82F6] via-[#6366F1] to-[#8B5CF6] flex items-center justify-center text-white font-bold text-3xl shadow-2xl transform hover:scale-110 transition-transform duration-300">
-            Z
-            <Sparkles className="absolute -top-1 -right-1 w-5 h-5 text-yellow-300 animate-pulse" />
+      {/* Film Grain / Noise Overlay for "GIF" feel */}
+      <div className="absolute inset-0 z-1 pointer-events-none opacity-[0.15] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] mix-blend-overlay" />
+
+      {/* Floating Chill Particles */}
+      {[...Array(20)].map((_, i) => (
+        <Particle key={i} delay={i * 2} />
+      ))}
+
+      {/* Center Content */}
+      <div className="relative z-10 flex flex-col items-center justify-center h-full px-6 text-center">
+        {/* Animated Logo */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1.5, ease: "easeOut" }}
+          className="mb-8"
+        >
+          <div className="relative group cursor-pointer">
+            <motion.div 
+              animate={{ 
+                boxShadow: ["0 0 20px rgba(168,85,247,0.3)", "0 0 50px rgba(168,85,247,0.6)", "0 0 20px rgba(168,85,247,0.3)"] 
+              }}
+              transition={{ duration: 4, repeat: Infinity }}
+              className="w-24 h-24 rounded-[2.5rem] bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-white text-5xl font-black shadow-2xl relative z-10"
+            >
+              Z
+              <Sparkles className="absolute -top-2 -right-2 w-6 h-6 text-yellow-300 animate-pulse" />
+            </motion.div>
+            <div className="absolute inset-0 bg-purple-500 blur-2xl opacity-20 group-hover:opacity-40 transition-opacity" />
           </div>
-        </div>
+        </motion.div>
 
-        {/* Main Heading */}
-        <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white mb-4">
-          Chào mừng đến với Z4rum
-        </h1>
-        
-        {/* Subtitle */}
-        <p className="text-lg sm:text-xl text-[#94a3b8] max-w-2xl mb-8 leading-relaxed">
-          Một không gian xã hội hiện đại để khám phá, trò chuyện, và hơn hết là sự kết nối. 
-          <span className="block mt-2">"Cuộc sống là một cuộc đối thoại. Hãy tham gia vào nó." - Anonymous</span>
-        </p>
-
-        {/* CTA Buttons */}
-        <div className="flex flex-col sm:flex-row items-center gap-4 mb-8">
-          <a href="/login" className="group relative px-8 py-3 rounded-xl bg-gradient-to-r from-[#3B82F6] to-[#6366F1] text-white font-semibold shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transform hover:scale-105 transition-all duration-300 flex items-center gap-2">
-            Đăng nhập
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </a>
-          <a href="/register" className="px-8 py-3 rounded-xl border-2 border-[#1e3a52] text-[#cbd5e1] font-semibold hover:bg-[#1e293b] backdrop-blur-sm transform hover:scale-105 transition-all duration-300">
-            Đăng ký
-          </a>
-        </div>
-
-        <a href="/home" className="text-[#94a3b8] hover:text-white underline transition-colors duration-300 flex items-center gap-2">
-          Đi đến trang chủ
-          <Zap className="w-4 h-4" />
-        </a>
-      </div>
-
-      {/* Stats Section */}
-      <div className="relative max-w-6xl mx-auto px-4 py-16 -mt-20">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {stats.map((stat, index) => (
-            <div 
-              key={index}
-              className="backdrop-blur-lg bg-[#1e293b]/50 rounded-2xl p-6 border border-[#1e3a52] hover:border-[#3B82F6]/50 transform hover:scale-105 transition-all duration-300"
-              style={{ animationDelay: `${index * 100}ms` }}
-            >
-              <div className="text-3xl sm:text-4xl font-bold text-white mb-2">
-                {stat.number}
-              </div>
-              <div className="text-[#94a3b8] text-sm">{stat.label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Features Section */}
-      <div className="relative max-w-6xl mx-auto px-4 py-16 -mt-10">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-            Tính năng nổi bật
-          </h2>
-          <p className="text-[#94a3b8] max-w-2xl mx-auto">
-            Trải nghiệm những tính năng độc đáo và mang tính kết nối được thiết kế bởi Z4rum 
+        {/* Minimalist Intro */}
+        <motion.div
+          initial={{ opacity: 0, filter: "blur(10px)" }}
+          animate={{ opacity: 1, filter: "blur(0px)" }}
+          transition={{ delay: 0.5, duration: 1.2 }}
+        >
+          <h1 className="text-5xl md:text-7xl font-bold text-white mb-4 tracking-tighter">
+            Z4RUM<span className="text-purple-400">.</span>
+          </h1>
+          <p className="text-slate-400 text-lg md:text-xl font-medium max-w-sm mx-auto leading-relaxed opacity-80 mb-12">
+            Không gian xã hội hiện đại. 
+            <br />
+            Nơi chỉ có niềm vui và sự chia sẻ.
           </p>
-        </div>
+        </motion.div>
 
-        <div className="grid md:grid-cols-2 gap-6">
-          {features.map((feature, index) => (
-            <div 
-              key={index}
-              className="group backdrop-blur-lg bg-[#1e293b]/50 rounded-2xl p-8 border border-[#1e3a52] hover:border-[#3B82F6]/50 transform hover:scale-105 transition-all duration-300"
+        {/* Auth Buttons */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1, duration: 1 }}
+          className="flex flex-col sm:flex-row gap-4 w-full max-w-xs"
+        >
+          <Link href="/login" className="flex-1">
+            <motion.button
+              whileHover={{ scale: 1.05, backgroundColor: "rgba(255,255,255,1)" }}
+              whileTap={{ scale: 0.95 }}
+              className="w-full py-4 bg-white/90 text-indigo-950 font-bold rounded-2xl flex items-center justify-center gap-2 shadow-xl shadow-white/5 transition-all text-lg"
             >
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#3B82F6] to-[#6366F1] flex items-center justify-center text-white mb-4 group-hover:rotate-6 transition-transform shadow-lg shadow-blue-500/30">
-                {feature.icon}
-              </div>
-              <h3 className="text-xl font-semibold text-white mb-2">{feature.title}</h3>
-              <p className="text-[#94a3b8]">{feature.description}</p>
-            </div>
-          ))}
-        </div>
+              <LogIn size={20} />
+              Đăng nhập
+            </motion.button>
+          </Link>
+
+          <Link href="/register" className="flex-1">
+            <motion.button
+              whileHover={{ scale: 1.05, borderColor: "rgba(255,255,255,1)" }}
+              whileTap={{ scale: 0.95 }}
+              className="w-full py-4 bg-white/5 border-2 border-white/20 text-white font-bold rounded-2xl flex items-center justify-center gap-2 backdrop-blur-md transition-all text-lg"
+            >
+              <UserPlus size={20} />
+              Tham gia
+            </motion.button>
+          </Link>
+        </motion.div>
+
+        {/* Hidden Enter Link */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.4 }}
+          whileHover={{ opacity: 1 }}
+          className="mt-12"
+        >
+          <Link href="/home" className="text-slate-500 text-sm font-bold tracking-widest uppercase flex items-center gap-2 hover:text-white transition-all">
+            Khám phá ẩn danh
+            <ArrowRight size={14} />
+          </Link>
+        </motion.div>
       </div>
 
-      {/* Testimonials Section 
-      <div className="relative max-w-6xl mx-auto px-4 py-16">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-            Người dùng nói gì về chúng tôi
-          </h2>
-        </div>*/}
-
-      {/* <div className="grid md:grid-cols-3 gap-6">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="backdrop-blur-lg bg-[#1e293b]/50 rounded-2xl p-6 border border-[#1e3a52] hover:border-[#6366F1]/50 transition-all duration-300">
-              <div className="flex gap-1 mb-4">
-                {[...Array(5)].map((_, j) => (
-                  <Star key={j} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                ))}
-              </div>
-              <p className="text-[#cbd5e1] mb-4">
-                "Z4rum đã giúp tôi tìm được những người bạn tuyệt vời. Giao diện đẹp, dễ sử dụng!"
-              </p>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#3B82F6] to-[#8B5CF6]"></div>
-                <div>
-                  <div className="text-white font-semibold">Người dùng {i}</div>
-                  <div className="text-[#94a3b8] text-sm">Thành viên từ 2024</div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div> 
-      </div>*/}
-
-      {/* CTA Section */}
-      <div className="relative max-w-4xl mx-auto px-4 py-20 text-center -mt-10">
-        <div className="backdrop-blur-lg bg-[#1e293b]/50 rounded-3xl p-12 border border-[#1e3a52]">
-          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-            Sẵn sàng bắt đầu hành trình?
-          </h2>
-          <p className="text-[#94a3b8] mb-8 max-w-2xl mx-auto">
-            Hãy bắt đầu hành trình kết nối và khám phá cùng Z4rum ngay bây giờ.
-          </p>
-          <a href="/register" className="inline-block px-10 py-4 rounded-xl bg-gradient-to-r from-[#3B82F6] to-[#6366F1] text-white font-bold text-lg shadow-2xl shadow-blue-500/30 hover:shadow-blue-500/50 transform hover:scale-105 transition-all duration-300">
-            Đăng ký miễn phí
-          </a>
-        </div>
-      </div>
-
-      {/* Footer */}
-      <footer className="relative border-t border-[#1e3a52] py-8">
-        <div className="max-w-6xl mx-auto px-4 text-center text-[#94a3b8]">
-          <p>© 2024 Z4rum. All rights reserved.</p>
-        </div>
-      </footer>
+      {/* Decorative Blur Orbs */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-500/10 blur-[120px] rounded-full pointer-events-none animate-pulse" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-500/10 blur-[120px] rounded-full pointer-events-none animate-pulse" style={{ animationDelay: '2s' }} />
     </div>
   );
 }
