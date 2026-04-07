@@ -256,6 +256,12 @@ export default function HomePage() {
     return () => io.disconnect();
   }, [cursor]);
 
+  useEffect(() => {
+    if (selectedPost && !commentsByPost[selectedPost.id]) {
+      loadComments(selectedPost.id, null);
+    }
+  }, [selectedPost]);
+
   const handleCreate = async () => {
     if (!newContent.trim()) return;
     setCreating(true);
@@ -446,10 +452,22 @@ export default function HomePage() {
                     const text = modalCommentText.trim();
                     if (!text) return;
                     try {
-                      await postApi.comments.create(selectedPost!.id, { content: text });
+                      const res = await postApi.comments.create(selectedPost!.id, { content: text });
                       setModalCommentText("");
-                      loadComments(selectedPost!.id, null);
-                    } catch { }
+                      // Update local comment list
+                      setCommentsByPost((prev) => {
+                        const existing = prev[selectedPost!.id] || [];
+                        return { ...prev, [selectedPost!.id]: [res.item, ...existing] };
+                      });
+                      // Update comment count delta
+                      setCommentDeltaByPost((prev) => ({
+                        ...prev,
+                        [selectedPost!.id]: (prev[selectedPost!.id] || 0) + 1
+                      }));
+                      push("Bình luận thành công", "success");
+                    } catch (e: any) {
+                      push(e?.response?.data?.error || "Gửi bình luận thất bại", "error");
+                    }
                   }}
                   className="bg-blue-500 text-white px-6 py-3 rounded-2xl font-bold hover:bg-blue-600 transition-all shadow-lg shadow-blue-500/20 active:scale-95"
                 >
