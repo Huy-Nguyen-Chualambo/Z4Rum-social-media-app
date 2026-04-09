@@ -5,24 +5,35 @@ import { motion } from 'framer-motion';
 import { Sparkles, ArrowRight, LogIn, UserPlus } from 'lucide-react';
 import Link from 'next/link';
 
+const seededPercent = (seed: number) => {
+  const value = Math.sin(seed * 12.9898) * 43758.5453;
+  return (value - Math.floor(value)) * 100;
+};
+
 // Simple Floating Particle Component
-const Particle = ({ delay }: { delay: number }) => (
-  <motion.div
-    initial={{ y: "110vh", x: Math.random() * 100 + "%", opacity: 0 }}
-    animate={{ 
-      y: "-10vh", 
-      opacity: [0, 1, 1, 0],
-      x: (Math.random() * 20 - 10) + "%" 
-    }}
-    transition={{ 
-      duration: Math.random() * 10 + 15, 
-      repeat: Infinity, 
-      delay: delay,
-      ease: "linear" 
-    }}
-    className="absolute w-1 h-1 bg-white/40 rounded-full blur-[1px] pointer-events-none"
-  />
-);
+const Particle = ({ delay, index }: { delay: number; index: number }) => {
+  const startX = seededPercent(index + 1);
+  const driftX = seededPercent(index + 101) % 20 - 10;
+  const duration = 15 + (seededPercent(index + 201) % 10);
+
+  return (
+    <motion.div
+      initial={{ y: "110vh", x: `${startX}%`, opacity: 0 }}
+      animate={{
+        y: "-10vh",
+        opacity: [0, 1, 1, 0],
+        x: `${startX + driftX}%`
+      }}
+      transition={{
+        duration,
+        repeat: Infinity,
+        delay,
+        ease: "linear"
+      }}
+      className="absolute w-1 h-1 bg-white/40 rounded-full blur-[1px] pointer-events-none"
+    />
+  );
+};
 
 export default function LandingPage() {
   return (
@@ -43,7 +54,7 @@ export default function LandingPage() {
 
       {/* Floating Chill Particles */}
       {[...Array(20)].map((_, i) => (
-        <Particle key={i} delay={i * 2} />
+        <Particle key={i} delay={i * 2} index={i} />
       ))}
 
       {/* Center Content */}
