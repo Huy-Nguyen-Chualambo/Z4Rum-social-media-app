@@ -1,263 +1,281 @@
-# Z4Rum — Social Media App
+# Z4rum - Social Platform
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/status-active-brightgreen.svg)]
-[![Frontend Build](https://img.shields.io/badge/frontend-built-yellowgreen.svg)]
-[![Backend Build](https://img.shields.io/badge/backend-built-yellowgreen.svg)]
+Z4rum is a full-stack social media project built with Next.js and Node.js, focused on real-time interaction, community content, and modern UI/UX.
 
-Z4Rum is a modern, full‑stack social media application designed for sharing posts, following users, liking and commenting, and managing user profiles. This repository contains the source code for both frontend and backend parts of the app and is intended to be a starting point for production deployments or educational projects.
+This repository contains both frontend and backend code in a monorepo structure.
 
-This README is comprehensive — it contains everything you need to run, test, and contribute to the project.
+## Demo Scope
 
-Table of Contents
-- Project overview
-- Key features
-- Architecture & tech stack
-- Getting started (local development)
-  - Prerequisites
-  - Clone & install
-  - Environment variables
-  - Database setup & migrations
-  - Run the app (dev & production)
-- API overview (main endpoints)
-- Frontend overview (routes & components)
-- Testing
-- Linting and formatting
-- Deployment (Docker & example cloud deployments)
-- Folder structure
-- Contributing
-- Roadmap
-- Troubleshooting
-- License & contact
+Core user flows implemented:
 
-Project overview
-Z4Rum aims to provide a small-scale, production‑capable social network with:
-- User authentication and session management (JWT)
-- Profile management including avatars
-- Post creation (text + images), edit, delete
-- Feed showing posts from followed users
-- Follow/unfollow system
-- Likes and threaded comments
-- Basic notifications
-- Search users and posts
-- Responsive UI for desktop & mobile
+- Authentication with JWT (register, login, current user)
+- Profile view and profile update
+- Social post feed with search, pagination cursor, likes, and comments
+- Friend request flow
+- One-to-one messaging API
+- Real-time matching flow (Socket.IO)
+- Voting topics with options, votes, and topic comments
+- Responsive web UI with desktop and mobile navigation
+- Vercel Speed Insights integration on frontend
 
-Key features (user stories)
-- As a user, I can sign up, log in, and manage my profile.
-- As a user, I can create posts with text and images.
-- As a user, I can follow other users and see a feed of posts from people I follow.
-- As a user, I can like and comment on posts.
-- As a user, I receive simple notifications for relevant events (new follower, comment on my post).
-- As an admin (if enabled), I can moderate posts and users.
+## Tech Stack
 
-Architecture & tech stack
-This repository is structured as a full-stack monorepo with two primary directories:
-- /client — React frontend (TypeScript + Vite or Create React App)
-- /server — Node.js backend (TypeScript + Express) with Prisma ORM and PostgreSQL
+### Frontend
 
-Primary technologies used (customize to your implementation if different):
-- Frontend: React, TypeScript, React Router, Tailwind CSS (or CSS Modules), Vite
-- Backend: Node.js, TypeScript, Express, Prisma (PostgreSQL)
-- Authentication: JSON Web Tokens (JWT)
-- Image uploads: Cloudinary (recommended) or AWS S3 / local storage
-- Database: PostgreSQL (production) / SQLite (local dev option)
-- Development tooling: ESLint, Prettier, Husky (pre-commit hooks), Vitest/Jest
-- Containerization: Docker & Docker Compose
+- Next.js 16 (App Router)
+- React 19 + TypeScript
+- Tailwind CSS 4
+- TanStack Query
+- Zustand
+- Axios
+- Socket.IO client
+- Vercel Speed Insights
 
-If your codebase uses different tools (e.g., MongoDB, Next.js), swap the steps below to match your stack.
+### Backend
 
-Getting started (local development)
+- Node.js + Express 5
+- TypeScript
+- Prisma ORM
+- PostgreSQL
+- JWT authentication
+- Socket.IO
 
-Prerequisites
-- Node.js (LTS >= 18)
-- npm >= 8 or yarn
-- PostgreSQL (or Docker if using containers)
-- Git
-- (Optional) Docker & Docker Compose
-- (Optional) Cloudinary/AWS account for media uploads
+### Deployment
 
-Clone the repository
+- Frontend: Vercel
+- Backend: Render (see render.yaml)
+
+## Repository Structure
+
+```text
+Z4rum/
+├─ frontend/   # Next.js app
+├─ backend/    # Express + Prisma API
+├─ render.yaml # Render service config for backend
+└─ README.md
+```
+
+## Local Development
+
+### 1. Prerequisites
+
+- Node.js 20+
+- npm 10+
+- PostgreSQL 14+
+
+### 2. Clone Repository
+
 ```bash
 git clone https://github.com/Huy-Nguyen-Chualambo/Z4Rum-social-media-app.git
 cd Z4Rum-social-media-app
 ```
 
-Install dependencies
-Assumes a client/ and server/ directory:
+### 3. Install Dependencies
 
-Frontend
 ```bash
-cd client
+cd backend
 npm install
-# or
-yarn
-```
 
-Backend
-```bash
-cd ../server
+cd ../frontend
 npm install
-# or
-yarn
 ```
 
-Environment variables
-Create .env files for server and client (if necessary). Example values below are recommended defaults — update them for your environment.
+### 4. Configure Environment Variables
 
-server/.env
-```
-# Server
-NODE_ENV=development
+Create backend/.env:
+
+```env
 PORT=4000
-
-# Database (Postgres)
-DATABASE_URL=postgresql://postgres:password@localhost:5432/z4rum_dev?schema=public
-
-# Auth
-JWT_SECRET=replace-this-with-a-strong-secret
-JWT_EXPIRES_IN=7d
-
-# File uploads (Cloudinary example)
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
-
-# Optional: local uploads
-UPLOADS_DIR=./uploads
-
-# Optional: email / notifications
-SMTP_HOST=smtp.example.com
-SMTP_PORT=587
-SMTP_USER=youruser
-SMTP_PASS=yourpass
+DATABASE_URL=postgresql://postgres:password@localhost:5432/z4rum?schema=public
+JWT_SECRET=replace-with-a-strong-secret
+CLIENT_ORIGIN=http://localhost:3000
 ```
 
-client/.env
-```
-VITE_API_URL=http://localhost:4000/api
-VITE_APP_NAME=Z4Rum
+Create frontend/.env.local:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:4000
+NEXT_PUBLIC_SOCKET_URL=http://localhost:4000
 ```
 
-Database setup & migrations
-This example uses Prisma + PostgreSQL. If you are using another ORM/DB, adapt accordingly.
+### 5. Setup Database
 
-1. Create your database (Postgres):
 ```bash
-# Using psql
-createdb z4rum_dev
-```
-
-2. Generate Prisma client and run migrations:
-```bash
-cd server
+cd backend
 npx prisma generate
-npx prisma migrate dev --name init
-# Optionally seed data:
-npx prisma db seed
+npx prisma migrate dev
 ```
 
-If you prefer Docker for DB:
-```bash
-docker run --name z4rum-postgres -e POSTGRES_PASSWORD=password -e POSTGRES_DB=z4rum_dev -p 5432:5432 -d postgres:15
-```
+### 6. Run in Development
 
-Run the app (development)
-Backend (watch mode)
+Backend:
+
 ```bash
-cd server
+cd backend
 npm run dev
-# Common commands:
-# npm run dev      -> Start server with ts-node-dev / nodemon
-# npm run build    -> Build TypeScript to dist/
-# npm run start    -> Start production server (node dist)
 ```
 
-Frontend (dev)
+Frontend:
+
 ```bash
-cd client
+cd frontend
 npm run dev
-# or
-npm start
 ```
 
-Open the frontend in your browser (usually http://localhost:5173 or http://localhost:3000 depending on setup).
+Open http://localhost:3000
 
-Run the app (production build)
-1. Build frontend:
+## Build Commands
+
+Backend production build:
+
 ```bash
-cd client
+cd backend
 npm run build
-# This will produce a /dist or /build folder depending on toolchain
-```
-2. Serve static build or configure server to serve frontend assets. Example with Express:
-- Build client -> copy /client/dist into /server/public and start server in production mode.
-
-Docker (quick local deployment)
-A sample docker-compose.yml (place at repo root) might look like:
-```yaml
-version: "3.8"
-services:
-  postgres:
-    image: postgres:15
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: z4rum_prod
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-
-  server:
-    build: ./server
-    env_file:
-      - ./server/.env
-    ports:
-      - "4000:4000"
-    depends_on:
-      - postgres
-
-  client:
-    build: ./client
-    env_file:
-      - ./client/.env
-    ports:
-      - "3000:3000"
-    depends_on:
-      - server
-
-volumes:
-  pgdata:
+npm run start
 ```
 
-API overview (common endpoints)
-Below are example endpoints. Check server/src/routes for the actual routes of your codebase.
+Frontend production build:
 
-Auth
-- POST /api/auth/register — Register new user (body: { name, email, password })
-- POST /api/auth/login — Login (body: { email, password }) → returns JWT
-- POST /api/auth/refresh — Refresh token (optional)
-- POST /api/auth/logout — Logout
+```bash
+cd frontend
+npm run build
+npm run start
+```
 
-Users
-- GET /api/users — List or search users (query: q=)
-- GET /api/users/:id — Get user profile and statistics
-- PUT /api/users/:id — Update profile (auth required)
-- POST /api/users/:id/follow — Follow a user (auth)
-- POST /api/users/:id/unfollow — Unfollow a user (auth)
+## Backend API Overview
 
-Posts
-- GET /api/posts/feed — Get authenticated user feed (auth)
-- GET /api/posts — Paginated global posts or search
-- GET /api/posts/:id — Get single post with comments
-- POST /api/posts — Create new post (auth, multi-part for images)
-- PUT /api/posts/:id — Edit post (auth, owner)
-- DELETE /api/posts/:id — Delete post (auth, owner)
+Base URL (local): http://localhost:4000
 
-Likes & Comments
-- POST /api/posts/:id/like — Like post (auth)
-- POST /api/posts/:id/unlike — Unlike post (auth)
-- POST /api/posts/:id/comments — Add comment (auth)
+### Auth
+
+- POST /auth/register
+- POST /auth/login
+- GET /auth/me
+
+### Users
+
+- GET /users?search=
+- GET /users/:id
+- PUT /users/:id
+
+### Posts
+
+- POST /posts
+- GET /posts?limit=&cursor=&authorId=&search=
+- GET /posts/:id
+- PUT /posts/:id
+- DELETE /posts/:id
+- POST /posts/:id/like
+- GET /posts/:id/comments
+- POST /posts/:id/comments
+
+### Friends
+
+- POST /friends/request/:receiverId
+- POST /friends/accept/:requestId
+- GET /friends
+
+### Messages
+
+- GET /messages
+- GET /messages/:userId
+- POST /messages/:userId
+
+### Match
+
+- POST /match/start
+- POST /match/stop
+
+### Votes
+
+- GET /votes/topics
+- GET /votes/topics/trending
+- GET /votes/topics/:id
+- POST /votes/topics
+- POST /votes/topics/:id/vote
+- GET /votes/topics/:id/comments
+- POST /votes/topics/:id/comments
+
+Most routes require header:
+
+```http
+Authorization: Bearer <jwt_token>
+```
+
+## Frontend Routes
+
+- /
+- /home
+- /explore
+- /messages
+- /messages/[userId]
+- /match
+- /movies
+- /movies/[slug]
+- /profile
+- /settings
+- /users/[id]
+- /vote
+- /login
+- /register
+
+## Deployment Notes
+
+### Backend on Render
+
+Configured in render.yaml:
+
+- rootDir: backend
+- buildCommand: npm ci --include=dev && npm run build
+- startCommand: npm run start
+
+### Frontend on Vercel
+
+- Project root: frontend
+- Framework preset: Next.js
+- Build command: next build
+
+## Troubleshooting
+
+### 1. JSON parse errors in package.json or package-lock.json
+
+This usually happens after conflict resolution using apply both changes and leaves duplicated JSON blocks.
+
+Fix:
+
+```bash
+cd frontend
+rm -f package-lock.json
+npm install
+```
+
+Then verify build:
+
+```bash
+npm run build
+```
+
+### 2. Multiple lockfile warning in Next.js
+
+If Next.js warns about multiple lockfiles, keep only lockfiles that belong to this project workspace when possible.
+
+### 3. Missing module @vercel/speed-insights/next
+
+Ensure dependency exists in frontend/package.json and run npm install inside frontend.
+
+## Why This Project Matters
+
+This project demonstrates practical full-stack engineering capability:
+
+- Designing and shipping end-to-end user features
+- Building real-time and REST APIs together
+- Managing relational data with Prisma
+- Handling modern frontend state and API cache patterns
+- Preparing applications for cloud deployment workflows
+
+## License
+
+This project is for portfolio and learning purposes.
 - GET /api/posts/:id/comments — Get comments for a post
 
 Notifications
