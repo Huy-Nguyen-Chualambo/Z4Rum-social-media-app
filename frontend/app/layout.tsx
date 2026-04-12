@@ -7,6 +7,7 @@ import { announcements, type Announcement } from "@/lib/constants/announcements"
 import BottomNav from "./_components/BottomNav";
 import Navbar from "./_components/Navbar";
 import Providers from "./providers";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ExternalLink, Bell } from "lucide-react";
 
 const geistSans = Geist({
@@ -92,6 +93,7 @@ export default function RootLayout({
             <BottomNav />
           </div>
         </Providers>
+        <SpeedInsights />
       </body>
     </html>
   );
