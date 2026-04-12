@@ -12,7 +12,8 @@ import {
     ArrowLeft,
     Tv,
     Users,
-    Star
+    Star,
+    ExternalLink
 } from "lucide-react";
 import Link from "next/link";
 
@@ -101,26 +102,56 @@ export default function MovieDetailPage() {
                 </Link>
             </div>
 
-            {/* Player Section - Aggressive Breakout for Mobile Fullscreen button visibility */}
+            {/* Redirect Banner */}
+            <div className="max-w-6xl mx-auto px-4 mb-4">
+                <a 
+                    href={`https://z4phim.vercel.app/phim/${slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-col md:flex-row items-center justify-between bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-4 md:px-8 transition-transform hover:scale-[0.99] active:scale-95 shadow-lg shadow-blue-500/20 gap-4"
+                >
+                    <div className="flex items-center gap-4 text-white">
+                        <div className="bg-white/20 p-2 rounded-xl">
+                            <ExternalLink size={24} />
+                        </div>
+                        <div>
+                            <p className="font-bold text-lg leading-tight text-white mb-0">Xem phim này tại Z4PHIM</p>
+                            <p className="text-white/80 text-sm mb-0">Chất lượng cao hơn, không quảng cáo và hoàn toàn miễn phí!</p>
+                        </div>
+                    </div>
+                    <div className="bg-white text-blue-600 px-6 py-2 rounded-full font-bold text-sm whitespace-nowrap">
+                        Mở ngay
+                    </div>
+                </a>
+            </div>
+
+            {/* Player Section */}
             <div className="relative w-full sm:max-w-6xl sm:mx-auto sm:px-4 mb-8">
                 <div className="w-screen sm:w-full relative left-1/2 sm:static -translate-x-1/2 sm:translate-x-0">
-                    <div className="bg-black aspect-video sm:rounded-3xl overflow-hidden shadow-2xl shadow-black/50 border-y sm:border border-[#1e3a52]">
+                    <div className="bg-black aspect-video sm:rounded-3xl overflow-hidden shadow-2xl shadow-black/50 border-y sm:border border-[#1e3a52] relative">
                         {currentEpisode ? (
-                            <iframe
-                                src={currentEpisode.link_embed}
-                                className="w-full h-full"
-                                allowFullScreen={true}
-                                // @ts-ignore
-                                webkitallowfullscreen="true"
-                                // @ts-ignore
-                                mozallowfullscreen="true"
-                                // @ts-ignore
-                                oallowfullscreen="true"
-                                // @ts-ignore
-                                msallowfullscreen="true"
-                                allow="autoplay; encrypted-media; fullscreen *; picture-in-picture"
-                                frameBorder="0"
-                            ></iframe>
+                            <>
+                                <iframe
+                                    src={currentEpisode.link_embed}
+                                    className="w-full h-full opacity-40 blur-[2px]"
+                                    allowFullScreen={true}
+                                />
+                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm p-6 text-center">
+                                    <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mb-6 shadow-xl shadow-blue-600/40 animate-pulse">
+                                        <Play size={32} className="text-white fill-white translate-x-1" />
+                                    </div>
+                                    <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">Bạn đang xem phim tại phiên bản cũ</h2>
+                                    <p className="text-gray-300 mb-8 max-w-md mx-auto">Vui lòng chuyển sang Z4Phim để có trải nghiệm xem phim mượt mà và chất lượng tốt nhất.</p>
+                                    <a 
+                                        href={`https://z4phim.vercel.app/phim/${slug}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-xl font-bold transition-all transform hover:scale-105 active:scale-95"
+                                    >
+                                        Tiếp tục xem tại Z4PHIM
+                                    </a>
+                                </div>
+                            </>
                         ) : (
                             <div className="w-full h-full flex items-center justify-center flex-col gap-4">
                                 <Tv size={64} className="text-[#1e3a52]" />
