@@ -13,7 +13,7 @@ type WeatherApiCurrent = {
     text?: string;
     code?: number;
   };
-  is_day?: "yes" | "no";
+  is_day?: number;
 };
 
 type WeatherApiResponse = {
@@ -57,7 +57,7 @@ export async function GET(req: NextRequest) {
       temperature: data.current.temp_c ?? null,
       description: data.current.condition?.text || "Unknown",
       weatherCode: data.current.condition?.code ?? null,
-      isDay: data.current.is_day || "yes"
+      isDay: data.current.is_day === 1 ? "yes" : "no"
     });
   } catch {
     return NextResponse.json({ message: "Weather service unavailable" }, { status: 502 });

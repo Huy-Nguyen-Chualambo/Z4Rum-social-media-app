@@ -35,7 +35,7 @@ const pickScene = (description: string, isDay: "yes" | "no"): SceneType => {
   return "sunny";
 };
 
-const translateWeatherDescription = (description: string): string => {
+const translateWeatherDescription = (description: string, isDay: "yes" | "no"): string => {
   const normalized = description.toLowerCase();
   if (/(thunder|storm)/.test(normalized)) return "Mưa dông";
   if (/(heavy rain|torrential)/.test(normalized)) return "Mưa lớn";
@@ -43,7 +43,7 @@ const translateWeatherDescription = (description: string): string => {
   if (/(partly cloudy)/.test(normalized)) return "Có mây";
   if (/(cloud|overcast)/.test(normalized)) return "Nhiều mây";
   if (/(fog|mist|haze)/.test(normalized)) return "Sương mù";
-  if (/(clear|sunny)/.test(normalized)) return "Trời quang";
+  if (/(clear|sunny)/.test(normalized)) return isDay === "no" ? "Troi quang dem" : "Troi quang";
   if (/(snow|sleet|hail)/.test(normalized)) return "Tuyết";
   if (/(wind|breeze|gust)/.test(normalized)) return "Gió mạnh";
   return "Thời tiết ổn định";
@@ -92,7 +92,7 @@ export default function Navbar() {
   }, [city]);
 
   const scene = weather ? pickScene(weather.description, weather.isDay) : "sunny";
-  const localizedDescription = weather ? translateWeatherDescription(weather.description) : "";
+  const localizedDescription = weather ? translateWeatherDescription(weather.description, weather.isDay) : "";
 
   return (
     <nav className="w-full bg-gradient-to-br from-[#0a1628] to-[#071029] border-b border-[#1e293b] sticky top-0 z-40">
