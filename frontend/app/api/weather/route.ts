@@ -7,41 +7,45 @@ const LOCATION_MAP = {
 
 type LocationKey = keyof typeof LOCATION_MAP;
 
-type WeatherstackCurrent = {
-  temperature?: number;
-  weather_code?: number;
-  weather_descriptions?: string[];
+type WeatherApiCurrent = {
+  temp_c?: number;
+  condition?: {
+    text?: string;
+    code?: number;
+  };
   is_day?: "yes" | "no";
 };
 
-type WeatherstackResponse = {
-  success?: boolean;
-  error?: { info?: string };
+type WeatherApiResponse = {
+  error?: { message?: string };
   location?: { name?: string; country?: string };
-  current?: WeatherstackCurrent;
+  current?: WeatherApiCurrent;
 };
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
-  const apiKey = process.env.WEATHERSTACK_API_KEY;
+  const apiKey = process.env.WEATHERAPI_KEY || process.env.WEATHERSTACK_API_KEY;
   if (!apiKey) {
-    return NextResponse.json({ message: "Missing WEATHERSTACK_API_KEY" }, { status: 500 });
+    return NextResponse.json(
+      { message: "Missing WEATHERAPI_KEY (or WEATHERSTACK_API_KEY)" },
+      { status: 500 }
+    );
   }
 
   const cityParam = (req.nextUrl.searchParams.get("city") || "hanoi").toLowerCase();
   const city = (cityParam in LOCATION_MAP ? cityParam : "hanoi") as LocationKey;
   const query = LOCATION_MAP[city];
 
-  const endpoint = `http://api.weatherstack.com/current?access_key=${encodeURIComponent(apiKey)}&query=${encodeURIComponent(query)}`;
+  const endpoint = `https://api.weatherapi.com/v1/current.json?key=${encodeURIComponent(apiKey)}&q=${encodeURIComponent(query)}`;
 
   try {
     const response = await fetch(endpoint, { cache: "no-store" });
-    const data = (await response.json()) as WeatherstackResponse;
+    const data = (await response.json()) as WeatherApiResponse;
 
-    if (!response.ok || data.success === false || !data.current) {
+    if (!response.ok || data.error || !data.current) {
       return NextResponse.json(
-        { message: data.error?.info || "Unable to fetch weather data" },
+        { message: data.error?.message || "Unable to fetch weather data" },
         { status: 502 }
       );
     }
@@ -50,9 +54,9 @@ export async function GET(req: NextRequest) {
       city,
       locationName: data.location?.name || query,
       country: data.location?.country || "Vietnam",
-      temperature: data.current.temperature ?? null,
-      description: data.current.weather_descriptions?.[0] || "Unknown",
-      weatherCode: data.current.weather_code ?? null,
+      temperature: data.current.temp_c ?? null,
+      description: data.current.condition?.text || "Unknown",
+      weatherCode: data.current.condition?.code ?? null,
       isDay: data.current.is_day || "yes"
     });
   } catch {
