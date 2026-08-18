@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Sparkles, ArrowRight, LogIn, UserPlus } from 'lucide-react';
 import Link from 'next/link';
@@ -12,8 +12,8 @@ const seededPercent = (seed: number) => {
 
 // Simple Floating Particle Component
 const Particle = ({ delay, index }: { delay: number; index: number }) => {
-  const startX = seededPercent(index + 1);
-  const driftX = seededPercent(index + 101) % 20 - 10;
+  const startX = Number(seededPercent(index + 1).toFixed(5));
+  const driftX = Number((seededPercent(index + 101) % 20 - 10).toFixed(5));
   const duration = 15 + (seededPercent(index + 201) % 10);
 
   return (
@@ -36,6 +36,12 @@ const Particle = ({ delay, index }: { delay: number; index: number }) => {
 };
 
 export default function LandingPage() {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   return (
     <div className="fixed inset-0 z-[100] h-screen w-screen bg-[#0a0c16] overflow-hidden selection:bg-purple-500/30">
       {/* Immersive Chill Background */}
@@ -53,9 +59,11 @@ export default function LandingPage() {
       <div className="absolute inset-0 z-1 pointer-events-none opacity-[0.15] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] mix-blend-overlay" />
 
       {/* Floating Chill Particles */}
-      {[...Array(20)].map((_, i) => (
-        <Particle key={i} delay={i * 2} index={i} />
-      ))}
+      {isMounted
+        ? [...Array(20)].map((_, i) => (
+            <Particle key={i} delay={i * 2} index={i} />
+          ))
+        : null}
 
       {/* Center Content */}
       <div className="relative z-10 flex flex-col items-center justify-center h-full px-6 text-center">

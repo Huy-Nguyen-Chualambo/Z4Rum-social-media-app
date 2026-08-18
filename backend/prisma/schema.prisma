@@ -34,6 +34,9 @@ model User {
   voteTopics       VoteTopic[] @relation("VoteTopics")
   votes            Vote[]
   voteComments     VoteComment[] @relation("VoteComments")
+  z4Characters     Character[] @relation("Z4Characters")
+  z4Stories        Story[]     @relation("Z4Stories")
+  z4Sessions       ChatSession[] @relation("Z4Sessions")
 }
 
 model Post {
@@ -148,4 +151,116 @@ model VoteComment {
   topic     VoteTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
   topicId   String
   createdAt DateTime  @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Z4chat - AI role-play chat
+// ---------------------------------------------------------------------------
+
+/// A role-play character the user chats with.
+model Character {
+  id            String   @id @default(uuid())
+  owner         User     @relation("Z4Characters", fields: [ownerId], references: [id])
+  ownerId       String
+  name          String
+  avatarUrl     String?
+  tagline       String?
+  /// Who the character is. Always kept in the system prompt.
+  description   String
+  personality   String?
+  speechStyle   String?
+  /// First line the character says when a session starts.
+  greeting      String
+  /// Few-shot sample exchanges. The strongest lever we have on voice consistency.
+  exampleDialog String?
+  likes         String?
+  dislikes      String?
+  tags          String[]
+  isPublic      Boolean  @default(false)
+  /// Whether the character may message first after a period of silence.
+  proactive     Boolean  @default(true)
+  /// 1 = kiem toi, 2 = vua, 3 = quan tam nhieu. Drives the silence thresholds.
+  clinginess    Int      @default(2)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  sessions      ChatSession[]
+
+  @@index([ownerId, updatedAt])
+}
+
+/// A reusable plot the user can pair with any character.
+model Story {
+  id           String   @id @default(uuid())
+  owner        User     @relation("Z4Stories", fields: [ownerId], references: [id])
+  ownerId      String
+  title        String
+  synopsis     String?
+  worldSetting String?
+  plotOutline  String?
+  /// Who the user plays in this story.
+  userRoleName String?
+  userRoleDesc String?
+  openingScene String?
+  tags         String[]
+  isPublic     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  sessions     ChatSession[]
+
+  @@index([ownerId, updatedAt])
+}
+
+/// One conversation: a character, optionally inside a story.
+model ChatSession {
+  id              String    @id @default(uuid())
+  user            User      @relation("Z4Sessions", fields: [userId], references: [id])
+  userId          String
+  character       Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  characterId     String
+  story           Story?    @relation(fields: [storyId], references: [id], onDelete: SetNull)
+  storyId         String?
+  title           String?
+  /// Rolling summary of everything older than the verbatim window.
+  summary         String?
+  /// How many messages have already been folded into `summary`.
+  summarizedUpTo  Int       @default(0)
+  provider        String    @default("openrouter")
+  model           String    @default("openai/gpt-4o-mini")
+  lastSeenAt      DateTime  @default(now())
+  lastProactiveAt DateTime?
+  unreadCount     Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  messages        ChatMessage[]
+  memories        MemoryEntry[]
+
+  @@index([userId, updatedAt])
+}
+
+model ChatMessage {
+  id        String      @id @default(uuid())
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionId String
+  /// "user" | "assistant"
+  role      String
+  content   String
+  /// "normal" | "proactive" | "opening"
+  kind      String      @default("normal")
+  createdAt DateTime    @default(now())
+
+  @@index([sessionId, createdAt])
+}
+
+/// Hard facts pinned into every prompt so the character cannot forget them.
+model MemoryEntry {
+  id        String      @id @default(uuid())
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionId String
+  content   String
+  /// "user" = nguoi dung tu ghim, "auto" = trich tu tom tat
+  source    String      @default("user")
+  pinned    Boolean     @default(true)
+  createdAt DateTime    @default(now())
+
+  @@index([sessionId, createdAt])
 }

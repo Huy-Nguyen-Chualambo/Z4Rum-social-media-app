@@ -15,6 +15,9 @@ Core user flows implemented:
 - One-to-one messaging API
 - Real-time matching flow (Socket.IO)
 - Voting topics with options, votes, and topic comments
+- Z4chat: AI role-play chat with user-authored characters and stories, layered
+  memory so the plot is not forgotten, anti-repetition, and characters that
+  message you first
 - Responsive web UI with desktop and mobile navigation
 - Vercel Speed Insights integration on frontend
 
@@ -96,6 +99,14 @@ Create frontend/.env.local:
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:4000
 NEXT_PUBLIC_SOCKET_URL=http://localhost:4000
+
+# Z4chat AI providers - at least one key is required for chat to work.
+# Whichever keys are present show up in the model picker; the rest are hidden.
+OPENROUTER_API_KEY=
+GEMINI_API_KEY=
+GROQ_API_KEY=
+DEEPSEEK_API_KEY=
+OPENAI_API_KEY=
 ```
 
 ### 5. Setup Database
@@ -196,6 +207,36 @@ Base URL (local): http://localhost:4000
 - GET /votes/topics/:id/comments
 - POST /votes/topics/:id/comments
 
+### Z4chat (AI role-play)
+
+All routes require auth and are scoped to the calling user.
+
+- GET/POST /z4chat/characters
+- GET/PUT/DELETE /z4chat/characters/:id
+- GET/POST /z4chat/stories
+- GET/PUT/DELETE /z4chat/stories/:id
+- GET/POST /z4chat/sessions
+- GET/DELETE /z4chat/sessions/:id
+- POST /z4chat/sessions/:id/messages
+- PUT/DELETE /z4chat/sessions/:id/messages/:mid
+- POST /z4chat/sessions/:id/seen
+- PUT /z4chat/sessions/:id/summary
+- PUT /z4chat/sessions/:id/model
+- GET/POST /z4chat/sessions/:id/memories
+- PUT/DELETE /z4chat/sessions/:id/memories/:mid
+- POST /z4chat/sessions/:id/proactive
+- GET /z4chat/proactive/due
+- GET /z4chat/unread
+
+AI inference lives in the Next.js app instead, so the provider keys never leave
+the frontend host:
+
+- POST /api/z4chat/chat (streaming reply)
+- POST /api/z4chat/summarize
+- POST /api/z4chat/generate (AI-drafted character/story)
+- POST /api/z4chat/proactive
+- GET /api/z4chat/models
+
 Most routes require header:
 
 ```http
@@ -210,14 +251,16 @@ Authorization: Bearer <jwt_token>
 - /messages
 - /messages/[userId]
 - /match
-- /movies
-- /movies/[slug]
+- /z4chat
+- /z4chat/[sessionId]
 - /profile
 - /settings
 - /users/[id]
 - /vote
 - /login
 - /register
+
+`/movies` and `/movies/[slug]` now redirect to `/z4chat`.
 
 ## Deployment Notes
 

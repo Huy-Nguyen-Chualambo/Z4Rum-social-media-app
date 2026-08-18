@@ -7,6 +7,7 @@ import { announcements, type Announcement } from "@/lib/constants/announcements"
 import BottomNav from "./_components/BottomNav";
 import Navbar from "./_components/Navbar";
 import Providers from "./providers";
+import Z4chatWatcher from "./_components/Z4chatWatcher";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ExternalLink, Bell } from "lucide-react";
 
@@ -39,6 +40,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Providers>
+          <Z4chatWatcher />
           <div className="min-h-screen bg-[#0a0f1e] font-sans text-[#F1F5F9] pb-14 md:pb-0">
             <Navbar />
             <div className="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-[18rem_minmax(0,1fr)] lg:grid-cols-[18rem_minmax(0,1fr)_20rem] md:pt-0">
@@ -56,10 +58,11 @@ export default function RootLayout({
                   
                   <div className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide gap-4 pb-4 px-1 -mx-1">
                     {announcements.map((item: Announcement, index: number) => (
-                      <a 
+                      <a
                         key={index}
                         href={item.link}
-                        target="_blank"
+                        // Internal links (e.g. /z4chat) stay in this tab.
+                        target={item.link.startsWith("/") ? undefined : "_blank"}
                         rel="noopener noreferrer"
                         className="flex-none w-[85%] sm:w-[320px] snap-center flex items-center gap-4 bg-gradient-to-br from-[#0f1e30] to-[#0a1628] border border-[#1e3a52] p-5 rounded-3xl active:scale-95 transition-all shadow-lg hover:shadow-blue-500/5"
                       >

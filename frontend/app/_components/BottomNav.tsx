@@ -1,15 +1,16 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Search, MessageCircle, Heart, User, Plus, HomeIcon, Vote, Film } from "lucide-react";
+import { Home, Search, MessageCircle, Heart, User, Plus, HomeIcon, Vote, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/lib/store/useAuthStore";
+import { useZ4chatStore } from "@/lib/store/useZ4chatStore";
 import PostModal from "./PostModal";
 
 const items = [
   { name: "Trang chủ", icon: HomeIcon, href: "/home" },
   { name: "Tìm kiếm", icon: Search, href: "/explore" },
-  { name: "Xem phim", icon: Film, href: "/movies" },
+  { name: "Z4chat", icon: Sparkles, href: "/z4chat" },
   { name: "Nhắn tin", icon: MessageCircle, href: "/messages" },
   { name: "Chat với người lạ", icon: Heart, href: "/match" },
   { name: "Bình chọn - Thảo luận", icon: Vote, href: "/vote" },
@@ -19,6 +20,7 @@ const items = [
 export default function BottomNav() {
   const pathname = usePathname();
   const { token } = useAuthStore();
+  const z4chatUnread = useZ4chatStore((state) => state.unreadTotal);
   const [mounted, setMounted] = useState(false);
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
 
@@ -50,9 +52,15 @@ export default function BottomNav() {
           {items.map((i) => {
             const active = pathname?.startsWith(i.href);
             const Icon = i.icon;
+            const badge = i.href === "/z4chat" ? z4chatUnread : 0;
             return (
-              <Link key={i.href} href={i.href} className="flex flex-col items-center gap-1 px-3 py-1">
+              <Link key={i.href} href={i.href} className="relative flex flex-col items-center gap-1 px-3 py-1">
                 <Icon size={22} className={active ? "text-[#60A5FA]" : "text-[#94a3b8]"} />
+                {badge > 0 && (
+                  <span className="absolute top-0 right-1 min-w-[16px] h-4 px-1 rounded-full bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] text-white text-[10px] font-bold flex items-center justify-center">
+                    {badge > 9 ? "9+" : badge}
+                  </span>
+                )}
                 {/*   <span className={`text-xs ${active ? "text-white" : "text-[#94a3b8]"}`}>{i.name}</span> */}
               </Link>
             );

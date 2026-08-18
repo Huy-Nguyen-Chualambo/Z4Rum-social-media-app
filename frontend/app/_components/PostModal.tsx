@@ -4,6 +4,7 @@ import { postApi } from "@/lib/api/postApi";
 import { useToast } from "@/lib/ui/toast";
 import { Image as ImageIcon, Smile, X } from "lucide-react";
 import { useAuthStore } from "@/lib/store/useAuthStore";
+import { uploadImage } from "@/lib/utils/cloudinary";
 
 interface PostModalProps {
   isOpen: boolean;
@@ -30,33 +31,13 @@ export default function PostModal({ isOpen, onClose, onPostCreated }: PostModalP
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      push("Ảnh quá lớn (chỉ hỗ trợ < 5MB)", "error");
-      return;
-    }
-
     setIsUploading(true);
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "");
-    formData.append("cloud_name", process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "");
-
     try {
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`, {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await res.json();
-      if (data.secure_url) {
-        setImageUrl(data.secure_url);
-        push("Ảnh đã sẵn sàng!", "success");
-      } else {
-        throw new Error("Upload failed");
-      }
-    } catch (error) {
+      setImageUrl(await uploadImage(file));
+      push("Ảnh đã sẵn sàng!", "success");
+    } catch (error: any) {
       console.error(error);
-      push("Lỗi khi tải ảnh lên Cloudinary", "error");
+      push(error?.message || "Lỗi khi tải ảnh lên Cloudinary", "error");
     } finally {
       setIsUploading(false);
     }

@@ -33,7 +33,8 @@ export default function RightRail() {
 
                   <a
                     href={item.link}
-                    target="_blank"
+                    // Internal links (e.g. /z4chat) stay in this tab.
+                    target={item.link.startsWith("/") ? undefined : "_blank"}
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 text-blue-400 hover:text-blue-300 text-xs font-bold transition-colors bg-blue-500/10 px-3 py-1.5 rounded-lg border border-blue-500/20 hover:bg-blue-500/20"
                   >

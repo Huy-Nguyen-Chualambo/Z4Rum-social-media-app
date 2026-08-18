@@ -8,6 +8,7 @@ import friendRoutes from "./modules/friend/friend.routes";
 import messageRoutes from "./modules/message/message.routes";
 import matchRoutes from "./modules/match/match.routes";
 import voteRoutes from "./modules/vote/vote.routes";
+import z4chatRoutes from "./modules/z4chat/z4chat.routes";
 
 dotenv.config();
 
@@ -23,10 +24,11 @@ app.use("/friends", friendRoutes);
 app.use("/messages", messageRoutes);
 app.use("/match", matchRoutes);
 app.use("/votes", voteRoutes);
+app.use("/z4chat", z4chatRoutes);
 
 // Basic landing + health
 app.get("/", (_req, res) => {
-  res.type("text/plain").send("Z4rum API is running. See /auth, /users, /posts, /messages, /match, /votes");
+  res.type("text/plain").send("Z4rum API is running. See /auth, /users, /posts, /messages, /match, /votes, /z4chat");
 });
 
 app.get("/healthz", (_req, res) => {

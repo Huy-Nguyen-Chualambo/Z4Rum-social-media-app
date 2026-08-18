@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuthStore } from "@/lib/store/useAuthStore";
+import { useZ4chatStore } from "@/lib/store/useZ4chatStore";
 import {
   Home as HomeIcon,
   Search,
@@ -10,7 +11,7 @@ import {
   User,
   TrendingUp,
   Vote,
-  Film,
+  Sparkles,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import PostModal from "./PostModal";
@@ -20,7 +21,7 @@ const navItems = [
   { name: "Tìm kiếm", icon: Search, href: "/explore" },
   { name: "Nhắn tin", icon: MessageCircle, href: "/messages" },
   { name: "Chat với người lạ", icon: Heart, href: "/match" },
-  { name: "Xem phim", icon: Film, href: "/movies" },
+  { name: "Z4chat", icon: Sparkles, href: "/z4chat" },
   { name: "Bình chọn - Thảo luận", icon: Vote, href: "/vote" },
   { name: "Hồ sơ của tôi", icon: User, href: "/profile" },
 ];
@@ -28,6 +29,7 @@ const navItems = [
 export default function Sidebar() {
   const pathname = usePathname();
   const { token } = useAuthStore();
+  const z4chatUnread = useZ4chatStore((state) => state.unreadTotal);
   const [mounted, setMounted] = useState(false);
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
 
@@ -40,6 +42,9 @@ export default function Sidebar() {
         {navItems.map((item) => {
           const isActive = pathname?.startsWith(item.href);
           const Icon = item.icon;
+          // Only rendered after mount: the count comes from an API call, so the
+          // server render has nothing to show and must not disagree.
+          const badge = mounted && item.href === "/z4chat" ? z4chatUnread : 0;
           return (
             <Link
               key={item.name}
@@ -51,6 +56,11 @@ export default function Sidebar() {
             >
               <Icon size={20} className={isActive ? "text-[#60A5FA]" : "group-hover:text-[#60A5FA] transition-colors"} />
               <span className="font-medium">{item.name}</span>
+              {badge > 0 && (
+                <span className="ml-auto min-w-5 h-5 px-1.5 rounded-full bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] text-white text-[11px] font-bold flex items-center justify-center">
+                  {badge > 9 ? "9+" : badge}
+                </span>
+              )}
             </Link>
           );
         })}
