@@ -5,5 +5,7 @@ export const authApi = {
     axiosClient.post("/auth/register", data).then((r) => r.data),
   login: (data: { email: string; password: string }) =>
     axiosClient.post("/auth/login", data).then((r) => r.data),
+  googleLogin: (data: { credential: string; gender?: "male" | "female" }) =>
+    axiosClient.post("/auth/google", data).then((r) => r.data),
   me: () => axiosClient.get("/auth/me").then((r) => r.data),
 };

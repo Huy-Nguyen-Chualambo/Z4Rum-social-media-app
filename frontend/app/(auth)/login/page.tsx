@@ -1,12 +1,22 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useToast } from "@/lib/ui/toast";
+import { GoogleLoginButton } from "../GoogleLoginButton";
+
+const getAuthErrorMessage = (error: unknown, fallback: string) => {
+  if (typeof error === "object" && error !== null && "response" in error) {
+    const response = (error as { response?: { data?: { error?: string } } }).response;
+    return response?.data?.error || fallback;
+  }
+  return fallback;
+};
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, token, loadMe } = useAuthStore();
+  const { login, googleLogin, token } = useAuthStore();
   const { push } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -19,6 +29,27 @@ export default function LoginPage() {
   }, [token, router]);
 
   const [error, setError] = useState<string | null>(null);
+
+  const handleGoogleCredential = useCallback(async (credential: string) => {
+    try {
+      setError(null);
+      setIsLoading(true);
+      await googleLogin(credential);
+      push("Đăng nhập Google thành công", "success");
+    } catch (err: unknown) {
+      const message = getAuthErrorMessage(err, "Đăng nhập Google thất bại");
+      setError(message);
+      push(message, "error");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [googleLogin, push]);
+
+  const handleGoogleError = useCallback((message: string) => {
+    setError(message);
+    push(message, "error");
+  }, [push]);
+
   return (
     <div className="bg-gradient-to-br from-[#0f1e30] to-[#0a1628] border border-[#1e3a52] rounded-2xl p-6">
       <h1 className="text-white text-2xl font-semibold mb-4">Đăng nhập</h1>
@@ -39,9 +70,10 @@ export default function LoginPage() {
             setIsLoading(true);
             await login(email, password);
             push("Đăng nhập thành công", "success");
-          } catch (err: any) {
-            setError(err?.response?.data?.error || "Đăng nhập thất bại");
-            push(err?.response?.data?.error || "Đăng nhập thất bại", "error");
+          } catch (err: unknown) {
+            const message = getAuthErrorMessage(err, "Đăng nhập thất bại");
+            setError(message);
+            push(message, "error");
           } finally {
             setIsLoading(false);
           }
@@ -51,16 +83,22 @@ export default function LoginPage() {
         <input className="w-full bg-transparent border border-[#1e3a52] rounded-lg px-3 py-2 text-[#cbd5e1] placeholder:text-[#475569]" placeholder="Mật khẩu" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
         <button type="submit" className="w-full py-2 rounded-lg bg-gradient-to-r from-[#3B82F6] to-[#6366F1] text-white font-semibold">Đăng nhập</button>
       </form>
+      <div className="my-4 flex items-center gap-3 text-xs uppercase text-[#64748b]">
+        <div className="h-px flex-1 bg-[#1e3a52]" />
+        hoặc
+        <div className="h-px flex-1 bg-[#1e3a52]" />
+      </div>
+      <GoogleLoginButton onCredential={handleGoogleCredential} onError={handleGoogleError} />
       {error && <div className="mt-3 text-sm text-red-400">{error}</div>}
       <p className="mt-4 text-sm text-[#94a3b8]">
         Chưa có tài khoản?{" "}
-        <a href="/register" className="text-[#3B82F6] hover:underline">
+        <Link href="/register" className="text-[#3B82F6] hover:underline">
           Đăng ký ngay
-        </a>
+        </Link>
       </p>
-      <a href="/" className="text-[#94a3b8] hover:text-white underline transition-colors duration-300 flex items-center gap-2">
+      <Link href="/" className="text-[#94a3b8] hover:text-white underline transition-colors duration-300 flex items-center gap-2">
         Quay về trang chính
-      </a>
+      </Link>
 
       {/* Loading Overlay */}
       {isLoading && (
@@ -68,7 +106,7 @@ export default function LoginPage() {
           <div className="bg-[#0f1e30] border border-[#1e3a52] p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4">
             <div className="w-12 h-12 border-4 border-[#3B82F6] border-t-transparent rounded-full animate-spin"></div>
             <div className="text-white font-medium text-lg animate-pulse">Đang kết nối tới máy chủ...</div>
-            <p className="text-[#64748b] text-sm italic">"Vui lòng đợi giây lát"</p>
+            <p className="text-[#64748b] text-sm italic">&quot;Vui lòng đợi giây lát&quot;</p>
           </div>
         </div>
       )}

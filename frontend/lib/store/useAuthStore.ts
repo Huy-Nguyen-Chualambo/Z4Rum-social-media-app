@@ -7,6 +7,7 @@ type AuthState = {
   user: User;
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
+  googleLogin: (credential: string, gender?: "male" | "female") => Promise<void>;
   register: (username: string, email: string, password: string, gender: "male" | "female") => Promise<void>;
   loadMe: () => Promise<void>;
   logout: () => void;
@@ -17,6 +18,14 @@ export const useAuthStore = create<AuthState>((set) => ({
   token: typeof window !== "undefined" ? (sessionStorage.getItem("z4rum_token") || localStorage.getItem("z4rum_token")) : null,
   async login(email, password) {
     const { token, user } = await authApi.login({ email, password });
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("z4rum_token", token);
+      localStorage.removeItem("z4rum_token");
+    }
+    set({ token, user });
+  },
+  async googleLogin(credential, gender) {
+    const { token, user } = await authApi.googleLogin({ credential, gender });
     if (typeof window !== "undefined") {
       sessionStorage.setItem("z4rum_token", token);
       localStorage.removeItem("z4rum_token");
