@@ -9,6 +9,7 @@ import Navbar from "./_components/Navbar";
 import Providers from "./providers";
 import Z4chatWatcher from "./_components/Z4chatWatcher";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/next";
 import { ExternalLink, Bell } from "lucide-react";
 
 const geistSans = Geist({
@@ -97,6 +98,7 @@ export default function RootLayout({
           </div>
         </Providers>
         <SpeedInsights />
+        <Analytics />
       </body>
     </html>
   );
