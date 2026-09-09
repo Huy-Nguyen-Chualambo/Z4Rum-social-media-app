@@ -13,7 +13,9 @@ export const useSocketStore = create<SocketState>((set, get) => ({
   connect: (token: string) => {
     const socket = io(SOCKET_BASE_URL, {
       auth: { token },
-      transports: ["websocket", "polling"], // fallback an toàn
+      // Keep polling available when the WebSocket upgrade is blocked.
+      transports: ["polling", "websocket"],
+      tryAllTransports: true,
       withCredentials: false,
     });
     set({ socket });

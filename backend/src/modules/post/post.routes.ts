@@ -76,9 +76,7 @@ router.delete("/:id", async (req, res) => {
   const post = await prisma.post.findUnique({ where: { id: req.params.id } });
   if (!post) return res.status(404).json({ error: "Not found" });
   if (post.authorId !== userId) return res.status(403).json({ error: "Forbidden" });
-  // Remove children first to avoid FK errors
-  await prisma.like.deleteMany({ where: { postId: post.id } });
-  await prisma.comment.deleteMany({ where: { postId: post.id } });
+  // The database cascades deletion to this post's likes and comments.
   await prisma.post.delete({ where: { id: post.id } });
   res.json({ ok: true });
 });
