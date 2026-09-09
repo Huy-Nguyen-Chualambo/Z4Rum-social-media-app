@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { voteApi, VoteTopic, VoteComment } from "@/lib/api/voteApi";
 import { useToast } from "@/lib/ui/toast";
 import RequireAuth from "../_components/RequireAuth";
@@ -50,6 +50,7 @@ export default function VotePage() {
   const [expandedTopics, setExpandedTopics] = useState<Set<string>>(new Set());
   const [loadingComments, setLoadingComments] = useState<Record<string, boolean>>({});
   const [sendingComment, setSendingComment] = useState<Record<string, boolean>>({});
+  const commentSendLocks = useRef(new Set<string>());
 
   const loadTopics = async () => {
     setLoading(true);
@@ -158,7 +159,8 @@ export default function VotePage() {
       return;
     }
 
-    if (sendingComment[topicId]) return;
+    if (commentSendLocks.current.has(topicId)) return;
+    commentSendLocks.current.add(topicId);
     setSendingComment((prev) => ({ ...prev, [topicId]: true }));
 
     try {
@@ -172,9 +174,11 @@ export default function VotePage() {
       }));
       setCommentInputs((prev) => ({ ...prev, [topicId]: { content: "", imageUrl: "" } }));
       push("Đã thêm bình luận!", "success");
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     } catch (error: any) {
       push(error?.response?.data?.error || "Thêm bình luận thất bại", "error");
     } finally {
+      commentSendLocks.current.delete(topicId);
       setSendingComment((prev) => ({ ...prev, [topicId]: false }));
     }
   };
@@ -345,6 +349,7 @@ export default function VotePage() {
                         <div className="bg-[#091427] border border-[#1e3a52] rounded-xl p-4 space-y-3">
                           <textarea
                             value={commentInputs[topic.id]?.content || ""}
+                            disabled={sendingComment[topic.id]}
                             onChange={(e) =>
                               setCommentInputs((prev) => ({
                                 ...prev,
@@ -359,6 +364,7 @@ export default function VotePage() {
                             <ImageIcon size={18} className="text-[#64748b]" />
                             <input
                               value={commentInputs[topic.id]?.imageUrl || ""}
+                              disabled={sendingComment[topic.id]}
                               onChange={(e) =>
                                 setCommentInputs((prev) => ({
                                   ...prev,
@@ -372,6 +378,8 @@ export default function VotePage() {
                           <button
                             onClick={() => handleAddComment(topic.id)}
                             disabled={sendingComment[topic.id]}
+                            aria-busy={!!sendingComment[topic.id]}
+                            aria-label={sendingComment[topic.id] ? "Đang xử lý bình luận" : "Gửi bình luận"}
                             className="w-full px-4 py-2 bg-gradient-to-r from-[#3B82F6] to-[#6366F1] text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                           >
                             {sendingComment[topic.id] ? (

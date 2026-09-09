@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
+import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import RequireAuth from "../_components/RequireAuth";
 import { MessageCircle, Heart, Send, MoreHorizontal, Image as ImageIcon, Smile, Bookmark, Trash2, Share2, Link as LinkIcon, Video, BarChart3, MapPin } from "lucide-react";
@@ -196,6 +197,8 @@ export default function HomePage() {
   const [commentsCursorByPost, setCommentsCursorByPost] = useState<Record<string, string | null>>({});
   const [commentsLoadingByPost, setCommentsLoadingByPost] = useState<Record<string, boolean>>({});
   const [modalCommentText, setModalCommentText] = useState("");
+  const [sendingComment, setSendingComment] = useState(false);
+  const commentSendLock = useRef(false);
   const [liveLikesByPost, setLiveLikesByPost] = useState<Record<string, number>>({});
 
   const loadComments = async (postId: string, cursor?: string | null) => {
@@ -443,6 +446,7 @@ export default function HomePage() {
               <div className="flex items-center gap-3 mb-8">
                 <input
                   value={modalCommentText}
+                  disabled={sendingComment}
                   onChange={(e) => setModalCommentText(e.target.value)}
                   placeholder="Viết cảm nghĩ của bạn..."
                   className="flex-1 bg-[#1e293b]/50 border border-[#334155] rounded-2xl px-6 py-3 text-[#cbd5e1] outline-none focus:border-blue-500/50 transition-all font-medium"
@@ -450,7 +454,9 @@ export default function HomePage() {
                 <button
                   onClick={async () => {
                     const text = modalCommentText.trim();
-                    if (!text) return;
+                    if (!text || commentSendLock.current) return;
+                    commentSendLock.current = true;
+                    setSendingComment(true);
                     try {
                       const res = await postApi.comments.create(selectedPost!.id, { content: text });
                       setModalCommentText("");
@@ -465,13 +471,21 @@ export default function HomePage() {
                         [selectedPost!.id]: (prev[selectedPost!.id] || 0) + 1
                       }));
                       push("Bình luận thành công", "success");
+                      await new Promise((resolve) => setTimeout(resolve, 1000));
                     } catch (e: any) {
                       push(e?.response?.data?.error || "Gửi bình luận thất bại", "error");
+                    } finally {
+                      commentSendLock.current = false;
+                      setSendingComment(false);
                     }
                   }}
-                  className="bg-blue-500 text-white px-6 py-3 rounded-2xl font-bold hover:bg-blue-600 transition-all shadow-lg shadow-blue-500/20 active:scale-95"
+                  disabled={sendingComment || !modalCommentText.trim()}
+                  aria-busy={sendingComment}
+                  aria-label={sendingComment ? "Đang xử lý bình luận" : "Gửi bình luận"}
+                  title="Gửi bình luận"
+                  className="bg-blue-500 text-white w-16 h-12 shrink-0 inline-flex items-center justify-center rounded-2xl font-bold hover:bg-blue-600 transition-all shadow-lg shadow-blue-500/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Gửi
+                  {sendingComment ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
                 </button>
               </div>
 

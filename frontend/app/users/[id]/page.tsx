@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { userApi } from "@/lib/api/userApi";
@@ -352,6 +353,8 @@ export default function UserProfilePage() {
   const [commentsCursorByPost, setCommentsCursorByPost] = useState<Record<string, string | null>>({});
   const [commentsLoadingByPost, setCommentsLoadingByPost] = useState<Record<string, boolean>>({});
   const [modalCommentText, setModalCommentText] = useState("");
+  const [sendingComment, setSendingComment] = useState(false);
+  const commentSendLock = useRef(false);
   const [liveLikesByPost, setLiveLikesByPost] = useState<Record<string, number>>({});
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const { socket } = useSocketStore();
@@ -761,6 +764,7 @@ export default function UserProfilePage() {
                   <div className="flex items-center gap-2 mb-3">
                     <input
                       value={modalCommentText}
+                      disabled={sendingComment}
                       onChange={(e) => setModalCommentText(e.target.value)}
                       placeholder="Viết bình luận..."
                       className="flex-1 bg-transparent outline-none text-[#cbd5e1] placeholder:text-[#475569] border-b border-[#1e3a52]"
@@ -769,7 +773,9 @@ export default function UserProfilePage() {
                       onClick={async () => {
                         if (!selectedPost) return;
                         const text = modalCommentText.trim();
-                        if (!text) return;
+                        if (!text || commentSendLock.current) return;
+                        commentSendLock.current = true;
+                        setSendingComment(true);
                         try {
                           const r = await postApi.comments.create(selectedPost.id, { content: text });
                           setCommentsByPost((prev) => ({
@@ -778,13 +784,21 @@ export default function UserProfilePage() {
                           }));
                           setCommentDeltaByPost((prev) => ({ ...prev, [selectedPost.id]: (prev[selectedPost.id] || 0) + 1 }));
                           setModalCommentText("");
+                          await new Promise((resolve) => setTimeout(resolve, 1000));
                         } catch (e: any) {
                           push(e?.response?.data?.error || "Gửi bình luận thất bại", "error");
+                        } finally {
+                          commentSendLock.current = false;
+                          setSendingComment(false);
                         }
                       }}
-                      className="px-3 py-1 text-sm bg-[#12304a] text-white rounded-md hover:bg-[#163b59]"
+                      disabled={sendingComment || !modalCommentText.trim()}
+                      aria-busy={sendingComment}
+                      aria-label={sendingComment ? "Đang xử lý bình luận" : "Gửi bình luận"}
+                      title="Gửi bình luận"
+                      className="w-12 h-9 shrink-0 inline-flex items-center justify-center text-sm bg-[#12304a] text-white rounded-md hover:bg-[#163b59] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Gửi
+                      {sendingComment ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
                     </button>
                   </div>
                   <div className="flex flex-col gap-3 max-h-72 overflow-auto pr-2">
