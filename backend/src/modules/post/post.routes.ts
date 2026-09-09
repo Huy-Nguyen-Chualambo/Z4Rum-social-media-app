@@ -2,6 +2,7 @@ import { Router } from "express";
 import { prisma } from "../../utils/prisma";
 import { authMiddleware } from "../../utils/jwt";
 import { emitLikeUpdated } from "../../realtime";
+import { validatePostContent } from "../../utils/postModeration";
 
 const router = Router();
 
@@ -10,6 +11,8 @@ router.use(authMiddleware);
 router.post("/", async (req, res) => {
   const userId = (req as any).userId as string;
   const { content, imageUrl } = req.body as { content: string; imageUrl?: string };
+  const contentError = validatePostContent(content);
+  if (contentError) return res.status(400).json({ error: contentError });
   const post = await prisma.post.create({ data: { content, imageUrl, authorId: userId } });
   res.json(post);
 });
@@ -57,6 +60,10 @@ router.put("/:id", async (req, res) => {
   if (!post) return res.status(404).json({ error: "Not found" });
   if (post.authorId !== userId) return res.status(403).json({ error: "Forbidden" });
   const { content, imageUrl } = req.body as { content?: string; imageUrl?: string };
+  if (content !== undefined) {
+    const contentError = validatePostContent(content);
+    if (contentError) return res.status(400).json({ error: contentError });
+  }
   const updateData: { content?: string; imageUrl?: string } = {};
   if (content !== undefined) updateData.content = content;
   if (imageUrl !== undefined) updateData.imageUrl = imageUrl;

@@ -1,4 +1,4 @@
-import { Film, Sparkles, Facebook } from "lucide-react";
+import { Film, Sparkles, Facebook, KeyRound } from "lucide-react";
 import React from "react";
 
 export interface Announcement {
@@ -11,9 +11,9 @@ export interface Announcement {
 
 export const announcements: Announcement[] = [
   {
-    icon: <Film size={20} className="text-blue-400" />,
-    title: "Chính thức đóng web Xem Phim và Truyện",
-    description: "Do lười và vấn đề bản quyền nên bảnh đóng, bạn là con người, bảnh cũng là con người nói thế tự hiểu , cả nhà thông cảm nha 😢",
+    icon: <KeyRound size={20} className="text-blue-400" />,
+    title: "Bảnh sẽ chặn 1 số từ khoá khi đăng bài, và 1 số thay đổi khác nữa",
+    description: "Do một số thành phần rác đăng bài linh tinh nên bảnh sẽ chặn 1 số từ không phù hợp, bạn là con người, bảnh cũng là con người nói thế tự hiểu , cả nhà thông cảm nha 😢",
     link: "https://www.tiktok.com/@z4rum2",
     linkText: "Kênh tiktok của Bảnh"
   },
