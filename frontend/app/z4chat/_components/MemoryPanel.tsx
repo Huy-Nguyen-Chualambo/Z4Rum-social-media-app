@@ -88,20 +88,20 @@ export default function MemoryPanel({
       title="Đang nhớ gì?"
       footer={<GhostButton onClick={onClose}>Đóng</GhostButton>}
     >
-      <p className="text-[#94a3b8] text-[13px] leading-relaxed mb-6">
+      <p className="text-[#a3a3a3] text-[13px] leading-relaxed mb-6">
         Đây là đúng những gì {session.character.name} nhận được ở mỗi lượt trả lời. Thấy thiếu gì thì ghim thêm — nhân
         vật sẽ không được phép nói ngược lại những dòng đã ghim.
       </p>
 
       {/* Tier 0 - the sheet, never trimmed. */}
       <Tier
-        icon={<User size={14} className="text-[#60A5FA]" />}
+        icon={<User size={14} className="text-[#3B82F6]" />}
         title="Hồ sơ nhân vật"
         note="luôn gửi đầy đủ, không bao giờ bị cắt"
       >
-        <p className="text-[#cbd5e1] text-sm font-semibold">{session.character.name}</p>
+        <p className="text-[#dedede] text-sm font-semibold">{session.character.name}</p>
         {session.character.tagline && (
-          <p className="text-[#94a3b8] text-[13px] mt-0.5">{session.character.tagline}</p>
+          <p className="text-[#a3a3a3] text-[13px] mt-0.5">{session.character.tagline}</p>
         )}
         <div className="flex flex-wrap gap-1.5 mt-2">
           {[
@@ -114,7 +114,7 @@ export default function MemoryPanel({
             .map((label) => (
               <span
                 key={label as string}
-                className="bg-[#1e293b] border border-[#334155] text-[#94a3b8] text-[11px] font-semibold px-2 py-0.5 rounded-md"
+                className="bg-[#292929] border border-[#383838] text-[#a3a3a3] text-[11px] font-semibold px-2 py-0.5 rounded-md"
               >
                 {label}
               </span>
@@ -124,16 +124,16 @@ export default function MemoryPanel({
 
       {session.story && (
         <Tier
-          icon={<BookOpen size={14} className="text-[#a78bfa]" />}
+          icon={<BookOpen size={14} className="text-[#3B82F6]" />}
           title="Cốt truyện"
           note="luôn gửi đầy đủ"
         >
-          <p className="text-[#cbd5e1] text-sm font-semibold">{session.story.title}</p>
+          <p className="text-[#dedede] text-sm font-semibold">{session.story.title}</p>
           {session.story.synopsis && (
-            <p className="text-[#94a3b8] text-[13px] mt-1 leading-relaxed">{session.story.synopsis}</p>
+            <p className="text-[#a3a3a3] text-[13px] mt-1 leading-relaxed">{session.story.synopsis}</p>
           )}
           {session.story.userRoleName && (
-            <p className="text-[#64748b] text-xs mt-2">Bạn vào vai: {session.story.userRoleName}</p>
+            <p className="text-[#969696] text-xs mt-2">Bạn vào vai: {session.story.userRoleName}</p>
           )}
         </Tier>
       )}
@@ -163,7 +163,7 @@ export default function MemoryPanel({
         </div>
 
         {memories.length === 0 ? (
-          <p className="text-[#64748b] text-xs">
+          <p className="text-[#969696] text-xs">
             Chưa có ký ức nào. Chat một lúc là hệ thống tự trích ra, hoặc bạn ghim tay ngay từ giờ.
           </p>
         ) : (
@@ -171,20 +171,20 @@ export default function MemoryPanel({
             {memories.map((memory) => (
               <li
                 key={memory.id}
-                className={`flex items-start gap-2 rounded-xl px-3 py-2 border ${
-                  memory.pinned ? "border-[#fbbf24]/25 bg-[#fbbf24]/5" : "border-[#1e3a52] opacity-60"
+                className={`flex items-start gap-2 rounded-sm px-3 py-2 border ${
+                  memory.pinned ? "border-[#fbbf24]/25 bg-[#fbbf24]/5" : "border-[#303030] opacity-60"
                 }`}
               >
-                <span className="flex-1 min-w-0 text-[#cbd5e1] text-[13px] leading-snug break-words">
+                <span className="flex-1 min-w-0 text-[#dedede] text-[13px] leading-snug break-words">
                   {memory.content}
                   {memory.source === "auto" && (
-                    <span className="text-[#475569] text-[11px] ml-2">(tự trích)</span>
+                    <span className="text-[#858585] text-[11px] ml-2">(tự trích)</span>
                   )}
                 </span>
                 <button
                   onClick={() => handleTogglePin(memory)}
                   disabled={busyId === memory.id}
-                  className="p-1 rounded-lg text-[#64748b] hover:text-[#fbbf24] disabled:opacity-40 shrink-0"
+                  className="p-1 rounded-lg text-[#969696] hover:text-[#fbbf24] disabled:opacity-40 shrink-0"
                   aria-label={memory.pinned ? "Bỏ ghim" : "Ghim lại"}
                   title={memory.pinned ? "Bỏ ghim (không gửi nữa)" : "Ghim lại"}
                 >
@@ -193,7 +193,7 @@ export default function MemoryPanel({
                 <button
                   onClick={() => handleDelete(memory)}
                   disabled={busyId === memory.id}
-                  className="p-1 rounded-lg text-[#64748b] hover:text-[#f87171] disabled:opacity-40 shrink-0"
+                  className="p-1 rounded-lg text-[#969696] hover:text-[#f87171] disabled:opacity-40 shrink-0"
                   aria-label="Xoá ký ức"
                 >
                   <Trash2 size={13} />
@@ -206,21 +206,21 @@ export default function MemoryPanel({
 
       {/* Tier 2 - the rolling summary. */}
       <Tier
-        icon={<Sparkles size={14} className="text-[#8B5CF6]" />}
+        icon={<Sparkles size={14} className="text-[#3B82F6]" />}
         title="Tóm tắt chuyện đã xảy ra"
         note={session.summarizedUpTo ? `đã nén ${session.summarizedUpTo} tin nhắn đầu` : "chưa cần nén"}
       >
         {session.summary ? (
-          <p className="text-[#94a3b8] text-[13px] leading-relaxed whitespace-pre-wrap">{session.summary}</p>
+          <p className="text-[#a3a3a3] text-[13px] leading-relaxed whitespace-pre-wrap">{session.summary}</p>
         ) : (
-          <p className="text-[#64748b] text-xs">
+          <p className="text-[#969696] text-xs">
             Hội thoại còn ngắn nên vẫn gửi nguyên văn toàn bộ — chưa cần tóm tắt.
           </p>
         )}
         <button
           onClick={onCompactNow}
           disabled={compacting}
-          className="flex items-center gap-1.5 mt-3 text-[#60A5FA] hover:text-[#93c5fd] text-xs font-semibold disabled:opacity-40"
+          className="flex items-center gap-1.5 mt-3 text-[#3B82F6] hover:text-[#3B82F6] text-xs font-semibold disabled:opacity-40"
         >
           {compacting ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
           {compacting ? "Đang nén…" : "Nén ký ức ngay"}
@@ -229,11 +229,11 @@ export default function MemoryPanel({
 
       {/* Tier 3 - raw tail. */}
       <Tier
-        icon={<Sparkles size={14} className="text-[#22d3ee]" />}
+        icon={<Sparkles size={14} className="text-[#3B82F6]" />}
         title="Tin nhắn gửi nguyên văn"
         note={`${verbatimCount} tin gần nhất`}
       >
-        <p className="text-[#64748b] text-xs leading-relaxed">
+        <p className="text-[#969696] text-xs leading-relaxed">
           Phần mới nhất của hội thoại luôn được gửi y nguyên. Cũ hơn thì nằm trong tóm tắt ở trên.
         </p>
       </Tier>
@@ -256,10 +256,10 @@ function Tier({
     <section className="mb-5 last:mb-0">
       <div className="flex items-baseline gap-2 mb-2">
         <span className="shrink-0 translate-y-0.5">{icon}</span>
-        <h3 className="text-[#e2e8f0] text-sm font-bold">{title}</h3>
-        {note && <span className="text-[#475569] text-[11px]">{note}</span>}
+        <h3 className="text-[#ededed] text-sm font-bold">{title}</h3>
+        {note && <span className="text-[#858585] text-[11px]">{note}</span>}
       </div>
-      <div className="bg-[#0a1628] border border-[#1e3a52] rounded-2xl p-4">{children}</div>
+      <div className="bg-[#141414] border border-[#303030] rounded-sm p-4">{children}</div>
     </section>
   );
 }

@@ -51,7 +51,7 @@ export default function LoginPage() {
   }, [push]);
 
   return (
-    <div className="bg-gradient-to-br from-[#0f1e30] to-[#0a1628] border border-[#1e3a52] rounded-2xl p-6">
+    <div className="bg-[#141414] border border-[#303030] rounded-sm p-6">
       <h1 className="text-white text-2xl font-semibold mb-4">Đăng nhập</h1>
       <form
         className="space-y-3"
@@ -79,34 +79,34 @@ export default function LoginPage() {
           }
         }}
       >
-        <input className="w-full bg-transparent border border-[#1e3a52] rounded-lg px-3 py-2 text-[#cbd5e1] placeholder:text-[#475569]" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <input className="w-full bg-transparent border border-[#1e3a52] rounded-lg px-3 py-2 text-[#cbd5e1] placeholder:text-[#475569]" placeholder="Mật khẩu" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-        <button type="submit" className="w-full py-2 rounded-lg bg-gradient-to-r from-[#3B82F6] to-[#6366F1] text-white font-semibold">Đăng nhập</button>
+        <input className="w-full bg-transparent border border-[#303030] rounded-lg px-3 py-2 text-[#dedede] placeholder:text-[#858585]" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+        <input className="w-full bg-transparent border border-[#303030] rounded-lg px-3 py-2 text-[#dedede] placeholder:text-[#858585]" placeholder="Mật khẩu" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        <button type="submit" className="w-full py-2 rounded-lg bg-blue-500 text-white font-semibold">Đăng nhập</button>
       </form>
-      <div className="my-4 flex items-center gap-3 text-xs uppercase text-[#64748b]">
-        <div className="h-px flex-1 bg-[#1e3a52]" />
+      <div className="my-4 flex items-center gap-3 text-xs uppercase text-[#969696]">
+        <div className="h-px flex-1 bg-[#303030]" />
         hoặc
-        <div className="h-px flex-1 bg-[#1e3a52]" />
+        <div className="h-px flex-1 bg-[#303030]" />
       </div>
       <GoogleLoginButton onCredential={handleGoogleCredential} onError={handleGoogleError} />
       {error && <div className="mt-3 text-sm text-red-400">{error}</div>}
-      <p className="mt-4 text-sm text-[#94a3b8]">
+      <p className="mt-4 text-sm text-[#a3a3a3]">
         Chưa có tài khoản?{" "}
         <Link href="/register" className="text-[#3B82F6] hover:underline">
           Đăng ký ngay
         </Link>
       </p>
-      <Link href="/" className="text-[#94a3b8] hover:text-white underline transition-colors duration-300 flex items-center gap-2">
+      <Link href="/" className="text-[#a3a3a3] hover:text-white underline transition-colors duration-300 flex items-center gap-2">
         Quay về trang chính
       </Link>
 
       {/* Loading Overlay */}
       {isLoading && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[999] flex flex-col items-center justify-center">
-          <div className="bg-[#0f1e30] border border-[#1e3a52] p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4">
+        <div className="fixed inset-0 bg-black/60  z-[999] flex flex-col items-center justify-center">
+          <div className="bg-[#141414] border border-[#303030] p-8 rounded-sm  flex flex-col items-center gap-4">
             <div className="w-12 h-12 border-4 border-[#3B82F6] border-t-transparent rounded-full animate-spin"></div>
             <div className="text-white font-medium text-lg animate-pulse">Đang kết nối tới máy chủ...</div>
-            <p className="text-[#64748b] text-sm italic">&quot;Vui lòng đợi giây lát&quot;</p>
+            <p className="text-[#969696] text-sm italic">&quot;Vui lòng đợi giây lát&quot;</p>
           </div>
         </div>
       )}

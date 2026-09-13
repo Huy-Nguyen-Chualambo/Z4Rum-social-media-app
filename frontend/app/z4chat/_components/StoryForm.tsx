@@ -120,10 +120,10 @@ export default function StoryForm({
         </>
       }
     >
-      <div className="mb-6 bg-[#8B5CF6]/5 border border-[#8B5CF6]/25 rounded-2xl p-4">
+      <div className="mb-6 bg-[#3B82F6]/5 border border-[#3B82F6]/25 rounded-sm p-4">
         <div className="flex items-center gap-2 mb-2.5">
-          <Sparkles size={16} className="text-[#8B5CF6]" />
-          <span className="text-[#cbd5e1] text-sm font-bold">Tạo nhanh bằng AI</span>
+          <Sparkles size={16} className="text-[#3B82F6]" />
+          <span className="text-[#dedede] text-sm font-bold">Tạo nhanh bằng AI</span>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
           <TextInput
@@ -181,7 +181,7 @@ export default function StoryForm({
         <TagInput value={form.tags || []} onChange={(tags) => set("tags", tags)} />
       </Field>
 
-      <div className="border-t border-[#1e3a52] pt-5 mt-2">
+      <div className="border-t border-[#303030] pt-5 mt-2">
         <Toggle
           checked={Boolean(form.isPublic)}
           onChange={(value) => set("isPublic", value)}

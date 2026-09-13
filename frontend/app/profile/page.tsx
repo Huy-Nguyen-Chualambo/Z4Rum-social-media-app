@@ -17,9 +17,9 @@ export default function ProfilePage() {
   return (
     <div>
       <RequireAuth />
-      <section className="bg-gradient-to-br from-[#0f1e30] to-[#0a1628] border border-[#1e3a52] rounded-2xl p-6">
+      <section className="bg-[#141414] border border-[#303030] rounded-sm p-6">
         <h1 className="text-white text-2xl font-bold mb-2">Profile</h1>
-        <p className="text-[#cbd5e1]">Đang chuyển đến hồ sơ của bạn...</p>
+        <p className="text-[#dedede]">Đang chuyển đến hồ sơ của bạn...</p>
       </section>
     </div>
   );

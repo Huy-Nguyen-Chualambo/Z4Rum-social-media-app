@@ -1,26 +1,54 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: dark;
+  --background: #101010;
+  --foreground: #ededed;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: Arial, Helvetica, sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, monospace;
+  --color-blue-500: #3b82f6;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+body { background: var(--background); color: var(--foreground); font-family: Arial, Helvetica, sans-serif; }
+button, a, input, textarea, select { -webkit-tap-highlight-color: transparent; }
+button:not(:disabled), summary { cursor: pointer; }
+:focus-visible { outline: 2px solid #3b82f6; outline-offset: 3px; }
+::selection { background: #3b82f6; color: white; }
+.timeline-post { padding: 16px 20px; border-bottom: 1px solid #292929; overflow-wrap: anywhere; }
+.timeline-post:hover { background: #141414; }
+.timeline-post > header { margin-bottom: 10px; }
+.timeline-post > header img { width: 36px; height: 36px; }
+.timeline-post > p { margin-bottom: 10px; }
+.timeline-post > footer { gap: 24px; padding-top: 0; }
+.timeline-post > footer button > div { padding: 3px 0; background: transparent; }
+.timeline-post > footer svg { width: 17px; height: 17px; }
+@media (max-width: 640px) { .timeline-post { padding: 14px 16px; } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}
+
+.app-shell { padding-bottom: calc(65px + env(safe-area-inset-bottom)); }
+.mobile-nav { padding-bottom: env(safe-area-inset-bottom); }
+@media (max-width: 767px) {
+  /* 16px controls prevent focus zoom in iOS without disabling pinch zoom. */
+  input:not([type="checkbox"]):not([type="radio"]), textarea, select { font-size: 16px; }
+  .timeline-post > header > div { min-width: 0; overflow-wrap: anywhere; }
+  .timeline-post > footer button { min-width: 44px; min-height: 44px; }
+  .mobile-chat-panel {
+    position: fixed;
+    top: var(--visible-top, 0px);
+    left: 0;
+    right: 0;
+    z-index: 60;
+    height: var(--visible-height, 100dvh);
+    padding-top: env(safe-area-inset-top);
+    background: #101010;
   }
+  .mobile-chat-panel .chat-input-row { padding-bottom: max(8px, env(safe-area-inset-bottom)); }
 }
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
+@media (min-width: 768px) { .app-shell { padding-bottom: 0; } }

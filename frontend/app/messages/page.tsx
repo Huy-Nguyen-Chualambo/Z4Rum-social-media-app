@@ -71,28 +71,28 @@ export default function MessagesIndexPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
       <RequireAuth />
-      <div className="bg-gradient-to-br from-[#0f1e30] to-[#0a1628] border border-[#1e3a52] rounded-2xl p-5">
+      <div className="bg-[#141414] border border-[#303030] rounded-sm p-5">
         <h1 className="text-white text-lg font-semibold mb-4">Hội thoại</h1>
-        {loading && <div className="text-[#94a3b8]">Đang tải...</div>}
+        {loading && <div className="text-[#a3a3a3]">Đang tải...</div>}
         <div className="flex flex-col">
           {conversations.map((c) => {
             const lastReadIso = lastReadByPeer[c.peer.id];
             const isUnread = c.lastMessage.senderId !== user?.id && (!lastReadIso || new Date(c.lastMessage.createdAt) > new Date(lastReadIso));
             return (
-            <Link key={c.peer.id} href={`/messages/${c.peer.id}`} className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#0f2236] border-b border-[#0e1c2e] last:border-b-0">
-              <img src={c.peer.avatarUrl || "https://avatars.githubusercontent.com/u/0?v=4"} className="w-10 h-10 rounded-full ring-2 ring-[#1e3a52]" alt="avatar" />
+            <Link key={c.peer.id} href={`/messages/${c.peer.id}`} className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#1c1c1c] border-b border-[#1c1c1c] last:border-b-0">
+              <img src={c.peer.avatarUrl || "https://avatars.githubusercontent.com/u/0?v=4"} className="w-10 h-10 rounded-full  " alt="avatar" />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-3">
-                  <div className={`truncate ${isUnread ? "text-white font-semibold" : "text-[#cbd5e1]"}`}>{c.peer.username}</div>
-                  <div className="text-[#64748b] text-xs shrink-0">{formatTime(c.lastMessage.createdAt)}</div>
+                  <div className={`truncate ${isUnread ? "text-white font-semibold" : "text-[#dedede]"}`}>{c.peer.username}</div>
+                  <div className="text-[#969696] text-xs shrink-0">{formatTime(c.lastMessage.createdAt)}</div>
                 </div>
-                <div className={`text-sm truncate ${isUnread ? "text-white font-semibold" : "text-[#94a3b8]"}`}>{c.lastMessage.content}</div>
+                <div className={`text-sm truncate ${isUnread ? "text-white font-semibold" : "text-[#a3a3a3]"}`}>{c.lastMessage.content}</div>
               </div>
             </Link>
             );
           })}
           {!loading && conversations.length === 0 && (
-            <div className="text-[#94a3b8]">Chưa có hội thoại. Hãy vào profile và nhấn Nhắn tin để bắt đầu.</div>
+            <div className="text-[#a3a3a3]">Chưa có hội thoại. Hãy vào profile và nhấn Nhắn tin để bắt đầu.</div>
           )}
         </div>
       </div>

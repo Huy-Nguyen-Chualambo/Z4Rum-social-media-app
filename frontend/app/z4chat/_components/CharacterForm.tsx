@@ -153,10 +153,10 @@ export default function CharacterForm({
       }
     >
       {/* Quick draft: the blank-page problem is why most people never finish a character. */}
-      <div className="mb-6 bg-[#3B82F6]/5 border border-[#3B82F6]/25 rounded-2xl p-4">
+      <div className="mb-6 bg-[#3B82F6]/5 border border-[#3B82F6]/25 rounded-sm p-4">
         <div className="flex items-center gap-2 mb-2.5">
-          <Sparkles size={16} className="text-[#8B5CF6]" />
-          <span className="text-[#cbd5e1] text-sm font-bold">Tạo nhanh bằng AI</span>
+          <Sparkles size={16} className="text-[#3B82F6]" />
+          <span className="text-[#dedede] text-sm font-bold">Tạo nhanh bằng AI</span>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
           <TextInput
@@ -174,14 +174,14 @@ export default function CharacterForm({
             {generating ? <Loader2 size={16} className="animate-spin" /> : "Tạo nháp"}
           </PrimaryButton>
         </div>
-        <p className="text-[#64748b] text-xs mt-2">Chỉ điền vào các ô còn trống, không ghi đè thứ bạn đã viết.</p>
+        <p className="text-[#969696] text-xs mt-2">Chỉ điền vào các ô còn trống, không ghi đè thứ bạn đã viết.</p>
       </div>
 
       <div className="flex items-start gap-4 mb-5">
         <img
           src={form.avatarUrl || "https://avatars.githubusercontent.com/u/0?v=4"}
           alt="avatar"
-          className="w-20 h-20 rounded-2xl object-cover ring-2 ring-[#1e3a52] shrink-0"
+          className="w-20 h-20 rounded-sm object-cover   shrink-0"
         />
         <div className="flex-1 min-w-0">
           <input type="file" id="z4-avatar" accept="image/*" className="hidden" onChange={handleAvatar} />
@@ -196,7 +196,7 @@ export default function CharacterForm({
           {form.avatarUrl && (
             <button
               onClick={() => set("avatarUrl", "")}
-              className="ml-3 text-[#64748b] hover:text-[#f87171] text-xs font-semibold"
+              className="ml-3 text-[#969696] hover:text-[#f87171] text-xs font-semibold"
             >
               Xoá ảnh
             </button>
@@ -259,7 +259,7 @@ export default function CharacterForm({
         <TagInput value={form.tags || []} onChange={(tags) => set("tags", tags)} />
       </Field>
 
-      <div className="border-t border-[#1e3a52] pt-5 mt-2">
+      <div className="border-t border-[#303030] pt-5 mt-2">
         <Toggle
           checked={Boolean(form.proactive)}
           onChange={(value) => set("proactive", value)}
@@ -275,17 +275,17 @@ export default function CharacterForm({
                   key={level}
                   type="button"
                   onClick={() => set("clinginess", level)}
-                  className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${
+                  className={`flex-1 py-2 rounded-sm text-sm font-bold transition-all ${
                     form.clinginess === level
-                      ? "bg-gradient-to-r from-[#3B82F6]/25 to-[#8B5CF6]/25 border border-[#3B82F6]/50 text-white"
-                      : "border border-[#1e3a52] text-[#94a3b8] hover:bg-[#1e293b]"
+                      ? "bg-blue-500 border border-[#3B82F6]/50 text-white"
+                      : "border border-[#303030] text-[#a3a3a3] hover:bg-[#292929]"
                   }`}
                 >
                   {level === 1 ? "Nhẹ" : level === 2 ? "Vừa" : "Nhiều"}
                 </button>
               ))}
             </div>
-            <p className="text-[#64748b] text-xs mt-2">{CLINGINESS_LABEL[form.clinginess || 2]}</p>
+            <p className="text-[#969696] text-xs mt-2">{CLINGINESS_LABEL[form.clinginess || 2]}</p>
           </Field>
         )}
 

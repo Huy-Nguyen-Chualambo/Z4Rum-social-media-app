@@ -178,49 +178,51 @@ export default function MatchPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0f1e] font-sans text-[#F1F5F9]">
+    <div className="min-h-screen bg-[#101010] font-sans text-[#ededed]">
       <RequireAuth />
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="bg-gradient-to-br from-[#0f1e30] to-[#0a1628] border border-[#1e3a52] rounded-2xl overflow-hidden">
+      <div className="w-full">
+        <div className="overflow-hidden">
           {!sessionId ? (
-            <div className="p-8">
-                <div className="max-w-md mx-auto space-y-6">
-                  <div className="text-center mb-8">
-                    <h1 className="text-white text-3xl font-bold mb-2 flex items-center justify-center gap-3">
-                      <Heart className="text-pink-500" size={32} />
+            <div className="px-5 py-5">
+                <div className="space-y-5">
+                  <div className="border-b border-neutral-800 pb-4 mb-5">
+                    <h1 className="text-white text-xl font-bold mb-2 flex items-center gap-2">
+
                       Chat với người lạ
                     </h1>
-                    <p className="text-[#94a3b8] text-sm">Kết nối và trò chuyện với những người mới</p>
+                    <p className="text-[#a3a3a3] text-sm">Bảnh ghép kèo. Anh em mở lời.</p>
                   </div>
 
                   <div>
                     <label className="text-white text-sm font-semibold mb-3 block">Chọn chế độ ghép đôi:</label>
                     <div className="grid grid-cols-2 gap-3">
                       <button
+                        aria-pressed={selectedMode === "normal"}
                         onClick={() => setSelectedMode("normal")}
                         disabled={finding}
-                        className={`p-4 rounded-xl border-2 transition-all ${
+                        className={`p-3 rounded-sm border transition-all ${
                           selectedMode === "normal"
-                            ? "border-[#3B82F6] bg-[#1e3a5a] text-white"
-                            : "border-[#1e3a52] bg-[#091427] text-[#cbd5e1] hover:border-[#2d5a7b]"
+                            ? "border-[#3B82F6] bg-[#1c1c1c] text-white"
+                            : "border-[#303030] bg-[#181818] text-[#dedede] hover:border-[#525252]"
                         } ${finding ? "opacity-50 cursor-not-allowed" : ""}`}
                       >
-                        <Users size={24} className="mx-auto mb-2" />
+                        <Users size={18} className="mb-2" />
                         <div className="font-semibold">Bình thường</div>
-                        <div className="text-xs text-[#94a3b8] mt-1">Ghép cả nam và nữ</div>
+                        <div className="text-xs text-[#a3a3a3] mt-1">Ghép cả nam và nữ</div>
                       </button>
                       <button
+                        aria-pressed={selectedMode === "opposite"}
                         onClick={() => setSelectedMode("opposite")}
                         disabled={finding}
-                        className={`p-4 rounded-xl border-2 transition-all ${
+                        className={`p-3 rounded-sm border transition-all ${
                           selectedMode === "opposite"
-                            ? "border-[#F97316] bg-[#3a1e0a] text-white"
-                            : "border-[#1e3a52] bg-[#091427] text-[#cbd5e1] hover:border-[#2d5a7b]"
+                            ? "border-[#3B82F6] bg-[#1c1c1c] text-white"
+                            : "border-[#303030] bg-[#181818] text-[#dedede] hover:border-[#525252]"
                         } ${finding ? "opacity-50 cursor-not-allowed" : ""}`}
                       >
-                        <Heart size={24} className="mx-auto mb-2" />
+                        <Heart size={18} className="mb-2" />
                         <div className="font-semibold">Khác giới</div>
-                        <div className="text-xs text-[#94a3b8] mt-1">Chỉ ghép khác giới</div>
+                        <div className="text-xs text-[#a3a3a3] mt-1">Chỉ ghép khác giới</div>
                       </button>
                     </div>
                   </div>
@@ -228,21 +230,21 @@ export default function MatchPage() {
                   {!finding ? (
                     <button
                       onClick={handleStartFinding}
-                      className="w-full py-4 px-6 bg-gradient-to-r from-[#3B82F6] to-[#6366F1] text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-blue-500/30 transition-all flex items-center justify-center gap-2"
+                      className="w-full py-2.5 px-4 bg-blue-500 text-white font-semibold rounded-sm   transition-all flex items-center justify-center gap-2"
                     >
                       <Search size={20} />
                       Bắt đầu tìm kiếm
                     </button>
                   ) : (
                     <div className="space-y-4">
-                      <div className="bg-[#091427] border border-[#1e3a52] rounded-xl p-6 text-center">
+                      <div className="bg-[#181818] border border-[#303030] rounded-sm p-6 text-center">
                         <Loader2 size={32} className="animate-spin text-[#3B82F6] mx-auto mb-3" />
                         <div className="text-white font-semibold mb-1">Đang tìm kiếm người để chat...</div>
-                        <div className="text-[#94a3b8] text-sm">Vui lòng đợi trong giây lát</div>
+                        <div className="text-[#a3a3a3] text-sm">Vui lòng đợi trong giây lát</div>
                       </div>
                       <button
                         onClick={handleStopFinding}
-                        className="w-full py-3 px-6 bg-[#2a0f17] text-red-300 font-semibold rounded-xl hover:bg-[#3a121c] transition-all flex items-center justify-center gap-2"
+                        className="w-full py-3 px-6 bg-[#2a0f17] text-red-300 font-semibold rounded-sm hover:bg-[#3a121c] transition-all flex items-center justify-center gap-2"
                       >
                         <X size={18} />
                         Hủy tìm kiếm
@@ -252,16 +254,16 @@ export default function MatchPage() {
                 </div>
             </div>
           ) : (
-            <div className="flex flex-col h-[80vh]">
+            <div className="mobile-chat-panel flex flex-col h-[80dvh]">
               {/* Header - Anonymous chat */}
-              <div className="px-6 py-4 border-b border-[#1e293b] flex items-center justify-between bg-[#0d1b2f]">
+              <div className="shrink-0 px-3 sm:px-6 py-3 border-b border-[#292929] flex items-center justify-between bg-[#141414]">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#3B82F6] to-[#6366F1] flex items-center justify-center ring-2 ring-[#1e3a52]">
+                  <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center  ">
                     <span className="text-white font-bold text-lg">?</span>
                   </div>
                   <div>
                     <div className="text-white font-semibold">Người lạ</div>
-                    <div className="text-[#94a3b8] text-xs">Chat ẩn danh</div>
+                    <div className="text-[#a3a3a3] text-xs">Chat ẩn danh</div>
                   </div>
                 </div>
                 <button
@@ -274,9 +276,9 @@ export default function MatchPage() {
               </div>
 
               {/* Messages */}
-              <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#0a0f1e]">
+              <div ref={chatContainerRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 sm:p-4 space-y-4 bg-[#101010]">
                 {messages.length === 0 ? (
-                  <div className="text-center text-[#64748b] py-8">
+                  <div className="text-center text-[#969696] py-8">
                     <p>Bắt đầu cuộc trò chuyện với người lạ...</p>
                   </div>
                 ) : (
@@ -284,17 +286,17 @@ export default function MatchPage() {
                     const isMine = msg.senderId === user?.id;
                     return (
                       <div key={msg.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
-                        <div className={`max-w-[70%] ${isMine ? "order-2" : "order-1"}`}>
+                        <div className={`min-w-0 max-w-[85%] sm:max-w-[70%] ${isMine ? "order-2" : "order-1"}`}>
                           <div
-                            className={`px-4 py-2 rounded-2xl ${
+                            className={`whitespace-pre-wrap [overflow-wrap:anywhere] px-3 py-2 rounded-sm ${
                               isMine
-                                ? "bg-gradient-to-r from-[#3B82F6] to-[#6366F1] text-white"
-                                : "bg-[#1e293b] text-[#cbd5e1]"
+                                ? "bg-blue-500 text-white"
+                                : "bg-[#292929] text-[#dedede]"
                             }`}
                           >
                             {msg.content}
                           </div>
-                          <div className={`text-[#64748b] text-xs mt-1 ${isMine ? "text-right" : "text-left"}`}>
+                          <div className={`text-[#969696] text-xs mt-1 ${isMine ? "text-right" : "text-left"}`}>
                             {formatTime(msg.createdAt)}
                           </div>
                         </div>
@@ -306,7 +308,7 @@ export default function MatchPage() {
               </div>
 
               {/* Input */}
-              <div className="px-4 py-3 border-t border-[#1e293b] bg-[#0d1b2f] flex items-center gap-3">
+              <div className="chat-input-row shrink-0 px-3 py-2 border-t border-[#292929] bg-[#141414] flex items-center gap-3">
                 <input
                   value={messageInput}
                   onChange={(e) => setMessageInput(e.target.value)}
@@ -316,14 +318,16 @@ export default function MatchPage() {
                       handleSendMessage();
                     }
                   }}
+                  aria-label="Tin nhắn"
                   placeholder="Nhập tin nhắn..."
-                  className="flex-1 bg-[#091427] border border-[#1e3a52] rounded-xl px-4 py-2 text-[#cbd5e1] placeholder:text-[#475569] outline-none focus:border-[#3B82F6] transition-colors"
+                  className="min-w-0 min-h-11 flex-1 bg-[#181818] border border-[#303030] rounded-sm px-4 py-2 text-[#dedede] placeholder:text-[#858585] outline-none focus:border-[#3B82F6] transition-colors"
                   disabled={sending}
                 />
                 <button
                   onClick={handleSendMessage}
+                  aria-label="Gửi tin nhắn"
                   disabled={sending || !messageInput.trim()}
-                  className="p-2 bg-gradient-to-r from-[#3B82F6] to-[#6366F1] text-white rounded-xl hover:shadow-lg hover:shadow-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="min-h-11 min-w-11 shrink-0 flex items-center justify-center p-2 bg-blue-500 text-white rounded-sm   transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {sending ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
                 </button>

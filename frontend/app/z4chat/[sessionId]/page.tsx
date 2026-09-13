@@ -346,7 +346,7 @@ export default function Z4chatSessionPage() {
     return (
       <div className="min-h-screen">
         <RequireAuth />
-        <div className="flex items-center justify-center gap-2 py-24 text-[#64748b] text-sm">
+        <div className="flex items-center justify-center gap-2 py-24 text-[#969696] text-sm">
           <Loader2 size={18} className="animate-spin" />
           Đang mở cuộc trò chuyện…
         </div>
@@ -359,16 +359,16 @@ export default function Z4chatSessionPage() {
       <div className="min-h-screen">
         <RequireAuth />
         <div className="flex flex-col items-center text-center py-20">
-          <div className="p-3.5 rounded-2xl bg-[#1e293b] border border-[#334155] mb-4">
+          <div className="p-3.5 rounded-sm bg-[#292929] border border-[#383838] mb-4">
             <AlertTriangle size={22} className="text-[#fbbf24]" />
           </div>
           <h2 className="text-white font-bold mb-2">Không mở được cuộc trò chuyện này</h2>
-          <p className="text-[#94a3b8] text-[13px] max-w-sm">
+          <p className="text-[#a3a3a3] text-[13px] max-w-sm">
             Có thể nó đã bị xoá, hoặc không thuộc về tài khoản đang đăng nhập.
           </p>
           <button
             onClick={() => router.push("/z4chat")}
-            className="mt-5 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] text-white text-sm font-bold"
+            className="mt-5 px-5 py-2.5 rounded-sm bg-blue-500 text-white text-sm font-bold"
           >
             Về Z4chat
           </button>
@@ -383,12 +383,12 @@ export default function Z4chatSessionPage() {
     <div className="min-h-screen">
       <RequireAuth />
 
-      <div className="flex flex-col h-[75dvh] min-h-[440px] bg-gradient-to-br from-[#0f1e30] to-[#0a1628] border border-[#1e3a52] rounded-3xl overflow-hidden">
+      <div className="mobile-chat-panel flex flex-col h-[75dvh] md:min-h-[440px] bg-[#141414] border border-[#303030] rounded-sm overflow-hidden">
         {/* header */}
-        <div className="flex items-center gap-3 px-3 sm:px-4 py-3 border-b border-[#1e3a52] shrink-0">
+        <div className="flex items-center gap-3 px-3 sm:px-4 py-3 border-b border-[#303030] shrink-0">
           <Link
             href="/z4chat"
-            className="p-2 rounded-xl text-[#94a3b8] hover:text-white hover:bg-[#1e293b] transition-colors shrink-0"
+            className="min-h-11 min-w-11 flex items-center justify-center p-2 rounded-sm text-[#a3a3a3] hover:text-white hover:bg-[#292929] transition-colors shrink-0"
             aria-label="Quay lại"
           >
             <ArrowLeft size={18} />
@@ -397,19 +397,19 @@ export default function Z4chatSessionPage() {
           <img
             src={session.character.avatarUrl || FALLBACK_AVATAR}
             alt={session.character.name}
-            className="w-10 h-10 rounded-xl object-cover ring-1 ring-[#1e3a52] shrink-0"
+            className="w-10 h-10 rounded-sm object-cover   shrink-0"
           />
 
           <div className="min-w-0 flex-1">
             <h1 className="text-white font-bold truncate leading-tight">{session.character.name}</h1>
-            <p className="text-[#64748b] text-xs truncate">
+            <p className="text-[#969696] text-xs truncate">
               {session.story ? session.story.title : session.character.tagline || "Trò chuyện tự do"}
             </p>
           </div>
 
           <button
             onClick={() => setMemoryOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[#1e3a52] text-[#94a3b8] hover:text-white hover:bg-[#1e293b] transition-colors shrink-0"
+            className="min-h-11 min-w-11 flex items-center justify-center gap-1.5 px-3 py-2 rounded-sm border border-[#303030] text-[#a3a3a3] hover:text-white hover:bg-[#292929] transition-colors shrink-0"
             title="Xem và sửa những gì nhân vật đang nhớ"
           >
             {compacting ? <Loader2 size={15} className="animate-spin" /> : <Brain size={15} />}
@@ -418,7 +418,7 @@ export default function Z4chatSessionPage() {
 
           <button
             onClick={() => setModelOpen(true)}
-            className="p-2 rounded-xl border border-[#1e3a52] text-[#94a3b8] hover:text-white hover:bg-[#1e293b] transition-colors shrink-0"
+            className="min-h-11 min-w-11 flex items-center justify-center p-2 rounded-sm border border-[#303030] text-[#a3a3a3] hover:text-white hover:bg-[#292929] transition-colors shrink-0"
             title={`AI đang dùng: ${session.provider} · ${session.model}`}
             aria-label="Chọn AI"
           >
@@ -427,7 +427,7 @@ export default function Z4chatSessionPage() {
         </div>
 
         {/* messages */}
-        <div ref={scrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-3 sm:px-4 py-4 space-y-4">
+        <div ref={scrollRef} onScroll={handleScroll} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 sm:px-4 py-4 space-y-4">
           {messages.map((message) => (
             <ChatBubble
               key={message.id}
@@ -462,13 +462,13 @@ export default function Z4chatSessionPage() {
         {/* A failed reply never eats the turn: the message stays, the draft stays,
             and asking again is one tap. */}
         {error && (
-          <div className="flex items-center gap-3 mx-3 sm:mx-4 mb-2 px-4 py-3 rounded-2xl bg-[#f87171]/10 border border-[#f87171]/30 shrink-0">
+          <div className="flex items-center gap-3 mx-3 sm:mx-4 mb-2 px-4 py-3 rounded-sm bg-[#f87171]/10 border border-[#f87171]/30 shrink-0">
             <AlertTriangle size={16} className="text-[#f87171] shrink-0" />
             <p className="flex-1 min-w-0 text-[#fca5a5] text-[13px] leading-snug">{error}</p>
             <button
               onClick={handleRetry}
               disabled={pending}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#f87171]/15 border border-[#f87171]/30 text-[#fca5a5] text-xs font-bold hover:bg-[#f87171]/25 disabled:opacity-40 shrink-0"
+              className="min-h-11 min-w-11 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-sm bg-[#f87171]/15 border border-[#f87171]/30 text-[#fca5a5] text-xs font-bold hover:bg-[#f87171]/25 disabled:opacity-40 shrink-0"
             >
               <RefreshCw size={12} />
               Thử lại

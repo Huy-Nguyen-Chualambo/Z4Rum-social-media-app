@@ -13,7 +13,7 @@ function renderContent(content: string): React.ReactNode {
   return content.split(/(\*[^*]+\*)/g).map((part, index) => {
     if (part.startsWith("*") && part.endsWith("*") && part.length > 2) {
       return (
-        <em key={index} className="text-[#94a3b8] not-italic opacity-90 italic">
+        <em key={index} className="text-[#a3a3a3] not-italic opacity-90 italic">
           {part.slice(1, -1)}
         </em>
       );
@@ -70,13 +70,13 @@ export default function ChatBubble({
         <img
           src={avatarUrl || FALLBACK_AVATAR}
           alt={characterName}
-          className="w-9 h-9 rounded-xl object-cover ring-1 ring-[#1e3a52] shrink-0 mt-1"
+          className="w-9 h-9 rounded-sm object-cover   shrink-0 mt-1"
         />
       )}
 
       <div className={`max-w-[85%] sm:max-w-[75%] min-w-0 ${isUser ? "items-end" : "items-start"} flex flex-col`}>
         {message.kind === "proactive" && (
-          <span className="flex items-center gap-1.5 text-[#a78bfa] text-[11px] font-bold mb-1 ml-1">
+          <span className="flex items-center gap-1.5 text-[#3B82F6] text-[11px] font-bold mb-1 ml-1">
             <BellRing size={11} />
             {characterName} nhắn trước
           </span>
@@ -89,7 +89,7 @@ export default function ChatBubble({
               onChange={(event) => setDraft(event.target.value)}
               rows={Math.min(10, Math.max(2, draft.split("\n").length + 1))}
               autoFocus
-              className="w-full bg-[#0a1628] border border-[#3B82F6]/50 rounded-2xl px-4 py-3 text-[#e2e8f0] outline-none resize-y leading-relaxed text-[15px]"
+              className="w-full bg-[#141414] border border-[#3B82F6]/50 rounded-sm px-4 py-3 text-[#ededed] outline-none resize-y leading-relaxed text-[15px]"
             />
             <div className="flex items-center gap-2 mt-2 justify-end">
               <button
@@ -97,7 +97,7 @@ export default function ChatBubble({
                   setDraft(message.content);
                   setEditing(false);
                 }}
-                className="p-2 rounded-lg border border-[#1e3a52] text-[#94a3b8] hover:text-white"
+                className="p-2 rounded-lg border border-[#303030] text-[#a3a3a3] hover:text-white"
                 aria-label="Huỷ sửa"
               >
                 <X size={14} />
@@ -113,16 +113,16 @@ export default function ChatBubble({
           </div>
         ) : (
           <div
-            className={`px-4 py-2.5 rounded-2xl text-[15px] leading-relaxed whitespace-pre-wrap break-words ${
+            className={`px-4 py-2.5 rounded-sm text-[15px] leading-relaxed whitespace-pre-wrap break-words ${
               isUser
-                ? "bg-gradient-to-r from-[#3B82F6] to-[#6366F1] text-white rounded-br-md"
+                ? "bg-blue-500 text-white rounded-br-md"
                 : message.kind === "opening"
-                ? "bg-[#0f1e30] border border-[#8B5CF6]/25 text-[#cbd5e1] rounded-bl-md"
-                : "bg-[#0f1e30] border border-[#1e3a52] text-[#e2e8f0] rounded-bl-md"
+                ? "bg-[#141414] border border-[#3B82F6]/25 text-[#dedede] rounded-bl-md"
+                : "bg-[#141414] border border-[#303030] text-[#ededed] rounded-bl-md"
             }`}
           >
             {renderContent(message.content)}
-            {streaming && <span className="inline-block w-1.5 h-4 ml-0.5 align-middle bg-[#60A5FA] animate-pulse" />}
+            {streaming && <span className="inline-block w-1.5 h-4 ml-0.5 align-middle bg-[#3B82F6] animate-pulse" />}
           </div>
         )}
 
@@ -144,11 +144,11 @@ export default function ChatBubble({
               isUser ? "flex-row-reverse" : ""
             }`}
           >
-            <span className="text-[#475569] text-[11px] px-1">{formatTime(message.createdAt)}</span>
+            <span className="text-[#858585] text-[11px] px-1">{formatTime(message.createdAt)}</span>
             {canRegenerate && onRegenerate && (
               <button
                 onClick={onRegenerate}
-                className="p-1.5 rounded-lg text-[#64748b] hover:text-[#60A5FA] hover:bg-[#1e293b]"
+                className="p-1.5 rounded-lg text-[#969696] hover:text-[#3B82F6] hover:bg-[#292929]"
                 aria-label="Tạo lại câu trả lời"
               >
                 <RefreshCw size={13} />
@@ -157,7 +157,7 @@ export default function ChatBubble({
             {onEdit && (
               <button
                 onClick={() => setEditing(true)}
-                className="p-1.5 rounded-lg text-[#64748b] hover:text-[#60A5FA] hover:bg-[#1e293b]"
+                className="p-1.5 rounded-lg text-[#969696] hover:text-[#3B82F6] hover:bg-[#292929]"
                 aria-label="Sửa tin nhắn"
               >
                 <Pencil size={13} />
@@ -166,7 +166,7 @@ export default function ChatBubble({
             {onDelete && (
               <button
                 onClick={onDelete}
-                className="p-1.5 rounded-lg text-[#64748b] hover:text-[#f87171] hover:bg-[#1e293b]"
+                className="p-1.5 rounded-lg text-[#969696] hover:text-[#f87171] hover:bg-[#292929]"
                 aria-label="Xoá tin nhắn"
               >
                 <Trash2 size={13} />

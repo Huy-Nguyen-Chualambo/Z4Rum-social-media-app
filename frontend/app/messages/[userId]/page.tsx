@@ -115,33 +115,34 @@ export default function ChatPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-6">
       <RequireAuth />
-      <div className="bg-gradient-to-br from-[#0f1e30] to-[#0a1628] border border-[#1e3a52] rounded-2xl h-[70vh] flex flex-col">
-        <div className="px-5 py-3 border-b border-[#1e293b] text-white font-semibold flex items-center gap-3">
-          <Link href="/messages" className="text-[#94a3b8] hover:text-white">←</Link>
-          <span>Tin nhắn với {otherId}</span>
+      <div className="mobile-chat-panel bg-[#141414] md:border border-[#303030] rounded-sm h-[70dvh] flex flex-col">
+        <div className="shrink-0 px-3 py-2 border-b border-[#292929] text-white font-semibold flex items-center gap-3">
+          <Link href="/messages" aria-label="Quay lại tin nhắn" className="flex min-h-11 min-w-11 items-center justify-center text-[#a3a3a3] hover:text-white">←</Link>
+          <span className="min-w-0 truncate">Tin nhắn với {otherId}</span>
         </div>
-        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 flex flex-col gap-2">
           {messages.map((m) => {
             const isMine = m.senderId === user?.id;
             return (
               <div key={m.id} className={`flex flex-col ${isMine ? "items-end" : "items-start"}`}>
-                <div className={`${isMine ? "bg-[#1b3a5a]" : "bg-[#102032]"} text-[#cbd5e1] inline-block px-3 py-2 rounded-lg max-w-[80%]`}>{m.content}</div>
-                <div className="text-[#64748b] text-xs mt-1">{isMine ? "Bạn" : otherId} · {formatTime(m.createdAt)}</div>
+                <div className={`${isMine ? "bg-[#1c1c1c]" : "bg-[#1c1c1c]"} text-[#dedede] inline-block px-3 py-2 rounded-lg max-w-[85%] whitespace-pre-wrap [overflow-wrap:anywhere]`}>{m.content}</div>
+                <div className="text-[#969696] text-xs mt-1 max-w-full [overflow-wrap:anywhere]">{isMine ? "Bạn" : otherId} · {formatTime(m.createdAt)}</div>
               </div>
             );
           })}
-          {loading && <div className="text-[#94a3b8]">Đang tải...</div>}
+          {loading && <div className="text-[#a3a3a3]">Đang tải...</div>}
           <div ref={bottomRef} />
         </div>
-        <div className="p-3 border-t border-[#1e293b] flex items-center gap-2">
+        <div className="chat-input-row shrink-0 p-3 border-t border-[#292929] flex items-center gap-2">
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") send(); }}
             placeholder="Nhập tin nhắn"
-            className="flex-1 bg-transparent outline-none text-[#cbd5e1] placeholder:text-[#475569] border-b border-[#1e3a52] py-2"
+            aria-label="Tin nhắn"
+            className="min-w-0 min-h-11 flex-1 bg-transparent outline-none text-[#dedede] placeholder:text-[#858585] border-b border-[#303030] py-2"
           />
-          <button onClick={send} className="px-4 py-2 bg-[#12304a] text-white rounded-lg hover:bg-[#163b59]">Gửi</button>
+          <button onClick={send} className="min-h-11 shrink-0 px-4 py-2 bg-[#1c1c1c] text-white rounded-lg hover:bg-[#1c1c1c]">Gửi</button>
         </div>
       </div>
     </div>

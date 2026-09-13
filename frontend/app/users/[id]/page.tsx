@@ -185,18 +185,18 @@ function PostCardItem({
   const isOwner = currentUserId && post.author.id === currentUserId;
 
   return (
-    <article className="bg-gradient-to-br from-[#0f1e30] to-[#0a1628] border border-[#1e3a52] rounded-2xl p-4 sm:p-5 hover:border-[#2d5a7b] transition-all duration-300 hover:shadow-lg hover:shadow-blue-900/20 relative">
+    <article className="timeline-post relative">
       <header className="flex items-center gap-3 mb-3 sm:mb-4 relative">
         <Link href={`/users/${post.author.id}`}>
-          <img src={post.author.avatarUrl || "https://avatars.githubusercontent.com/u/0?v=4"} alt="avatar" className="w-12 h-12 rounded-full object-cover ring-2 ring-[#1e3a52]" />
+          <img src={post.author.avatarUrl || "https://avatars.githubusercontent.com/u/0?v=4"} alt="avatar" className="w-12 h-12 rounded-full object-cover  " />
         </Link>
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <Link href={`/users/${post.author.id}`} className="text-white font-semibold text-sm hover:underline cursor-pointer">
               {post.author.username}
             </Link>
-            <span className="text-[#64748b] text-xs">·</span>
-            <span className="text-[#64748b] text-xs">{formatDateTime(post.createdAt)}</span>
+            <span className="text-[#969696] text-xs">·</span>
+            <span className="text-[#969696] text-xs">{formatDateTime(post.createdAt)}</span>
           </div>
         </div>
         {isOwnerPost && !isEditing && (
@@ -206,7 +206,7 @@ function PostCardItem({
                 e.stopPropagation();
                 onEdit();
               }}
-              className="p-2 text-[#60A5FA] hover:bg-[#1e293b] rounded-lg transition-colors"
+              className="p-2 text-[#3B82F6] hover:bg-[#292929] rounded-lg transition-colors"
               title="Sửa bài viết"
             >
               <Edit3 size={16} />
@@ -225,16 +225,16 @@ function PostCardItem({
           </div>
         )}
         {!isEditing && (
-          <button onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }} className="text-[#64748b] hover:text-white hover:bg-[#1e293b] p-2 rounded-lg transition-colors">
+          <button onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }} className="text-[#969696] hover:text-white hover:bg-[#292929] p-2 rounded-lg transition-colors">
             <MoreHorizontal size={18} />
           </button>
         )}
         {menuOpen && (
-          <div className="absolute right-2 top-10 bg-[#0b1728] border border-[#1e3a52] rounded-lg shadow-xl z-10 w-44">
-            <button onClick={(e) => handleCopyLink(e)} className="w-full flex items-center gap-2 px-3 py-2 text-left text-[#cbd5e1] hover:bg-[#12243a]">
+          <div className="absolute right-2 top-10 bg-[#1c1c1c] border border-[#303030] rounded-lg  z-10 w-44">
+            <button onClick={(e) => handleCopyLink(e)} className="w-full flex items-center gap-2 px-3 py-2 text-left text-[#dedede] hover:bg-[#1c1c1c]">
               <LinkIcon size={16} /> Sao chép liên kết
             </button>
-            <button onClick={(e) => handleShare(e)} className="w-full flex items-center gap-2 px-3 py-2 text-left text-[#cbd5e1] hover:bg-[#12243a]">
+            <button onClick={(e) => handleShare(e)} className="w-full flex items-center gap-2 px-3 py-2 text-left text-[#dedede] hover:bg-[#1c1c1c]">
               <Share2 size={16} /> Chia sẻ
             </button>
             {isOwner && (
@@ -259,24 +259,24 @@ function PostCardItem({
             value={editPostContent}
             onChange={(e) => setEditPostContent(e.target.value)}
             placeholder="Nội dung bài viết"
-            className="w-full bg-transparent outline-none text-[#cbd5e1] placeholder:text-[#475569] border border-[#1e3a52] rounded-lg p-3 min-h-[100px] resize-none"
+            className="w-full bg-transparent outline-none text-[#dedede] placeholder:text-[#858585] border border-[#303030] rounded-lg p-3 min-h-[100px] resize-none"
           />
           <input
             value={editPostImageUrl}
             onChange={(e) => setEditPostImageUrl(e.target.value)}
             placeholder="Image URL (tuỳ chọn)"
-            className="w-full bg-transparent outline-none text-[#cbd5e1] placeholder:text-[#475569] border border-[#1e3a52] rounded-lg p-2"
+            className="w-full bg-transparent outline-none text-[#dedede] placeholder:text-[#858585] border border-[#303030] rounded-lg p-2"
           />
           {editPostImageUrl && (
             <div className="mt-2">
-              <img src={editPostImageUrl} alt="preview" className="rounded-xl max-h-64 object-cover" />
+              <img src={editPostImageUrl} alt="preview" className="rounded-sm max-h-64 object-cover" />
             </div>
           )}
           <div className="flex items-center gap-2">
             <button
               onClick={onSave}
               disabled={savingPost || !editPostContent.trim()}
-              className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"
+              className="px-4 py-2 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-500 disabled:opacity-50 flex items-center gap-2"
             >
               <Save size={16} /> {savingPost ? "Đang lưu..." : "Lưu"}
             </button>
@@ -291,27 +291,27 @@ function PostCardItem({
         </div>
       ) : (
         <>
-          <p className="text-[#cbd5e1] text-sm leading-relaxed mb-3 whitespace-pre-wrap">{post.content}</p>
+          <p className="text-[#dedede] text-sm leading-relaxed mb-3 whitespace-pre-wrap">{post.content}</p>
 
           {post.imageUrl && (
-            <div className="mb-3 sm:mb-4 rounded-xl overflow-hidden group cursor-pointer">
+            <div className="mb-3 sm:mb-4 rounded-sm overflow-hidden group cursor-pointer">
               <div className="w-full aspect-square bg-black/20">
-                <img src={post.imageUrl} alt="post media" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                <img src={post.imageUrl} alt="post media" className="w-full h-full object-cover  transition-transform duration-300" />
               </div>
             </div>
           )}
 
-          <footer className="flex items-center justify-between text-[#cbd5e1] pt-3 border-t border-[#1e293b]">
+          <footer className="flex items-center justify-between text-[#dedede] pt-3 border-t border-[#292929]">
             <div className="flex items-center gap-5">
-              <button onClick={(e) => handleLike(e)} className={`flex items-center gap-2 hover:text-pink-500 transition-colors group ${liked ? "text-pink-500" : "text-[#cbd5e1]"}`}>
+              <button onClick={(e) => handleLike(e)} className={`flex items-center gap-2 hover:text-blue-500 transition-colors group ${liked ? "text-blue-500" : "text-[#dedede]"}`}>
                 <Heart size={20} className={`group-hover:scale-110 transition-transform ${liked ? "fill-current" : ""}`} />
                 <span className="text-sm font-medium">{localLikes}</span>
               </button>
-              <button onClick={(e) => { e.stopPropagation(); onOpen(); }} className="flex items-center gap-2 hover:text-blue-400 transition-colors group">
+              <button onClick={(e) => { e.stopPropagation(); onOpen(); }} className="flex items-center gap-2 hover:text-blue-500 transition-colors group">
                 <MessageCircle size={20} className="group-hover:scale-110 transition-transform" />
                 <span className="text-sm font-medium">{commentCount}</span>
               </button>
-              <button className="flex items-center gap-2 hover:text-green-400 transition-colors group">
+              <button className="flex items-center gap-2 hover:text-blue-500 transition-colors group">
                 <Send onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }} size={20} className="group-hover:scale-110 transition-transform" />
               </button>
             </div>
@@ -591,18 +591,18 @@ export default function UserProfilePage() {
     <div className="max-w-2xl mx-auto px-4 py-6">
       <RequireAuth />
       {loadingProfile ? (
-        <div className="text-[#94a3b8]">Đang tải hồ sơ...</div>
+        <div className="text-[#a3a3a3]">Đang tải hồ sơ...</div>
       ) : profile ? (
         <>
-          <div className="bg-gradient-to-br from-[#0f1e30] to-[#0a1628] border border-[#1e3a52] rounded-2xl p-5 mb-6">
+          <div className="bg-[#141414] border border-[#303030] rounded-sm p-5 mb-6">
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
-              <img src={profile.avatarUrl || "https://avatars.githubusercontent.com/u/0?v=4"} className="w-20 h-20 rounded-full ring-2 ring-[#1e3a52] shrink-0" alt="avatar" />
+              <img src={profile.avatarUrl || "https://avatars.githubusercontent.com/u/0?v=4"} className="w-20 h-20 rounded-full   shrink-0" alt="avatar" />
               <div className="flex-1 w-full text-center sm:text-left">
                 <h1 className="text-white text-lg font-semibold">{profile.username}</h1>
                 {!editing ? (
                   <>
-                    <p className="text-[#cbd5e1] mt-2 whitespace-pre-wrap">{profile.bio || "Chưa có giới thiệu."}</p>
-                    <div className="text-[#94a3b8] mt-1">Giới tính: {(profile as any).gender === "male" ? "Nam" : (profile as any).gender === "female" ? "Nữ" : "Chưa chọn"}</div>
+                    <p className="text-[#dedede] mt-2 whitespace-pre-wrap">{profile.bio || "Chưa có giới thiệu."}</p>
+                    <div className="text-[#a3a3a3] mt-1">Giới tính: {(profile as any).gender === "male" ? "Nam" : (profile as any).gender === "female" ? "Nữ" : "Chưa chọn"}</div>
                   </>
                 ) : (
                   <div className="mt-2 space-y-2">
@@ -610,16 +610,16 @@ export default function UserProfilePage() {
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
                       placeholder="Tên người dùng"
-                      className="w-full bg-transparent outline-none text-[#cbd5e1] placeholder:text-[#475569] border border-[#1e3a52] rounded-lg p-2"
+                      className="w-full bg-transparent outline-none text-[#dedede] placeholder:text-[#858585] border border-[#303030] rounded-lg p-2"
                     />
                     <div className="flex items-center justify-center sm:justify-start gap-4">
                       {/* Avatar Preview & Upload Trigger */}
                       <div className="relative group cursor-pointer hover:opacity-80 transition-opacity" onClick={() => document.getElementById("avatar-upload")?.click()}>
                         {avatarUrl ? (
-                          <img src={avatarUrl} className="w-16 h-16 rounded-full object-cover ring-2 ring-[#60A5FA]" alt="avatar preview" />
+                          <img src={avatarUrl} className="w-16 h-16 rounded-full object-cover  " alt="avatar preview" />
                         ) : (
-                          <div className="w-16 h-16 rounded-full bg-[#1e293b] flex items-center justify-center ring-2 ring-[#1e3a52]">
-                            <ImageIcon size={24} className="text-[#64748b]" />
+                          <div className="w-16 h-16 rounded-full bg-[#292929] flex items-center justify-center  ">
+                            <ImageIcon size={24} className="text-[#969696]" />
                           </div>
                         )}
                         <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
@@ -642,12 +642,12 @@ export default function UserProfilePage() {
                         disabled={isUploadingAvatar}
                       />
 
-                      <div className="text-sm text-[#94a3b8]">
+                      <div className="text-sm text-[#a3a3a3]">
                         Click vào ảnh này để thay đổi<br />(Tối đa 5MB)
                       </div>
                     </div>
-                    <textarea value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Giới thiệu ngắn" className="w-full bg-transparent outline-none text-[#cbd5e1] placeholder:text-[#475569] border border-[#1e3a52] rounded-lg p-2 min-h-[80px]" />
-                    <div className="flex items-center justify-center sm:justify-start gap-6 text-[#cbd5e1]">
+                    <textarea value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Giới thiệu ngắn" className="w-full bg-transparent outline-none text-[#dedede] placeholder:text-[#858585] border border-[#303030] rounded-lg p-2 min-h-[80px]" />
+                    <div className="flex items-center justify-center sm:justify-start gap-6 text-[#dedede]">
                       <label className="flex items-center gap-2 cursor-pointer">
                         <input type="radio" name="gender" checked={gender === "male"} onChange={() => setGender("male")} /> Nam
                       </label>
@@ -663,16 +663,16 @@ export default function UserProfilePage() {
                   <div className="flex items-center gap-2">
                     {!editing ? (
                       <>
-                        <button onClick={startEdit} className="px-3 py-2 text-sm bg-[#12304a] text-white rounded-lg hover:bg-[#163b59] flex items-center gap-2">
+                        <button onClick={startEdit} className="px-3 py-2 text-sm bg-[#1c1c1c] text-white rounded-lg hover:bg-[#1c1c1c] flex items-center gap-2">
                           <Edit3 size={16} /> Sửa hồ sơ
                         </button>
-                        <button onClick={() => setShowSettings(!showSettings)} className="px-3 py-2 text-sm bg-[#1e3a52] text-white rounded-lg hover:bg-[#2d5a7b] flex items-center gap-2">
+                        <button onClick={() => setShowSettings(!showSettings)} className="px-3 py-2 text-sm bg-[#303030] text-white rounded-lg hover:bg-[#525252] flex items-center gap-2">
                           <Settings size={16} /> Cài đặt
                         </button>
                       </>
                     ) : (
                       <>
-                        <button onClick={saveEdit} className="px-3 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2">
+                        <button onClick={saveEdit} className="px-3 py-2 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-500 flex items-center gap-2">
                           <Save size={16} /> Lưu
                         </button>
                         <button onClick={cancelEdit} className="px-3 py-2 text-sm bg-[#2a0f17] text-red-300 rounded-lg hover:bg-[#3a121c] flex items-center gap-2">
@@ -682,20 +682,20 @@ export default function UserProfilePage() {
                     )}
                   </div>
                   {showSettings && !editing && (
-                    <div className="mt-2 w-full bg-[#0a1628] border border-[#1e3a52] rounded-lg p-4">
+                    <div className="mt-2 w-full bg-[#141414] border border-[#303030] rounded-lg p-4">
                       <h3 className="text-white text-sm font-semibold mb-3 flex items-center gap-2">
                         <Settings size={16} /> Cài đặt
                       </h3>
                       <div className="space-y-3">
-                        <div className="text-[#cbd5e1] text-sm text-left">
-                          <div className="text-[#94a3b8] mb-1">Tên người dùng:</div>
+                        <div className="text-[#dedede] text-sm text-left">
+                          <div className="text-[#a3a3a3] mb-1">Tên người dùng:</div>
                           <div className="text-white">{profile.username}</div>
                         </div>
-                        <div className="text-[#cbd5e1] text-sm text-left">
-                          <div className="text-[#94a3b8] mb-1">ID:</div>
+                        <div className="text-[#dedede] text-sm text-left">
+                          <div className="text-[#a3a3a3] mb-1">ID:</div>
                           <div className="text-white font-mono text-xs">{profile.id}</div>
                         </div>
-                        <div className="pt-3 border-t border-[#1e3a52]">
+                        <div className="pt-3 border-t border-[#303030]">
                           <button
                             onClick={handleLogout}
                             className="w-full px-3 py-2 text-sm bg-red-600/20 text-red-300 rounded-lg hover:bg-red-600/30 flex items-center justify-center gap-2 transition-colors"
@@ -709,12 +709,12 @@ export default function UserProfilePage() {
                 </div>
               )}
               {!isOwner && (
-                <a href={`/messages/${userId}`} className="px-3 py-2 text-sm bg-[#12304a] text-white rounded-lg hover:bg-[#163b59] w-full sm:w-auto text-center mt-2 sm:mt-0">Nhắn tin</a>
+                <a href={`/messages/${userId}`} className="px-3 py-2 text-sm bg-[#1c1c1c] text-white rounded-lg hover:bg-[#1c1c1c] w-full sm:w-auto text-center mt-2 sm:mt-0">Nhắn tin</a>
               )}
             </div>
           </div>
 
-          <div className="flex flex-col gap-5">
+          <div className="flex flex-col">
             {items.map((p) => {
               const isEditing = editingPostId === p.id;
               const isOwnerPost = isOwner && p.author.id === userId;
@@ -744,30 +744,30 @@ export default function UserProfilePage() {
             })}
           </div>
           <div ref={sentinelRef} className="h-10" />
-          {loading && <div className="text-center text-[#94a3b8] py-4">Đang tải...</div>}
+          {loading && <div className="text-center text-[#a3a3a3] py-4">Đang tải...</div>}
 
           {selectedPost && (
             <div onClick={() => setSelectedPost(null)} className="fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4 overflow-y-auto">
-              <div onClick={(e) => e.stopPropagation()} className="bg-gradient-to-br from-[#0f1e30] to-[#0a1628] border border-[#1e3a52] rounded-2xl w-full max-w-2xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
+              <div onClick={(e) => e.stopPropagation()} className="bg-[#141414] border border-[#303030] rounded-sm w-full max-w-2xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
                 <div className="flex items-start gap-3 mb-3">
-                  <img src={selectedPost.author.avatarUrl || "https://avatars.githubusercontent.com/u/0?v=4"} className="w-10 h-10 rounded-full ring-2 ring-[#1e3a52]" alt="avatar" />
+                  <img src={selectedPost.author.avatarUrl || "https://avatars.githubusercontent.com/u/0?v=4"} className="w-10 h-10 rounded-full  " alt="avatar" />
                   <div className="flex-1">
                     <div className="text-white font-semibold text-sm">{selectedPost.author.username}</div>
-                    <div className="text-[#64748b] text-xs">{formatDateTime(selectedPost.createdAt)}</div>
+                    <div className="text-[#969696] text-xs">{formatDateTime(selectedPost.createdAt)}</div>
                   </div>
-                  <button onClick={() => setSelectedPost(null)} className="text-[#64748b] hover:text-white">✕</button>
+                  <button onClick={() => setSelectedPost(null)} className="text-[#969696] hover:text-white">✕</button>
                 </div>
-                <div className="text-[#cbd5e1] mb-3">{selectedPost.content}</div>
-                {selectedPost.imageUrl && <img src={selectedPost.imageUrl} className="rounded-xl mb-4" alt="post" />}
-                <div className="border-t border-[#1e293b] pt-3">
-                  <div className="text-[#94a3b8] text-sm mb-2">Bình luận</div>
+                <div className="text-[#dedede] mb-3">{selectedPost.content}</div>
+                {selectedPost.imageUrl && <img src={selectedPost.imageUrl} className="rounded-sm mb-4" alt="post" />}
+                <div className="border-t border-[#292929] pt-3">
+                  <div className="text-[#a3a3a3] text-sm mb-2">Bình luận</div>
                   <div className="flex items-center gap-2 mb-3">
                     <input
                       value={modalCommentText}
                       disabled={sendingComment}
                       onChange={(e) => setModalCommentText(e.target.value)}
                       placeholder="Viết bình luận..."
-                      className="flex-1 bg-transparent outline-none text-[#cbd5e1] placeholder:text-[#475569] border-b border-[#1e3a52]"
+                      className="flex-1 bg-transparent outline-none text-[#dedede] placeholder:text-[#858585] border-b border-[#303030]"
                     />
                     <button
                       onClick={async () => {
@@ -796,25 +796,25 @@ export default function UserProfilePage() {
                       aria-busy={sendingComment}
                       aria-label={sendingComment ? "Đang xử lý bình luận" : "Gửi bình luận"}
                       title="Gửi bình luận"
-                      className="w-12 h-9 shrink-0 inline-flex items-center justify-center text-sm bg-[#12304a] text-white rounded-md hover:bg-[#163b59] disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-12 h-9 shrink-0 inline-flex items-center justify-center text-sm bg-[#1c1c1c] text-white rounded-md hover:bg-[#1c1c1c] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {sendingComment ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
                     </button>
                   </div>
                   <div className="flex flex-col gap-3 max-h-72 overflow-auto pr-2">
                     {(commentsByPost[selectedPost.id] || []).map((c) => (
-                      <div key={c.id} className="text-[#cbd5e1] text-sm">
-                        <span className="text-[#64748b] text-xs mr-2">{formatTime(c.createdAt)}</span>
+                      <div key={c.id} className="text-[#dedede] text-sm">
+                        <span className="text-[#969696] text-xs mr-2">{formatTime(c.createdAt)}</span>
                         {c.content}
                       </div>
                     ))}
                     {!(commentsByPost[selectedPost.id]?.length) && (
-                      <div className="text-[#64748b] text-sm">Chưa có bình luận.</div>
+                      <div className="text-[#969696] text-sm">Chưa có bình luận.</div>
                     )}
                     {commentsCursorByPost[selectedPost.id] && (
                       <button
                         onClick={() => loadComments(selectedPost.id, commentsCursorByPost[selectedPost.id])}
-                        className="self-center text-[#60A5FA] text-sm hover:underline"
+                        className="self-center text-[#3B82F6] text-sm hover:underline"
                       >
                         Tải thêm
                       </button>

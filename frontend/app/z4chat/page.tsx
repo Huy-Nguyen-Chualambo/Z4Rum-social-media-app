@@ -146,24 +146,24 @@ export default function Z4chatHubPage() {
   const visibleStories = mine(stories);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen px-3 py-4 sm:px-5">
       <RequireAuth />
 
       <header className="mb-6">
         <div className="flex items-center gap-3 mb-2">
-          <div className="p-2.5 rounded-2xl bg-gradient-to-br from-[#3B82F6]/20 to-[#8B5CF6]/20 border border-[#3B82F6]/30">
-            <Sparkles size={20} className="text-[#60A5FA]" />
+          <div className="p-2.5 rounded-sm bg-[#141414] border border-[#3B82F6]/30">
+            <Sparkles size={20} className="text-[#3B82F6]" />
           </div>
           <h1 className="text-white text-2xl font-black tracking-tight">Z4chat</h1>
         </div>
-        <p className="text-[#94a3b8] text-sm leading-relaxed">
+        <p className="text-[#a3a3a3] text-sm leading-relaxed">
           Tạo nhân vật và cốt truyện của riêng bạn, rồi nhập vai cùng họ. Nhân vật sẽ nhớ chuyện đã xảy ra và đôi khi
           nhắn tin trước.
         </p>
       </header>
 
       {!aiReady && (
-        <div className="flex items-start gap-3 bg-[#fbbf24]/10 border border-[#fbbf24]/30 rounded-2xl p-4 mb-6">
+        <div className="flex items-start gap-3 bg-[#fbbf24]/10 border border-[#fbbf24]/30 rounded-sm p-4 mb-6">
           <AlertTriangle size={18} className="text-[#fbbf24] shrink-0 mt-0.5" />
           <p className="text-[#fcd34d] text-[13px] leading-relaxed">
             Chưa cấu hình API key nào nên nhân vật chưa trả lời được. Thêm{" "}
@@ -174,24 +174,25 @@ export default function Z4chatHubPage() {
         </div>
       )}
 
-      <nav className="flex items-center gap-1.5 bg-[#0f1e30] border border-[#1e3a52] rounded-2xl p-1.5 mb-5">
+      <nav className="flex items-center gap-1.5 bg-[#141414] border border-[#303030] rounded-sm p-1.5 mb-5">
         {TABS.map((item) => {
           const Icon = item.icon;
           const active = tab === item.id;
           return (
             <button
               key={item.id}
+              aria-label={item.label}
               onClick={() => setTab(item.id)}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all ${
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-sm text-sm font-bold transition-all ${
                 active
-                  ? "bg-gradient-to-r from-[#3B82F6]/25 to-[#8B5CF6]/25 border border-[#3B82F6]/40 text-white"
-                  : "text-[#94a3b8] hover:bg-[#1e293b] border border-transparent"
+                  ? "bg-blue-500 border border-[#3B82F6]/40 text-white"
+                  : "text-[#a3a3a3] hover:bg-[#292929] border border-transparent"
               }`}
             >
               <Icon size={15} />
               <span className="hidden sm:inline">{item.label}</span>
               {item.id === "sessions" && unreadTotal > 0 && (
-                <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-gradient-to-r from-[#8B5CF6] to-[#ec4899] text-white text-[10px] font-bold flex items-center justify-center">
+                <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-[#141414] text-white text-[10px] font-bold flex items-center justify-center">
                   {unreadTotal}
                 </span>
               )}
@@ -202,13 +203,13 @@ export default function Z4chatHubPage() {
 
       {tab !== "sessions" && (
         <div className="flex items-center justify-between gap-3 mb-4">
-          <div className="flex items-center gap-1 bg-[#0f1e30] border border-[#1e3a52] rounded-xl p-1">
+          <div className="flex items-center gap-1 bg-[#141414] border border-[#303030] rounded-sm p-1">
             {(["mine", "public"] as Scope[]).map((value) => (
               <button
                 key={value}
                 onClick={() => setScope(value)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-                  scope === value ? "bg-[#1e293b] text-white" : "text-[#64748b] hover:text-[#94a3b8]"
+                  scope === value ? "bg-[#292929] text-white" : "text-[#969696] hover:text-[#a3a3a3]"
                 }`}
               >
                 {value === "mine" ? "Của tôi" : "Cộng đồng"}
@@ -222,7 +223,7 @@ export default function Z4chatHubPage() {
                 ? setCharacterForm({ open: true, editing: null })
                 : setStoryForm({ open: true, editing: null })
             }
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] text-white text-sm font-bold hover:shadow-[0_0_20px_rgba(59,130,246,0.35)] transition-all active:scale-95"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-sm bg-blue-500 text-white text-sm font-bold  transition-all active:scale-95"
           >
             <Plus size={16} />
             {tab === "characters" ? "Tạo nhân vật" : "Tạo cốt truyện"}
@@ -231,7 +232,7 @@ export default function Z4chatHubPage() {
       )}
 
       {loading ? (
-        <div className="flex items-center justify-center gap-2 py-16 text-[#64748b] text-sm">
+        <div className="flex items-center justify-center gap-2 py-16 text-[#969696] text-sm">
           <Loader2 size={18} className="animate-spin" />
           Đang tải…
         </div>
@@ -251,7 +252,7 @@ export default function Z4chatHubPage() {
           </div>
         ) : (
           <EmptyState
-            icon={<Users size={22} className="text-[#60A5FA]" />}
+            icon={<Users size={22} className="text-[#3B82F6]" />}
             title={scope === "mine" ? "Bạn chưa có nhân vật nào" : "Chưa ai chia sẻ nhân vật"}
             body={
               scope === "mine"
@@ -280,7 +281,7 @@ export default function Z4chatHubPage() {
           </div>
         ) : (
           <EmptyState
-            icon={<BookOpen size={22} className="text-[#a78bfa]" />}
+            icon={<BookOpen size={22} className="text-[#3B82F6]" />}
             title={scope === "mine" ? "Chưa có cốt truyện nào" : "Chưa ai chia sẻ cốt truyện"}
             body="Cốt truyện cho nhân vật một bối cảnh, một vai cho bạn, và một màn mở đầu — nhờ vậy hội thoại có hướng đi chứ không lan man. Không có cũng chat được."
             action={
@@ -298,7 +299,7 @@ export default function Z4chatHubPage() {
         </div>
       ) : (
         <EmptyState
-          icon={<MessageSquare size={22} className="text-[#60A5FA]" />}
+          icon={<MessageSquare size={22} className="text-[#3B82F6]" />}
           title="Chưa có cuộc trò chuyện nào"
           body="Chọn một nhân vật ở tab Nhân vật rồi bấm “Bắt đầu chat”."
           action={{ label: "Xem nhân vật", onClick: () => setTab("characters") }}
@@ -356,14 +357,14 @@ function EmptyState({
   action?: { label: string; onClick: () => void };
 }) {
   return (
-    <div className="flex flex-col items-center text-center bg-gradient-to-br from-[#0f1e30] to-[#0a1628] border border-[#1e3a52] rounded-3xl px-6 py-12">
-      <div className="p-3.5 rounded-2xl bg-[#1e293b] border border-[#334155] mb-4">{icon}</div>
+    <div className="flex flex-col items-center text-center bg-[#141414] border border-[#303030] rounded-sm px-6 py-12">
+      <div className="p-3.5 rounded-sm bg-[#292929] border border-[#383838] mb-4">{icon}</div>
       <h3 className="text-white font-bold mb-2">{title}</h3>
-      <p className="text-[#94a3b8] text-[13px] leading-relaxed max-w-sm">{body}</p>
+      <p className="text-[#a3a3a3] text-[13px] leading-relaxed max-w-sm">{body}</p>
       {action && (
         <button
           onClick={action.onClick}
-          className="mt-5 flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] text-white text-sm font-bold hover:shadow-[0_0_20px_rgba(59,130,246,0.35)] transition-all active:scale-95"
+          className="mt-5 flex items-center gap-2 px-5 py-2.5 rounded-sm bg-blue-500 text-white text-sm font-bold  transition-all active:scale-95"
         >
           <Plus size={16} />
           {action.label}

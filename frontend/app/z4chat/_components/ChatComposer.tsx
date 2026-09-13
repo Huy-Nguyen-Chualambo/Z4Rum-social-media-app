@@ -46,7 +46,7 @@ export default function ChatComposer({
   };
 
   return (
-    <div className="border-t border-[#1e3a52] bg-[#0a1628]/80 backdrop-blur px-3 sm:px-4 py-3">
+    <div className="chat-input-row shrink-0 border-t border-[#303030] bg-[#141414]/80  px-3 sm:px-4 py-3">
       <div className="flex items-end gap-2">
         <textarea
           ref={textareaRef}
@@ -62,13 +62,13 @@ export default function ChatComposer({
           maxLength={4000}
           disabled={disabled}
           placeholder={`Nói gì với ${characterName}…`}
-          className="flex-1 bg-[#0f1e30] border border-[#1e3a52] rounded-2xl px-4 py-3 text-[#e2e8f0] placeholder:text-[#475569] outline-none focus:border-[#3B82F6]/60 resize-none leading-relaxed text-[15px] transition-colors disabled:opacity-50"
+          className="min-w-0 flex-1 bg-[#141414] border border-[#303030] rounded-sm px-4 py-3 text-[#ededed] placeholder:text-[#858585] outline-none focus:border-[#3B82F6]/60 resize-none leading-relaxed text-[15px] transition-colors disabled:opacity-50"
         />
 
         {streaming ? (
           <button
             onClick={onStop}
-            className="shrink-0 w-12 h-12 rounded-2xl border border-[#1e3a52] text-[#94a3b8] hover:text-white hover:bg-[#1e293b] flex items-center justify-center transition-colors"
+            className="shrink-0 w-12 h-12 rounded-sm border border-[#303030] text-[#a3a3a3] hover:text-white hover:bg-[#292929] flex items-center justify-center transition-colors"
             aria-label="Dừng"
             title="Dừng trả lời"
           >
@@ -78,7 +78,7 @@ export default function ChatComposer({
           <button
             onClick={submit}
             disabled={!draft.trim() || disabled}
-            className="shrink-0 w-12 h-12 rounded-2xl bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] text-white flex items-center justify-center hover:shadow-[0_0_20px_rgba(59,130,246,0.35)] transition-all active:scale-95 disabled:opacity-35 disabled:shadow-none"
+            className="shrink-0 w-12 h-12 rounded-sm bg-blue-500 text-white flex items-center justify-center  transition-all active:scale-95 disabled:opacity-35 "
             aria-label="Gửi"
           >
             {disabled ? <Loader2 size={17} className="animate-spin" /> : <Send size={17} />}
@@ -86,7 +86,7 @@ export default function ChatComposer({
         )}
       </div>
 
-      <p className="text-[#475569] text-[11px] mt-1.5 ml-1 hidden sm:block">
+      <p className="text-[#858585] text-[11px] mt-1.5 ml-1 hidden sm:block">
         Enter để gửi · Shift+Enter để xuống dòng · viết hành động trong *dấu sao*
       </p>
     </div>

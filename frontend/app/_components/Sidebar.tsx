@@ -9,7 +9,6 @@ import {
   MessageCircle,
   Heart,
   User,
-  TrendingUp,
   Vote,
   Sparkles,
 } from "lucide-react";
@@ -36,9 +35,10 @@ export default function Sidebar() {
   useEffect(() => setMounted(true), []);
 
   return (
-    <aside className="w-72 min-w-[18rem] bg-gradient-to-br from-[#0a1628] to-[#071029] border-r border-[#1e293b] p-6 h-[calc(100vh-73px)] fixed top-[73px] left-0 overflow-hidden flex flex-col z-30">
+    <aside className="sticky top-14 flex h-[calc(100dvh-56px)] flex-col overflow-y-auto px-3 py-5 text-sm">
+      <p className="px-3 mb-3 text-[10px] font-bold uppercase tracking-widest text-neutral-500">Diễn đàn / Z4rum</p>
 
-      <nav className="flex flex-col gap-2 mb-8 flex-1 overflow-y-auto">
+      <nav className="flex flex-col gap-0.5 mb-5 flex-1 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = pathname?.startsWith(item.href);
           const Icon = item.icon;
@@ -49,15 +49,16 @@ export default function Sidebar() {
             <Link
               key={item.name}
               href={item.href}
-              className={`flex items-center gap-4 py-3 px-4 rounded-xl transition-all duration-200 group ${isActive
-                  ? "bg-gradient-to-r from-[#3B82F6]/20 to-[#8B5CF6]/20 text-white border border-[#3B82F6]/30"
-                  : "text-[#94a3b8] hover:bg-[#1e293b] hover:text-white"
+              aria-current={isActive ? "page" : undefined}
+              className={`flex items-center gap-3 py-2.5 px-3 rounded-sm transition-all duration-200 group ${isActive
+                  ? "bg-[#1c1c1c] text-white border-l-2 border-blue-500"
+                  : "text-[#a3a3a3] hover:bg-[#292929] hover:text-white"
                 }`}
             >
-              <Icon size={20} className={isActive ? "text-[#60A5FA]" : "group-hover:text-[#60A5FA] transition-colors"} />
+              <Icon size={20} className={isActive ? "text-[#3B82F6]" : "group-hover:text-[#3B82F6] transition-colors"} />
               <span className="font-medium">{item.name}</span>
               {badge > 0 && (
-                <span className="ml-auto min-w-5 h-5 px-1.5 rounded-full bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] text-white text-[11px] font-bold flex items-center justify-center">
+                <span className="ml-auto min-w-5 h-5 px-1.5 rounded-full bg-blue-500 text-white text-[11px] font-bold flex items-center justify-center">
                   {badge > 9 ? "9+" : badge}
                 </span>
               )}
@@ -67,22 +68,23 @@ export default function Sidebar() {
         {mounted && token && (
           <button
             onClick={() => setIsPostModalOpen(true)}
-            className="hidden md:flex items-center gap-4 py-3 px-4 rounded-xl transition-all duration-200 w-full bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] text-white font-semibold shadow-lg shadow-blue-500/40 hover:shadow-blue-500/60 hover:scale-[1.02] mt-2"
+            className="hidden md:flex items-center gap-3 py-2.5 px-3 rounded-sm transition-all duration-200 w-full bg-blue-500 text-white font-semibold     mt-2"
           >
             Đăng bài viết
           </button>
         )}
       </nav>
-      <div className="mt-auto">
+      <div className="mt-auto border-t border-neutral-800 pt-4">
+        <p className="mb-3 px-1 text-xs leading-5 text-neutral-500">Có chuyện gì? Kể Bảnh nghe.<br />Một góc mạng của anh em mình.</p>
         {!mounted ? (
           <div className="flex flex-col gap-2">
-            <div className="w-full text-center py-2 rounded-xl bg-gradient-to-r from-[#3B82F6] to-[#6366F1] text-white font-semibold opacity-50">Đăng nhập</div>
-            <div className="w-full text-center py-2 rounded-xl border border-[#1e3a52] text-[#cbd5e1] opacity-50">Đăng ký</div>
+            <div className="w-full text-center py-2 rounded-sm bg-blue-500 text-white font-semibold opacity-50">Đăng nhập</div>
+            <div className="w-full text-center py-2 rounded-sm border border-[#303030] text-[#dedede] opacity-50">Đăng ký</div>
           </div>
         ) : !token ? (
           <div className="flex flex-col gap-2">
-            <Link href="/login" className="w-full text-center py-2 rounded-xl bg-gradient-to-r from-[#3B82F6] to-[#6366F1] text-white font-semibold">Đăng nhập</Link>
-            <Link href="/register" className="w-full text-center py-2 rounded-xl border border-[#1e3a52] text-[#cbd5e1] hover:bg-[#1e293b] transition-colors">Đăng ký</Link>
+            <Link href="/login" className="w-full text-center py-2 rounded-sm bg-blue-500 text-white font-semibold">Đăng nhập</Link>
+            <Link href="/register" className="w-full text-center py-2 rounded-sm border border-[#303030] text-[#dedede] hover:bg-[#292929] transition-colors">Đăng ký</Link>
           </div>
         ) : null}
       </div>

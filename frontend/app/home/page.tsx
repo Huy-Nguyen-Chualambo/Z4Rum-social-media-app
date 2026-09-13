@@ -125,47 +125,47 @@ function PostCard({
   const isOwner = currentUserId && post.author.id === currentUserId;
 
   return (
-    <article onClick={() => onOpen?.(post)} className="bg-gradient-to-br from-[#0f1e30] to-[#0a1628] border border-[#1e3a52] rounded-2xl p-4 sm:p-5 hover:border-[#2d5a7b] transition-all duration-300 cursor-pointer group/card">
+    <article onClick={() => onOpen?.(post)} className="timeline-post cursor-pointer">
       <header className="flex items-center gap-3 mb-4 relative">
-        <Link href={`/users/${post.author.id}`}>
-          <img src={post.author.avatarUrl || "https://avatars.githubusercontent.com/u/0?v=4"} alt="avatar" className="w-12 h-12 rounded-xl object-cover ring-2 ring-[#1e3a52]" />
+        <Link href={`/users/${post.author.id}`} onClick={(e) => e.stopPropagation()}>
+          <img src={post.author.avatarUrl || "https://avatars.githubusercontent.com/u/0?v=4"} alt="avatar" className="w-9 h-9 rounded-sm object-cover  " />
         </Link>
         <div className="flex-1">
           <div className="flex flex-col">
-            <Link href={`/users/${post.author.id}`} className="text-white font-bold text-[15px] hover:underline">
+            <Link href={`/users/${post.author.id}`} onClick={(e) => e.stopPropagation()} className="text-white font-bold text-[15px] hover:underline">
               {post.author.username}
             </Link>
-            <span className="text-[#64748b] text-xs">{formatDateTime(post.createdAt)}</span>
+            <span className="text-[#969696] text-xs">{formatDateTime(post.createdAt)}</span>
           </div>
         </div>
-        <button onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }} className="text-[#64748b] hover:text-white hover:bg-[#1e293b] p-2 rounded-xl transition-colors">
+        <button onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }} className="text-[#969696] hover:text-white hover:bg-[#292929] p-2 rounded-sm transition-colors">
           <MoreHorizontal size={20} />
         </button>
       </header>
 
-      <p className="text-[#cbd5e1] text-[15px] leading-relaxed mb-4 whitespace-pre-wrap">{post.content}</p>
+      <p className="text-[#dedede] text-[15px] leading-relaxed mb-4 whitespace-pre-wrap">{post.content}</p>
 
       {post.imageUrl && (
-        <div className="mb-4 rounded-2xl overflow-hidden bg-black/20 border border-[#1e3a52]">
+        <div className="mb-4 rounded-sm overflow-hidden bg-black/20 border border-[#303030]">
           <img src={post.imageUrl} alt="post media" className="w-full h-auto max-h-[500px] object-contain mx-auto" />
         </div>
       )}
 
       <footer className="flex items-center gap-6 pt-2">
-        <button onClick={(e) => handleLike(e)} className={`flex items-center gap-2 group/btn transition-colors ${liked ? "text-pink-500" : "text-[#64748b] hover:text-pink-500"}`}>
-          <div className={`p-2 rounded-xl transition-all ${liked ? "bg-pink-500/10" : "group-hover/btn:bg-pink-500/10"}`}>
+        <button aria-label="Thích bài viết" aria-pressed={liked} onClick={(e) => handleLike(e)} className={`flex items-center gap-2 group/btn transition-colors ${liked ? "text-blue-500" : "text-[#969696] hover:text-blue-500"}`}>
+          <div className={`p-2 rounded-sm transition-all ${liked ? "bg-blue-500/10" : "group-hover/btn:bg-blue-500/10"}`}>
             <Heart size={20} className={liked ? "fill-current scale-110" : "group-hover/btn:scale-110"} />
           </div>
           <span className="text-sm font-bold">{localLikes}</span>
         </button>
-        <button className="flex items-center gap-2 text-[#64748b] hover:text-blue-400 group/btn transition-colors">
-          <div className="p-2 rounded-xl group-hover/btn:bg-blue-500/10 transition-all">
+        <button aria-label="Xem bình luận" className="flex items-center gap-2 text-[#969696] hover:text-blue-500 group/btn transition-colors">
+          <div className="p-2 rounded-sm group-hover/btn:bg-blue-500/10 transition-all">
             <MessageCircle size={20} className="group-hover/btn:scale-110" />
           </div>
           <span className="text-sm font-bold">{commentCount}</span>
         </button>
-        <button className="flex items-center gap-2 text-[#64748b] hover:text-green-400 group/btn transition-colors">
-          <div className="p-2 rounded-xl group-hover/btn:bg-green-500/10 transition-all">
+        <button className="flex items-center gap-2 text-[#969696] hover:text-blue-500 group/btn transition-colors">
+          <div className="p-2 rounded-sm group-hover/btn:bg-blue-500/10 transition-all">
             <Send size={20} className="group-hover/btn:scale-110" />
           </div>
         </button>
@@ -308,32 +308,36 @@ export default function HomePage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="w-full">
       <RequireAuth />
 
+      <header className="flex items-baseline justify-between border-b border-neutral-800 px-5 py-4">
+        <div><h1 className="text-xl font-extrabold tracking-tight">Chuyện anh em</h1><p className="mt-1 text-xs text-neutral-500">Có gì mới? Cho Bảnh hóng với.</p></div>
+        <span className="text-xs font-semibold text-blue-500">Mới nhất</span>
+      </header>
       {/* Create Post Section */}
-      <div className="mb-8 bg-gradient-to-br from-[#0f1e30] to-[#0a1628] border border-[#1e3a52] p-6 rounded-[2rem] shadow-xl relative overflow-hidden">
+      <div className="border-b border-[#292929] p-4 sm:px-5 relative">
         <div className="flex items-start gap-4">
-          <img src={user?.avatarUrl || "https://avatars.githubusercontent.com/u/0?v=4"} className="w-12 h-12 rounded-2xl ring-2 ring-blue-500/20 object-cover" alt="profile" />
+          <img src={user?.avatarUrl || "https://avatars.githubusercontent.com/u/0?v=4"} className="w-9 h-9 rounded-sm   object-cover" alt="profile" />
           <div className="flex-1 min-w-0">
             <textarea
               value={newContent}
               onChange={(e) => setNewContent(e.target.value)}
               placeholder="Bảnh đang nghĩ gì thế?"
-              className="bg-transparent w-full outline-none text-[#cbd5e1] placeholder:text-[#475569] mb-4 min-h-[100px] text-lg font-medium resize-none"
+              className="bg-transparent w-full outline-none text-[#dedede] placeholder:text-[#858585] mb-4 min-h-[56px] text-sm font-medium resize-none"
             />
 
             {/* Image Preview */}
             {(newImageUrl || isUploading) && (
-              <div className="mb-4 relative group w-fit border border-[#1e3a52] rounded-2xl overflow-hidden">
+              <div className="mb-4 relative group w-fit border border-[#303030] rounded-sm overflow-hidden">
                 {isUploading ? (
-                  <div className="w-48 h-32 bg-[#1e293b] flex items-center justify-center animate-pulse">
+                  <div className="w-48 h-32 bg-[#292929] flex items-center justify-center animate-pulse">
                     <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                   </div>
                 ) : (
                   <>
-                    <img src={newImageUrl} alt="preview" className="max-h-64 rounded-xl object-contain" />
-                    <button onClick={() => setNewImageUrl("")} className="absolute top-2 right-2 p-1.5 bg-black/60 rounded-xl text-white hover:bg-black/80 transition-all backdrop-blur-md">
+                    <img src={newImageUrl} alt="preview" className="max-h-64 rounded-sm object-contain" />
+                    <button onClick={() => setNewImageUrl("")} className="absolute top-2 right-2 p-1.5 bg-black/60 rounded-sm text-white hover:bg-black/80 transition-all ">
                       <Trash2 size={16} />
                     </button>
                   </>
@@ -343,12 +347,12 @@ export default function HomePage() {
 
             {/* Emoji Picker */}
             {isEmojiPickerOpen && (
-              <div className="mb-6 bg-[#0f1e30]/50 backdrop-blur-lg border border-blue-500/20 p-4 rounded-[1.5rem] grid grid-cols-6 sm:grid-cols-8 gap-2 animate-in fade-in slide-in-from-top-4">
+              <div className="mb-6 bg-[#141414]/50  border border-blue-500/20 p-4 rounded-sm grid grid-cols-6 sm:grid-cols-8 gap-2 animate-in fade-in slide-in-from-top-4">
                 {["😂", "😍", "🔥", "💀", "😢", "❤️", "✨", "🙌", "👍", "🤔", "🤣", "😭", "🚀", "🍿", "🎮", "🎸"].map((emoji) => (
                   <button
                     key={emoji}
                     onClick={() => setNewContent(prev => prev + emoji)}
-                    className="text-2xl hover:bg-blue-500/10 p-2 rounded-xl transition-all hover:scale-125 active:scale-90"
+                    className="text-2xl hover:bg-blue-500/10 p-2 rounded-sm transition-all  active:scale-90"
                   >
                     {emoji}
                   </button>
@@ -356,29 +360,29 @@ export default function HomePage() {
               </div>
             )}
 
-            <div className="flex items-center justify-between border-t border-[#1e3a52] pt-6">
+            <div className="flex items-center justify-between border-t border-[#292929] pt-2">
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => document.getElementById("home-file-upload")?.click()}
-                  className="p-2.5 text-[#60A5FA] hover:bg-blue-500/10 rounded-xl transition-all group"
+                  className="p-2.5 text-[#3B82F6] hover:bg-blue-500/10 rounded-sm transition-all group"
                   title="Thêm ảnh"
                 >
                   <ImageIcon size={22} className="group-hover:scale-110" />
                 </button>
                 <button
                   onClick={() => setIsEmojiPickerOpen(!isEmojiPickerOpen)}
-                  className={`p-2.5 rounded-xl transition-all group ${isEmojiPickerOpen ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30' : 'text-[#60A5FA] hover:bg-blue-500/10'}`}
+                  className={`p-2.5 rounded-sm transition-all group ${isEmojiPickerOpen ? 'bg-blue-500 text-white  ' : 'text-[#3B82F6] hover:bg-blue-500/10'}`}
                   title="Cảm xúc"
                 >
                   <Smile size={22} className="group-hover:scale-110" />
                 </button>
-                {/*<button className="p-2.5 text-[#60A5FA] hover:bg-blue-500/10 rounded-xl transition-all group" title="Thêm video">
+                {/*<button className="p-2.5 text-[#3B82F6] hover:bg-blue-500/10 rounded-sm transition-all group" title="Thêm video">
                   <Video size={22} className="group-hover:scale-110" />
                 </button>
-                <button className="p-2.5 text-[#60A5FA] hover:bg-blue-500/10 rounded-xl transition-all group" title="Tạo bình chọn">
+                <button className="p-2.5 text-[#3B82F6] hover:bg-blue-500/10 rounded-sm transition-all group" title="Tạo bình chọn">
                   <BarChart3 size={22} className="group-hover:scale-110" />
                 </button>
-                <button className="p-2.5 text-[#60A5FA] hover:bg-blue-500/10 rounded-xl transition-all group" title="Vị trí">
+                <button className="p-2.5 text-[#3B82F6] hover:bg-blue-500/10 rounded-sm transition-all group" title="Vị trí">
                   <MapPin size={22} className="group-hover:scale-110" />
                 </button>*/}
               </div>
@@ -388,7 +392,7 @@ export default function HomePage() {
               <button
                 onClick={handleCreate}
                 disabled={creating || !newContent.trim() || isUploading}
-                className="px-8 py-3 bg-gradient-to-r from-[#3B82F6] to-[#6366F1] text-white font-black rounded-xl hover:shadow-[0_0_30px_rgba(59,130,246,0.5)] transition-all hover:scale-105 active:scale-95 disabled:opacity-40 uppercase tracking-wider"
+                className="px-4 py-2 bg-blue-500 text-white font-black rounded-sm  transition-all  active:scale-95 disabled:opacity-40 "
               >
                 {creating ? "Đang đăng..." : "Đăng bài"}
               </button>
@@ -398,7 +402,7 @@ export default function HomePage() {
       </div>
 
       {/* Feed */}
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col">
         {items.map((p) => (
           <PostCard
             key={p.id}
@@ -414,33 +418,33 @@ export default function HomePage() {
       </div>
 
       <div ref={sentinelRef} className="h-20" />
-      {loading && <div className="text-center text-[#94a3b8] py-8 animate-pulse font-bold tracking-widest uppercase text-sm">Đang tải thêm...</div>}
+      {loading && <div className="text-center text-[#a3a3a3] py-8 animate-pulse font-bold tracking-widest uppercase text-sm">Đang tải thêm...</div>}
 
       {/* Post Detail Modal */}
       {selectedPost && (
-        <div onClick={() => setSelectedPost(null)} className="fixed inset-0 bg-black/80 backdrop-blur-md z-[200] flex items-center justify-center p-4 animate-in fade-in duration-300">
-          <div onClick={(e) => e.stopPropagation()} className="bg-gradient-to-br from-[#0f1e30] to-[#0a1628] border border-[#1e3a52] rounded-[2.5rem] w-full max-w-2xl p-8 max-h-[90vh] overflow-y-auto relative shadow-2xl animate-in zoom-in-95">
-            <button onClick={() => setSelectedPost(null)} className="absolute top-6 right-6 text-[#64748b] hover:text-white bg-[#1e293b] p-2 rounded-xl transition-all">
+        <div onClick={() => setSelectedPost(null)} className="fixed inset-0 bg-black/80  z-[200] flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div onClick={(e) => e.stopPropagation()} className="bg-[#141414] border border-[#303030] rounded-sm w-full max-w-2xl p-4 sm:p-8 max-h-[90dvh] overflow-y-auto relative  animate-in zoom-in-95">
+            <button onClick={() => setSelectedPost(null)} className="absolute top-6 right-6 text-[#969696] hover:text-white bg-[#292929] p-2 rounded-sm transition-all">
               <X size={20} />
             </button>
 
             <div className="flex items-start gap-4 mb-6">
-              <img src={selectedPost.author.avatarUrl || "https://avatars.githubusercontent.com/u/0?v=4"} className="w-12 h-12 rounded-2xl ring-2 ring-[#1e3a52] object-cover" alt="avatar" />
+              <img src={selectedPost.author.avatarUrl || "https://avatars.githubusercontent.com/u/0?v=4"} className="w-9 h-9 rounded-sm   object-cover" alt="avatar" />
               <div>
                 <div className="text-white font-bold text-lg">{selectedPost.author.username}</div>
-                <div className="text-[#64748b] text-sm">{formatDateTime(selectedPost.createdAt)}</div>
+                <div className="text-[#969696] text-sm">{formatDateTime(selectedPost.createdAt)}</div>
               </div>
             </div>
 
-            <div className="text-[#cbd5e1] text-lg mb-6 leading-relaxed whitespace-pre-wrap">{selectedPost.content}</div>
+            <div className="text-[#dedede] text-lg mb-6 leading-relaxed whitespace-pre-wrap">{selectedPost.content}</div>
 
             {selectedPost.imageUrl && (
-              <div className="rounded-[2rem] overflow-hidden border border-[#1e3a52] mb-8 bg-black/20">
+              <div className="rounded-sm overflow-hidden border border-[#303030] mb-8 bg-black/20">
                 <img src={selectedPost.imageUrl} className="w-full h-auto max-h-[600px] object-contain mx-auto" alt="post" />
               </div>
             )}
 
-            <div className="border-t border-[#1e3a52] pt-8">
+            <div className="border-t border-[#303030] pt-8">
               <h4 className="text-white font-black text-xl mb-6 uppercase tracking-tight">Bình luận</h4>
 
               <div className="flex items-center gap-3 mb-8">
@@ -449,7 +453,7 @@ export default function HomePage() {
                   disabled={sendingComment}
                   onChange={(e) => setModalCommentText(e.target.value)}
                   placeholder="Viết cảm nghĩ của bạn..."
-                  className="flex-1 bg-[#1e293b]/50 border border-[#334155] rounded-2xl px-6 py-3 text-[#cbd5e1] outline-none focus:border-blue-500/50 transition-all font-medium"
+                  className="flex-1 bg-[#292929]/50 border border-[#383838] rounded-sm px-6 py-3 text-[#dedede] outline-none focus:border-blue-500/50 transition-all font-medium"
                 />
                 <button
                   onClick={async () => {
@@ -483,7 +487,7 @@ export default function HomePage() {
                   aria-busy={sendingComment}
                   aria-label={sendingComment ? "Đang xử lý bình luận" : "Gửi bình luận"}
                   title="Gửi bình luận"
-                  className="bg-blue-500 text-white w-16 h-12 shrink-0 inline-flex items-center justify-center rounded-2xl font-bold hover:bg-blue-600 transition-all shadow-lg shadow-blue-500/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-blue-500 text-white w-16 h-12 shrink-0 inline-flex items-center justify-center rounded-sm font-bold hover:bg-blue-500 transition-all   active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {sendingComment ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
                 </button>
@@ -491,13 +495,13 @@ export default function HomePage() {
 
               <div className="space-y-6">
                 {(commentsByPost[selectedPost.id] || []).map((c) => (
-                  <div key={c.id} className="bg-[#1e293b]/30 p-5 rounded-2xl border border-[#334155]/50 group">
-                    <div className="text-[#94a3b8] text-xs mb-2 font-bold opacity-60 group-hover:opacity-100 transition-opacity">{formatTime(c.createdAt)}</div>
-                    <div className="text-[#cbd5e1] font-medium leading-relaxed">{c.content}</div>
+                  <div key={c.id} className="bg-[#292929]/30 p-5 rounded-sm border border-[#383838]/50 group">
+                    <div className="text-[#a3a3a3] text-xs mb-2 font-bold opacity-60 group-hover:opacity-100 transition-opacity">{formatTime(c.createdAt)}</div>
+                    <div className="text-[#dedede] font-medium leading-relaxed">{c.content}</div>
                   </div>
                 ))}
                 {!(commentsByPost[selectedPost.id]?.length) && !commentsLoadingByPost[selectedPost.id] && (
-                  <div className="text-center py-8 text-[#475569] font-medium italic">Chưa có bình luận nào ở đây cả.</div>
+                  <div className="text-center py-8 text-[#858585] font-medium italic">Chưa có bình luận nào ở đây cả.</div>
                 )}
                 {commentsLoadingByPost[selectedPost.id] && (
                   <div className="text-center py-4 text-blue-500 animate-pulse font-bold">Đang tải bình luận...</div>
