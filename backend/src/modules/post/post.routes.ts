@@ -3,6 +3,7 @@ import { prisma } from "../../utils/prisma";
 import { authMiddleware } from "../../utils/jwt";
 import { emitLikeUpdated } from "../../realtime";
 import { validatePostContent } from "../../utils/postModeration";
+import { boundedInt } from "../../utils/validation";
 
 const router = Router();
 
@@ -18,7 +19,7 @@ router.post("/", async (req, res) => {
 });
 
 router.get("/", async (req, res) => {
-  const limit = Number(req.query.limit || 10);
+  const limit = boundedInt(req.query.limit, 10, 1, 50);
   const cursor = (req.query.cursor as string) || undefined;
   const authorId = (req.query.authorId as string) || undefined;
   const searchRaw = typeof req.query.search === "string" ? req.query.search : "";

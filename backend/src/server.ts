@@ -12,7 +12,12 @@ const preferredPort = Number(process.env.PORT) || 4000;
 const server = http.createServer(app);
 
 const io = new Server(server, {
-  cors: { origin: process.env.CLIENT_ORIGIN || "*" },
+  cors: {
+    origin: (process.env.CLIENT_ORIGIN || "http://localhost:3000")
+      .split(",")
+      .map((origin) => origin.trim())
+      .filter(Boolean),
+  },
 });
 
 initSocket(io, prisma);

@@ -115,6 +115,16 @@ export type ModelsResponse = {
   ready: boolean;
 };
 
+function aiHeaders(json = false): HeadersInit {
+  const token = typeof window !== "undefined"
+    ? sessionStorage.getItem("z4rum_token") || localStorage.getItem("z4rum_token")
+    : null;
+  return {
+    ...(json ? { "Content-Type": "application/json" } : {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
+
 /** Error text out of a Next route, which answers `{ error }` on failure. */
 async function routeError(res: Response, fallback: string): Promise<string> {
   const body = await res.json().catch(() => null);
@@ -123,7 +133,7 @@ async function routeError(res: Response, fallback: string): Promise<string> {
 
 export const z4chatAi = {
   models: async (): Promise<ModelsResponse> => {
-    const res = await fetch("/api/z4chat/models", { cache: "no-store" });
+    const res = await fetch("/api/z4chat/models", { cache: "no-store", headers: aiHeaders() });
     if (!res.ok) throw new Error(await routeError(res, "Không đọc được danh sách model"));
     return res.json();
   },
@@ -139,7 +149,7 @@ export const z4chatAi = {
   ): Promise<{ text: string; provider: string | null; model: string | null }> => {
     const res = await fetch("/api/z4chat/chat", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: aiHeaders(true),
       body: JSON.stringify(payload),
       signal,
     });
@@ -175,7 +185,7 @@ export const z4chatAi = {
   }): Promise<{ summary: string; facts: string[] }> => {
     const res = await fetch("/api/z4chat/summarize", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: aiHeaders(true),
       body: JSON.stringify(payload),
     });
     if (!res.ok) throw new Error(await routeError(res, "Không nén được ký ức"));
@@ -185,7 +195,7 @@ export const z4chatAi = {
   generate: async (payload: { kind: "character" | "story"; brief: string; provider?: string; model?: string }) => {
     const res = await fetch("/api/z4chat/generate", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: aiHeaders(true),
       body: JSON.stringify(payload),
     });
     if (!res.ok) throw new Error(await routeError(res, "Không tạo được bản nháp"));
@@ -195,7 +205,7 @@ export const z4chatAi = {
   proactive: async (payload: Z4ChatContext & { slotPrompt: string }): Promise<{ content: string }> => {
     const res = await fetch("/api/z4chat/proactive", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: aiHeaders(true),
       body: JSON.stringify(payload),
     });
     if (!res.ok) throw new Error(await routeError(res, "Không tạo được tin nhắn"));

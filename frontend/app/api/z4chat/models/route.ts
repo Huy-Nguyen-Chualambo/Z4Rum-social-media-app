@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { DEFAULT_MODEL, DEFAULT_PROVIDER, listProviders } from "@/lib/z4chat/providers";
+import { protectAiRoute } from "@/lib/z4chat/routeSecurity";
 
 export const dynamic = "force-dynamic";
 
@@ -8,7 +9,10 @@ export const dynamic = "force-dynamic";
  * comes back here, so pasting a key into .env.local is the whole job of adding a
  * provider - no code change.
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const access = await protectAiRoute(req, "models");
+  if ("response" in access) return access.response;
+
   const providers = listProviders();
   const available = providers.filter((provider) => provider.available);
 

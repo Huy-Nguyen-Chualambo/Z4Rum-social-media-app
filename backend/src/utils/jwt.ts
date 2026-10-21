@@ -1,16 +1,24 @@
 import jwt from "jsonwebtoken";
 import { Request, Response, NextFunction } from "express";
 
-const JWT_SECRET = process.env.JWT_SECRET ?? "z4rum_secret_dev";
+const JWT_SECRET: string = (() => {
+  const value = process.env.JWT_SECRET;
+  if (!value) throw new Error("JWT_SECRET is required");
+  return value;
+})();
 
 export type JwtPayload = { id: string };
 
 export function signToken(payload: JwtPayload, expiresIn: string = "7d") {
-  return jwt.sign(payload, JWT_SECRET as string, { expiresIn: expiresIn as any });
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: expiresIn as jwt.SignOptions["expiresIn"] });
 }
 
 export function verifyToken(token: string): JwtPayload {
-  return jwt.verify(token, JWT_SECRET as string) as JwtPayload;
+  const decoded = jwt.verify(token, JWT_SECRET);
+  if (typeof decoded === "string" || typeof decoded.id !== "string") {
+    throw new Error("Invalid token payload");
+  }
+  return { id: decoded.id };
 }
 
 

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../../utils/prisma";
 import { authMiddleware } from "../../utils/jwt";
+import { nonEmptyString } from "../../utils/validation";
 
 const router = Router();
 
@@ -54,10 +55,10 @@ router.get("/:userId", async (req, res) => {
 router.post("/:userId", async (req, res) => {
   const senderId = (req as any).userId as string;
   const receiverId = req.params.userId;
-  const { content } = req.body as { content: string };
-  if (!content?.trim()) return res.status(400).json({ error: "Content required" });
+  const content = nonEmptyString(req.body?.content, 4000);
+  if (!content) return res.status(400).json({ error: "Nội dung phải có từ 1 đến 4000 ký tự", code: "INVALID_INPUT" });
   const message = await prisma.message.create({
-    data: { content: content.trim(), senderId, receiverId },
+    data: { content, senderId, receiverId },
   });
   res.json(message);
 });

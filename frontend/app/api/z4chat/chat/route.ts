@@ -8,6 +8,7 @@ import {
 import { buildSystemPrompt } from "@/lib/z4chat/prompt";
 import { callChat, streamDeltas, type CallResult, type ChatMessage } from "@/lib/z4chat/providers";
 import { normalizeContext, providerErrorResponse, RECENT_REPLIES } from "@/lib/z4chat/request";
+import { bodyErrorResponse, protectAiRoute, readLimitedJson } from "@/lib/z4chat/routeSecurity";
 
 export const dynamic = "force-dynamic";
 
@@ -21,11 +22,14 @@ export const dynamic = "force-dynamic";
  * that one is a suggestion, not a silent correction.
  */
 export async function POST(req: NextRequest) {
-  let body: any;
+  const access = await protectAiRoute(req, "chat");
+  if ("response" in access) return access.response;
+
+  let body: unknown;
   try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Body không phải JSON" }, { status: 400 });
+    body = await readLimitedJson(req);
+  } catch (error) {
+    return bodyErrorResponse(error);
   }
 
   const ctx = normalizeContext(body);
@@ -34,7 +38,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Chưa có nội dung để trả lời" }, { status: 400 });
   }
 
-  const turn = Number(body?.turn) || ctx.history.length;
+  const turnValue = body && typeof body === "object" ? (body as Record<string, unknown>).turn : undefined;
+  const turn = Number(turnValue) || ctx.history.length;
 
   const recentReplies = ctx.history
     .filter((item) => item.role === "assistant")

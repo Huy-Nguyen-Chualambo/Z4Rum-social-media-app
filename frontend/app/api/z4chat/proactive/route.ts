@@ -3,6 +3,7 @@ import { extractBannedOpeners } from "@/lib/z4chat/antiRepeat";
 import { buildProactivePrompt } from "@/lib/z4chat/prompt";
 import { chatText } from "@/lib/z4chat/providers";
 import { normalizeContext, providerErrorResponse, RECENT_REPLIES } from "@/lib/z4chat/request";
+import { bodyErrorResponse, protectAiRoute, readLimitedJson } from "@/lib/z4chat/routeSecurity";
 
 export const dynamic = "force-dynamic";
 
@@ -16,17 +17,21 @@ export const dynamic = "force-dynamic";
  * rather than a generic greeting.
  */
 export async function POST(req: NextRequest) {
-  let body: any;
+  const access = await protectAiRoute(req, "proactive");
+  if ("response" in access) return access.response;
+
+  let body: unknown;
   try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Body không phải JSON" }, { status: 400 });
+    body = await readLimitedJson(req);
+  } catch (error) {
+    return bodyErrorResponse(error);
   }
 
   const ctx = normalizeContext(body);
   if (!ctx) return NextResponse.json({ error: "Thiếu thông tin nhân vật" }, { status: 400 });
 
-  const slotPrompt = (body?.slotPrompt || "").trim().slice(0, 1000);
+  const rawSlot = body && typeof body === "object" ? (body as Record<string, unknown>).slotPrompt : undefined;
+  const slotPrompt = (typeof rawSlot === "string" ? rawSlot : "").trim().slice(0, 1000);
   if (!slotPrompt) return NextResponse.json({ error: "Thiếu ngữ cảnh thời gian" }, { status: 400 });
 
   const bannedOpeners = extractBannedOpeners(

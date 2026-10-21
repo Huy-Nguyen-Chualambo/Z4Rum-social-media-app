@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { SUMMARIZE_SYSTEM_PROMPT } from "@/lib/z4chat/prompt";
 import { chatText } from "@/lib/z4chat/providers";
 import { parseJsonReply, providerErrorResponse } from "@/lib/z4chat/request";
+import { bodyErrorResponse, protectAiRoute, readLimitedJson } from "@/lib/z4chat/routeSecurity";
 
 export const dynamic = "force-dynamic";
 
@@ -21,11 +22,14 @@ type SummarizeBody = {
  * verbatim window; the result is persisted through the Express backend.
  */
 export async function POST(req: NextRequest) {
+  const access = await protectAiRoute(req, "summarize");
+  if ("response" in access) return access.response;
+
   let body: SummarizeBody;
   try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Body không phải JSON" }, { status: 400 });
+    body = (await readLimitedJson(req)) as SummarizeBody;
+  } catch (error) {
+    return bodyErrorResponse(error);
   }
 
   const transcript = (Array.isArray(body.messages) ? body.messages : [])

@@ -26,18 +26,13 @@ export function initSocket(io: Server, prisma: PrismaClient) {
     // Join personal room for direct messages
     socket.join(`user:${userId}`);
 
-    socket.on("auth:handshake", ({ token }) => {
+    socket.on("match:join", async (payload: unknown) => {
       try {
-        const decoded = verifyToken(token);
-        (socket as any).userId = decoded.id;
-        socket.join(`user:${decoded.id}`);
-      } catch {
-        socket.emit("error", { code: "UNAUTHORIZED", message: "Invalid token" });
-      }
-    });
-
-    socket.on("match:join", async ({ mode = "normal" }: { mode?: "normal" | "opposite" }) => {
-      try {
+        const requestedMode = objectPayload(payload).mode;
+        const mode = requestedMode || "normal";
+        if (mode !== "normal" && mode !== "opposite") {
+          return socket.emit("error", { code: "INVALID_INPUT", message: "Invalid match mode" });
+        }
         userMatchMode.set(userId, mode);
         const session = await matchService.join(userId, mode);
         if (session) {
@@ -78,14 +73,25 @@ export function initSocket(io: Server, prisma: PrismaClient) {
     });
 
     socket.on("match:leave", async () => {
-      const mode = userMatchMode.get(userId) || "normal";
-      await matchService.leave(userId, mode);
-      userMatchMode.delete(userId);
+      try {
+        const mode = userMatchMode.get(userId) || "normal";
+        await matchService.leave(userId, mode);
+        userMatchMode.delete(userId);
+      } catch {
+        socket.emit("error", { code: "MATCH_ERROR", message: "Could not leave queue" });
+      }
     });
 
-    socket.on("message:send", async ({ sessionId, from, content }) => {
+    socket.on("message:send", async (payload: unknown) => {
+      const { sessionId, content } = objectPayload(payload);
+      if (!sessionId || !content?.trim() || content.length > 4000) {
+        return socket.emit("error", { code: "INVALID_INPUT", message: "Invalid message" });
+      }
+      const session = await activeMemberSession(prisma, sessionId, userId);
+      if (!session) return socket.emit("error", { code: "FORBIDDEN", message: "Session not found" });
+      socket.join(`session:${sessionId}`);
       const message = await prisma.message.create({
-        data: { content, senderId: from, sessionId },
+        data: { content: content.trim(), senderId: userId, sessionId },
       });
       io.to(`session:${sessionId}`).emit("message:receive", {
         id: message.id,
@@ -96,19 +102,33 @@ export function initSocket(io: Server, prisma: PrismaClient) {
       });
     });
 
-    socket.on("session:end", async ({ sessionId, by, reason }) => {
+    socket.on("session:end", async (payload: unknown) => {
+      const { sessionId, reason } = objectPayload(payload);
+      if (!sessionId || !(await activeMemberSession(prisma, sessionId, userId))) {
+        return socket.emit("error", { code: "FORBIDDEN", message: "Session not found" });
+      }
       await matchService.end(sessionId);
-      io.to(`session:${sessionId}`).emit("session:ended", { sessionId, by, reason });
+      io.to(`session:${sessionId}`).emit("session:ended", { sessionId, by: userId, reason: reason?.slice(0, 200) });
     });
 
-    socket.on("session:report", async ({ sessionId, offenderId, reason }) => {
+    socket.on("session:report", async (payload: unknown) => {
+      const { sessionId, offenderId, reason } = objectPayload(payload);
+      const session = sessionId ? await activeMemberSession(prisma, sessionId, userId) : null;
+      if (!session || !offenderId || ![session.userAId, session.userBId].includes(offenderId) || offenderId === userId) {
+        return socket.emit("error", { code: "INVALID_INPUT", message: "Invalid report" });
+      }
       // For v1: log to console; extend with Report model later
-      console.log("Report:", { sessionId, offenderId, reason });
+      console.log("Report:", { sessionId, reporterId: userId, offenderId, reason: reason?.slice(0, 500) });
     });
 
     // Direct messages (DM)
-    socket.on("dm:send", async ({ to, content }: { to: string; content: string }) => {
-      if (!content?.trim()) return;
+    socket.on("dm:send", async (payload: unknown) => {
+      const { to, content } = objectPayload(payload);
+      if (!to || to === userId || !content?.trim() || content.length > 4000) {
+        return socket.emit("error", { code: "INVALID_INPUT", message: "Invalid direct message" });
+      }
+      const receiver = await prisma.user.findUnique({ where: { id: to }, select: { id: true } });
+      if (!receiver) return socket.emit("error", { code: "NOT_FOUND", message: "User not found" });
       const message = await prisma.message.create({ data: { content: content.trim(), senderId: userId, receiverId: to } });
       // emit to both parties
       io.to(`user:${to}`).emit("dm:receive", message);
@@ -123,5 +143,24 @@ export function initSocket(io: Server, prisma: PrismaClient) {
         userMatchMode.delete(userId);
       }
     });
+  });
+}
+
+function objectPayload(value: unknown): Record<string, string | undefined> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  const input = value as Record<string, unknown>;
+  return Object.fromEntries(
+    Object.entries(input).map(([key, item]) => [key, typeof item === "string" ? item : undefined])
+  );
+}
+
+function activeMemberSession(prisma: PrismaClient, sessionId: string, userId: string) {
+  return prisma.matchSession.findFirst({
+    where: {
+      id: sessionId,
+      status: "active",
+      OR: [{ userAId: userId }, { userBId: userId }],
+    },
+    select: { id: true, userAId: true, userBId: true },
   });
 }

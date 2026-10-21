@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { buildGenerateSystemPrompt } from "@/lib/z4chat/prompt";
 import { chatText } from "@/lib/z4chat/providers";
 import { parseJsonReply, providerErrorResponse } from "@/lib/z4chat/request";
+import { bodyErrorResponse, protectAiRoute, readLimitedJson } from "@/lib/z4chat/routeSecurity";
 
 export const dynamic = "force-dynamic";
 
@@ -34,11 +35,14 @@ const STORY_KEYS = [
  * blank-page problem, which is where most people give up on making a character.
  */
 export async function POST(req: NextRequest) {
+  const access = await protectAiRoute(req, "generate");
+  if ("response" in access) return access.response;
+
   let body: { kind?: string; brief?: string; provider?: string; model?: string };
   try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Body không phải JSON" }, { status: 400 });
+    body = (await readLimitedJson(req)) as typeof body;
+  } catch (error) {
+    return bodyErrorResponse(error);
   }
 
   const kind = body.kind === "story" ? "story" : "character";
