@@ -270,7 +270,7 @@ export default function HomePage() {
     setCreating(true);
     try {
       const created = await postApi.create({ content: newContent.trim(), imageUrl: newImageUrl.trim() || undefined });
-      setItems(prev => [created as any, ...prev]);
+      setItems(prev => [created, ...prev]);
       setNewContent("");
       setNewImageUrl("");
       setIsEmojiPickerOpen(false);

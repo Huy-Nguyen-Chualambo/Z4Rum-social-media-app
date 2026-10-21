@@ -14,7 +14,13 @@ router.post("/", async (req, res) => {
   const { content, imageUrl } = req.body as { content: string; imageUrl?: string };
   const contentError = validatePostContent(content);
   if (contentError) return res.status(400).json({ error: contentError });
-  const post = await prisma.post.create({ data: { content, imageUrl, authorId: userId } });
+  const post = await prisma.post.create({
+    data: { content, imageUrl, authorId: userId },
+    include: {
+      author: { select: { id: true, username: true, avatarUrl: true } },
+      _count: { select: { likes: true, comments: true } },
+    },
+  });
   res.json(post);
 });
 
@@ -50,7 +56,13 @@ router.get("/", async (req, res) => {
 });
 
 router.get("/:id", async (req, res) => {
-  const post = await prisma.post.findUnique({ where: { id: req.params.id } });
+  const post = await prisma.post.findUnique({
+    where: { id: req.params.id },
+    include: {
+      author: { select: { id: true, username: true, avatarUrl: true } },
+      _count: { select: { likes: true, comments: true } },
+    },
+  });
   if (!post) return res.status(404).json({ error: "Not found" });
   res.json(post);
 });
