@@ -270,7 +270,20 @@ export default function HomePage() {
     setCreating(true);
     try {
       const created = await postApi.create({ content: newContent.trim(), imageUrl: newImageUrl.trim() || undefined });
-      setItems(prev => [created, ...prev]);
+      // Keep the optimistic render safe while frontend/backend deployments roll
+      // out independently. Older API instances returned no nested author.
+      const displayPost: FeedPost = created.author
+        ? created
+        : {
+            ...created,
+            author: {
+              id: user?.id || "",
+              username: user?.username || "Bạn",
+              avatarUrl: user?.avatarUrl,
+            },
+            _count: created._count || { likes: 0, comments: 0 },
+          };
+      setItems(prev => [displayPost, ...prev]);
       setNewContent("");
       setNewImageUrl("");
       setIsEmojiPickerOpen(false);
