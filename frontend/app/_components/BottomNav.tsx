@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Search, MessageCircle, Heart, User, Plus, Vote, Sparkles, Menu, LogIn } from "lucide-react";
+import { Home, Search, MessageCircle, Heart, User, Plus, Vote, Sparkles, Menu, LogIn, Globe } from "lucide-react";
 import { useSyncExternalStore, useState } from "react";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useZ4chatStore } from "@/lib/store/useZ4chatStore";
@@ -15,6 +15,7 @@ const items = [
   { name: "Chat lạ", icon: Heart, href: "/match" },
 ];
 const moreItems = [
+  { name: "Z4world", icon: Globe, href: "/z4world" },
   { name: "Tìm kiếm", icon: Search, href: "/explore" },
   { name: "Bình chọn – Thảo luận", icon: Vote, href: "/vote" },
   { name: "Hồ sơ của tôi", icon: User, href: "/profile" },

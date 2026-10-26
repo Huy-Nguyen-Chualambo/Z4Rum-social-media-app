@@ -4,6 +4,9 @@
   "description": "",
   "main": "dist/server.js",
   "scripts": {
+    "test": "node --import tsx --test tests/*.test.ts",
+    "test:world:fixture": "node --import tsx tests/world.fixture.ts",
+    "test:world:browser": "node tests/world.browser.cjs",
     "dev": "tsx watch src/server.ts",
     "build": "npx prisma generate && tsc",
     "start": "node dist/server.js",

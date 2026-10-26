@@ -11,11 +11,13 @@ import {
   User,
   Vote,
   Sparkles,
+  Globe,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import PostModal from "./PostModal";
 
 const navItems = [
+  { name: "Z4world", icon: Globe, href: "/z4world" },
   { name: "Trang chủ", icon: HomeIcon, href: "/home" },
   { name: "Tìm kiếm", icon: Search, href: "/explore" },
   { name: "Nhắn tin", icon: MessageCircle, href: "/messages" },

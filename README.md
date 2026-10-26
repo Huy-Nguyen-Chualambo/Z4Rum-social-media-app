@@ -6,6 +6,20 @@ This repository contains both frontend and backend code in a monorepo structure.
 
 ## Demo Scope
 
+### Z4world
+
+Visit `/z4world` after signing in to enter a shared 2D neighborhood. Rooms hold
+up to 20 people, with keyboard/touch movement, server-checked collision,
+proximity chat, emotes, café seating and private table chat. Share the room link
+to meet friends, then walk to Game Club for multiplayer quiz or disappearing
+floor. Scores and positions are authoritative on the server.
+
+This first version uses one backend process and ephemeral room/game state.
+It needs no database migration. See [Z4WORLD_PLAN.md](./Z4WORLD_PLAN.md) for
+controls, deployment constraints, automated checks and later milestones.
+
+### Social platform
+
 Core user flows implemented:
 
 - Authentication with JWT (register, login, current user)
