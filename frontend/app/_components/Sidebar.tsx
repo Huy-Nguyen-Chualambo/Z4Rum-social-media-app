@@ -17,12 +17,12 @@ import { useEffect, useState } from "react";
 import PostModal from "./PostModal";
 
 const navItems = [
-  { name: "Z4world", icon: Globe, href: "/z4world" },
   { name: "Trang chủ", icon: HomeIcon, href: "/home" },
   { name: "Tìm kiếm", icon: Search, href: "/explore" },
   { name: "Nhắn tin", icon: MessageCircle, href: "/messages" },
   { name: "Chat với người lạ", icon: Heart, href: "/match" },
   { name: "Z4chat", icon: Sparkles, href: "/z4chat" },
+  { name: "Z4world", icon: Globe, href: "/z4world" },
   { name: "Bình chọn - Thảo luận", icon: Vote, href: "/vote" },
   { name: "Hồ sơ của tôi", icon: User, href: "/profile" },
 ];

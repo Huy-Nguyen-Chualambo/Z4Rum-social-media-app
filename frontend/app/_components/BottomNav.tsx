@@ -11,11 +11,11 @@ const subscribe = () => () => {};
 const items = [
   { name: "Trang chủ", icon: Home, href: "/home" },
   { name: "Z4chat", icon: Sparkles, href: "/z4chat" },
-  { name: "Tin nhắn", icon: MessageCircle, href: "/messages" },
+  { name: "Z4world", icon: Globe, href: "/z4world" },
   { name: "Chat lạ", icon: Heart, href: "/match" },
 ];
 const moreItems = [
-  { name: "Z4world", icon: Globe, href: "/z4world" },
+  { name: "Tin nhắn", icon: MessageCircle, href: "/messages" },
   { name: "Tìm kiếm", icon: Search, href: "/explore" },
   { name: "Bình chọn – Thảo luận", icon: Vote, href: "/vote" },
   { name: "Hồ sơ của tôi", icon: User, href: "/profile" },
