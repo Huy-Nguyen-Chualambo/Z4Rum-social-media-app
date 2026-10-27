@@ -6,6 +6,7 @@ const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
   {
+    files: ["**/*.{js,jsx,ts,tsx}"],
     // The existing UI predates the stricter React 19 rules. Keep these visible
     // while allowing CI to focus on correctness/security failures.
     rules: {

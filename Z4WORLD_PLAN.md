@@ -32,6 +32,10 @@
 The initial version uses original SVG/CSS map artwork, existing accounts and
 Socket.IO. Live rooms and scores are ephemeral; no database migration is needed.
 
+The subsequent isometric art pass is tracked separately in
+[Z4WORLD_ART_PLAN.md](./Z4WORLD_ART_PLAN.md), including generated assets,
+critical review, corrections and visual-approval status.
+
 ## Run and verify
 
 Run the existing backend/frontend development commands and open `/z4world`.

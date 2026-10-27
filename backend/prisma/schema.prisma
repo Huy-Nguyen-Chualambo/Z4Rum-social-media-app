@@ -38,6 +38,16 @@ model User {
   z4Characters     Character[] @relation("Z4Characters")
   z4Stories        Story[]     @relation("Z4Stories")
   z4Sessions       ChatSession[] @relation("Z4Sessions")
+  worldProfile     WorldProfile?
+}
+
+model WorldProfile {
+  userId    String   @id
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  character String   @default("peach")
+  hair      String   @default("original")
+  outfit    String   @default("original")
+  updatedAt DateTime @updatedAt
 }
 
 model Post {

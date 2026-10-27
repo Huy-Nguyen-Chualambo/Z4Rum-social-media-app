@@ -1,0 +1,21 @@
+.frame { overflow: hidden; border: 1px solid #cfc7ac; border-radius: 22px; background: #f2eddf; box-shadow: 0 14px 40px #0002; }
+.sceneTop { display: flex; align-items: center; gap: 8px; padding: 14px 18px; border-bottom: 1px solid #ded7c2; color: #596a4e; font-size: 10px; font-weight: 750; letter-spacing: 2px; }
+.sceneTopRight { margin-left: auto; font-weight: 400; letter-spacing: 0; color: #8b8a77; }
+.liveDot, .captionDot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #89a677; }
+.scene { display: block; width: 100%; aspect-ratio: 1760 / 1060; }
+.prop { transition: opacity 180ms ease; }
+.caption { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 13px 18px; border-top: 1px solid #ded7c2; color: #7e806b; font-size: 11px; }
+.captionDot { margin-right: 6px; }
+.bubble { animation: appear 140ms ease-out; }
+.ripple { animation: ripple 2400ms ease-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes appear { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes ripple { from { opacity: .65; transform: scale(.75); } to { opacity: 0; transform: scale(1.1); } }
+@media (max-width: 639px) {
+  .sceneTop { padding: 11px 12px; font-size: 9px; letter-spacing: 1px; }
+  .sceneTopRight { display: none; }
+  .scene { min-height: 270px; }
+  .follow { aspect-ratio: 880 / 740; min-height: 350px; }
+  .caption { padding: 10px 12px; font-size: 10px; }
+  .caption > span:last-child { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .bubble, .ripple { animation: none; } .prop { transition: none; } .scene [data-player] { transition: none !important; } }

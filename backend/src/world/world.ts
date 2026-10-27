@@ -1,10 +1,12 @@
 import type { Server, Socket } from 'socket.io';
 import type { PrismaClient } from '@prisma/client';
-import { QUESTIONS, step, TABLES } from './rules';
+import { QUESTIONS, step, TABLES, SIZE, BLOCKS, TREE_TRUNKS } from './rules';
 import { randomUUID } from 'node:crypto';
 import { FloorGame } from './floor';
+import { defaultAppearance, onAppearanceSaved, type Appearance } from './appearance';
+import { prismaProfileStore } from './profile.store';
 
-type Player = { id: string; username: string; x: number; y: number; color: string; table?: string };
+type Player = { id: string; username: string; x: number; y: number; color: string; table?: string; facing?:string; appearance: Appearance };
 type Member = { socket: Socket; player: Player; moved: number; chatted: number; emoted: number };
 type Game = { phase: 'waiting' | 'question' | 'results'; players: Set<string>; scores: Record<string, number>; answered: Set<string>; index: number; round: string; endsAt: number; timer?: ReturnType<typeof setTimeout> };
 type Room = { id: string; members: Map<string, Member>; game: Game; floor: FloorGame };
@@ -15,6 +17,15 @@ export function initWorld(io: Server, prisma: PrismaClient) {
   const rooms = new Map<string, Room>();
   const memberships = new Map<string, Room>();
   const pending = new Map<string, symbol>();
+  const profiles = prisma.worldProfile ? prismaProfileStore(prisma) : null;
+  const unsubscribe = onAppearanceSaved((userId, appearance) => {
+    for (const room of rooms.values()) for (const [id, member] of room.members) {
+      if (member.player.id !== userId) continue;
+      member.player.appearance = appearance;
+      io.to(room.id).emit('world:appearance', { id, appearance });
+    }
+  });
+  io.engine?.once('close', unsubscribe);
   const gameState = (room: Room) => {
     const g = room.game;
     const q = QUESTIONS[g.index];
@@ -63,6 +74,7 @@ export function initWorld(io: Server, prisma: PrismaClient) {
       try {
         const userId = (socket as Socket & { userId: string }).userId;
         const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, username: true } });
+        const appearance = user ? await profiles?.read(userId) ?? defaultAppearance(userId) : null;
         if (!socket.connected || pending.get(socket.id) !== ticket) return;
         if (!user) { socket.emit('world:error', 'Tài khoản không còn tồn tại. Hãy đăng nhập lại.'); return; }
         // One world presence per account, including multiple browser tabs.
@@ -83,12 +95,14 @@ export function initWorld(io: Server, prisma: PrismaClient) {
           room = { id, members: new Map(), game: { phase: 'waiting', players: new Set(), scores: {}, answered: new Set(), index: -1, round: '', endsAt: 0 }, floor: new FloorGame(state => io.to(id).emit('world:floor', state)) };
           rooms.set(room.id, room);
         }
-        const player: Player = { ...user, x: 350, y: 440, color: colors[room.members.size % colors.length] };
+        const slots = Array.from({ length: 20 }, (_, i) => ({ x: 350+(i%5)*34, y: 440+Math.floor(i/5)*32 }));
+        const spawn = slots.find(p => [...room.members.values()].every(m => Math.hypot(m.player.x-p.x, m.player.y-p.y) > 26)) ?? slots[room.members.size];
+        const player: Player = { ...user, ...spawn, appearance: appearance!, color: colors[room.members.size % colors.length] };
         room.members.set(socket.id, { socket, player, moved: 0, chatted: 0, emoted: 0 });
         memberships.set(socket.id, room);
         await socket.join(room.id);
         if (memberships.get(socket.id) !== room) return;
-        socket.emit('world:snapshot', { roomId: room.id, self: socket.id, players: Object.fromEntries([...room.members].map(([id, m]) => [id, m.player])), game: gameState(room), floor: room.floor.state() });
+        socket.emit('world:snapshot', { roomId: room.id, self: socket.id, geometry:{...SIZE,blocks:BLOCKS,trunks:TREE_TRUNKS}, players: Object.fromEntries([...room.members].map(([id, m]) => [id, m.player])), game: gameState(room), floor: room.floor.state() });
         socket.to(room.id).emit('world:joined', { id: socket.id, player });
       } catch {
         if (pending.get(socket.id) === ticket) {
@@ -136,7 +150,7 @@ export function initWorld(io: Server, prisma: PrismaClient) {
       const seated = [...room.members.values()].filter(p => p.player.table === table.id);
       if (seated.length >= 2) return socket.emit('world:notice', 'Bàn đã đủ hai người.');
       const x = seated.some(p => p.player.x < table.x) ? table.x + 40 : table.x - 40;
-      Object.assign(m.player, { table: table.id, x, y: table.y });
+      Object.assign(m.player, { table: table.id, x, y: table.y, facing:x<table.x?'front-right':'back-left' });
       io.to(room.id).emit('world:joined', { id: socket.id, player: m.player });
     });
     socket.on('world:stand', () => {

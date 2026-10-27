@@ -44,18 +44,33 @@ const event = (socket, name, trigger) => new Promise((resolve, reject) => {
 
     async function walk(page, username, key, coordinate, target, sign) {
       await page.locator('h1').click();
-      await page.keyboard.down(key);
-      try {
-        await page.waitForFunction(({ username, coordinate, target, sign }) => {
-          const p = document.querySelector(`[data-username="${username}"]`);
-          return p && Number(p.getAttribute(`data-${coordinate}`))*sign >= target*sign;
-        }, { username, coordinate, target, sign }, { timeout: 8000, polling: 20 });
-      } finally { await page.keyboard.up(key); }
+      const player = page.locator(`[data-username="${username}"]`);
+      const destination = { x: Number(await player.getAttribute('data-x')), y: Number(await player.getAttribute('data-y')) };
+      destination[coordinate] = target;
+      const started = Date.now();
+      for (;;) {
+        const current = { x: Number(await player.getAttribute('data-x')), y: Number(await player.getAttribute('data-y')) };
+        const dx = destination.x-current.x, dy = destination.y-current.y;
+        if (Math.hypot(dx,dy) < 15) break;
+        if (Date.now()-started > 14000) throw new Error(`Could not walk ${username} to ${JSON.stringify(destination)}`);
+        const sx = dx-dy, sy = (dx+dy)*.5;
+        const pressed = [];
+        if (Math.abs(sx) > Math.abs(sy)*.45) pressed.push(sx > 0 ? 'ArrowRight' : 'ArrowLeft');
+        if (Math.abs(sy) > Math.abs(sx)*.45) pressed.push(sy > 0 ? 'ArrowDown' : 'ArrowUp');
+        for (const k of pressed) await page.keyboard.down(k);
+        await delay(Math.hypot(dx,dy) < 45 ? 70 : 150);
+        for (const k of pressed) await page.keyboard.up(k);
+        await delay(75);
+      }
       await delay(100);
     }
     await walk(a.page, 'Tester0', 'ArrowLeft', 'x', 180, -1);
     await a.page.getByRole('button', { name: 'Ngồi bàn cà phê' }).click();
     await a.page.getByRole('button', { name: 'Đứng dậy' }).waitFor();
+    assert.equal(await a.page.locator('[data-username="Tester0"] [data-animation]').getAttribute('data-animation'),'sit');
+    const seatedX=await a.page.locator('[data-username="Tester0"]').getAttribute('data-x');
+    await a.page.locator('h1').click();await a.page.keyboard.down('ArrowRight');await delay(200);await a.page.keyboard.up('ArrowRight');
+    assert.equal(await a.page.locator('[data-username="Tester0"]').getAttribute('data-x'),seatedX,'seated players cannot walk');
     await a.page.getByLabel('Kênh trò chuyện').selectOption('table');
     await send(a.page, 'Tin riêng chỉ tại bàn');
     await delay(350);
@@ -77,6 +92,7 @@ const event = (socket, name, trigger) => new Promise((resolve, reject) => {
     await send(a.page, 'Xa quá không nghe');
     // Both are close again; verify keyboard movement replicated.
     await b.page.getByRole('log').getByText('Xa quá không nghe', { exact: false }).waitFor();
+    for(const c of [a,b]) await c.page.getByRole('button',{name:'Vào Game Club',exact:true}).last().click();
     await a.page.getByRole('button', { name: 'Tham gia quiz', exact: true }).click();
     await a.page.getByRole('button', { name: 'Rời hàng đợi quiz' }).click();
     await a.page.getByRole('button', { name: 'Tham gia quiz', exact: true }).click();
@@ -106,7 +122,7 @@ const event = (socket, name, trigger) => new Promise((resolve, reject) => {
     await b.context.close();
     await a.page.waitForFunction(() => document.querySelectorAll('[data-player]').length === 1);
     const mobile = await open(1, true);
-    await mobile.page.getByRole('button', { name: 'Theo chân nhân vật' }).click();
+    await mobile.page.getByRole('button', { name: 'Xem toàn cảnh' }).click();
     const before = Number(await mobile.page.locator('[data-username="Tester1"]').getAttribute('data-x'));
     const arrow = mobile.page.getByRole('button', { name: 'Di chuyển →', exact: true });
     await arrow.scrollIntoViewIfNeeded();
@@ -140,6 +156,10 @@ const event = (socket, name, trigger) => new Promise((resolve, reject) => {
     assert.equal(Object.keys(snapshots[19].players).length, 20);
     assert.notEqual(snapshots[20].roomId, snapshots[19].roomId);
     assert.equal(Object.keys(snapshots[20].players).length, 1);
+    const moving=new Set();const delivery=value=>moving.add(value.id);sockets[1].on('world:moved',delivery);
+    for(let tick=0;tick<5;tick++){for(const client of sockets.slice(1,21))client.emit('world:move',{dx:1,dy:0});await delay(65);}
+    await delay(150);sockets[1].off('world:moved',delivery);assert.equal(moving.size,20);
+    console.log('PASS movement delivery from all 20 simultaneous room members');
     const invitedAuth = await login(21);
     const invited = io(api, { auth: { token: invitedAuth.token }, reconnection: false }); sockets.push(invited);
     await event(invited, 'connect');

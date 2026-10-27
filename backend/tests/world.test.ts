@@ -9,6 +9,7 @@ import { FloorGame } from '../src/world/floor';
 test('movement rejects boundaries, solids and keeps diagonal speed constant', () => {
   assert.equal(walkable(0, 0), false);
   assert.equal(walkable(500, 350), false);
+  assert.equal(walkable(240, 540), false);
   assert.equal(walkable(NaN, 300), false);
   assert.deepEqual(step(430, 350, 1, 0), { x: 430, y: 350 });
   const corner = step(425, 285, 1, 1);

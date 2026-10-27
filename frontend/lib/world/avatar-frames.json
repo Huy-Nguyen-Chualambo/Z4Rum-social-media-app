@@ -1,0 +1,574 @@
+{
+  "avatar-peach": [
+    {
+      "x": 0,
+      "y": 0,
+      "width": 640,
+      "height": 640,
+      "centerX": 336.5,
+      "footY": 628,
+      "topY": 68,
+      "bodyHeight": 560
+    },
+    {
+      "x": 640,
+      "y": 0,
+      "width": 640,
+      "height": 640,
+      "centerX": 944.5,
+      "footY": 629,
+      "topY": 70,
+      "bodyHeight": 559
+    },
+    {
+      "x": 0,
+      "y": 640,
+      "width": 640,
+      "height": 640,
+      "centerX": 344.5,
+      "footY": 1220,
+      "topY": 697,
+      "bodyHeight": 523
+    },
+    {
+      "x": 640,
+      "y": 640,
+      "width": 640,
+      "height": 640,
+      "centerX": 948,
+      "footY": 1220,
+      "topY": 700,
+      "bodyHeight": 520
+    }
+  ],
+  "avatar-lavender": [
+    {
+      "x": 0,
+      "y": 0,
+      "width": 640,
+      "height": 640,
+      "centerX": 314,
+      "footY": 624,
+      "topY": 60,
+      "bodyHeight": 564
+    },
+    {
+      "x": 640,
+      "y": 0,
+      "width": 640,
+      "height": 640,
+      "centerX": 1015.5,
+      "footY": 626,
+      "topY": 64,
+      "bodyHeight": 562
+    },
+    {
+      "x": 0,
+      "y": 640,
+      "width": 640,
+      "height": 640,
+      "centerX": 312.5,
+      "footY": 1194,
+      "topY": 682,
+      "bodyHeight": 512
+    },
+    {
+      "x": 640,
+      "y": 640,
+      "width": 640,
+      "height": 640,
+      "centerX": 1005,
+      "footY": 1201,
+      "topY": 680,
+      "bodyHeight": 521
+    }
+  ],
+  "avatar-peach-walk": [
+    {
+      "x": 0,
+      "y": 0,
+      "width": 320,
+      "height": 320,
+      "centerX": 202.5,
+      "footY": 313,
+      "topY": 13,
+      "bodyHeight": 300
+    },
+    {
+      "x": 320,
+      "y": 0,
+      "width": 320,
+      "height": 320,
+      "centerX": 508.5,
+      "footY": 312,
+      "topY": 13,
+      "bodyHeight": 299
+    },
+    {
+      "x": 640,
+      "y": 0,
+      "width": 320,
+      "height": 320,
+      "centerX": 792,
+      "footY": 312,
+      "topY": 13,
+      "bodyHeight": 299
+    },
+    {
+      "x": 960,
+      "y": 0,
+      "width": 320,
+      "height": 320,
+      "centerX": 1087,
+      "footY": 311,
+      "topY": 11,
+      "bodyHeight": 300
+    },
+    {
+      "x": 0,
+      "y": 320,
+      "width": 320,
+      "height": 320,
+      "centerX": 215,
+      "footY": 628,
+      "topY": 327,
+      "bodyHeight": 301
+    },
+    {
+      "x": 320,
+      "y": 320,
+      "width": 320,
+      "height": 320,
+      "centerX": 503.5,
+      "footY": 627,
+      "topY": 326,
+      "bodyHeight": 301
+    },
+    {
+      "x": 640,
+      "y": 320,
+      "width": 320,
+      "height": 320,
+      "centerX": 804,
+      "footY": 630,
+      "topY": 326,
+      "bodyHeight": 304
+    },
+    {
+      "x": 960,
+      "y": 320,
+      "width": 320,
+      "height": 320,
+      "centerX": 1095,
+      "footY": 628,
+      "topY": 325,
+      "bodyHeight": 303
+    },
+    {
+      "x": 0,
+      "y": 640,
+      "width": 320,
+      "height": 320,
+      "centerX": 211.5,
+      "footY": 943,
+      "topY": 641,
+      "bodyHeight": 302
+    },
+    {
+      "x": 320,
+      "y": 640,
+      "width": 320,
+      "height": 320,
+      "centerX": 516,
+      "footY": 945,
+      "topY": 644,
+      "bodyHeight": 301
+    },
+    {
+      "x": 640,
+      "y": 640,
+      "width": 320,
+      "height": 320,
+      "centerX": 814,
+      "footY": 944,
+      "topY": 641,
+      "bodyHeight": 303
+    },
+    {
+      "x": 960,
+      "y": 640,
+      "width": 320,
+      "height": 320,
+      "centerX": 1115,
+      "footY": 945,
+      "topY": 642,
+      "bodyHeight": 303
+    },
+    {
+      "x": 0,
+      "y": 960,
+      "width": 320,
+      "height": 320,
+      "centerX": 205.5,
+      "footY": 1263,
+      "topY": 960,
+      "bodyHeight": 303
+    },
+    {
+      "x": 320,
+      "y": 960,
+      "width": 320,
+      "height": 320,
+      "centerX": 510.5,
+      "footY": 1261,
+      "topY": 960,
+      "bodyHeight": 301
+    },
+    {
+      "x": 640,
+      "y": 960,
+      "width": 320,
+      "height": 320,
+      "centerX": 801.5,
+      "footY": 1262,
+      "topY": 960,
+      "bodyHeight": 302
+    },
+    {
+      "x": 960,
+      "y": 960,
+      "width": 320,
+      "height": 320,
+      "centerX": 1104,
+      "footY": 1262,
+      "topY": 960,
+      "bodyHeight": 302
+    }
+  ],
+  "avatar-lavender-walk": [
+    {
+      "x": 0,
+      "y": 0,
+      "width": 320,
+      "height": 320,
+      "centerX": 211.5,
+      "footY": 319,
+      "topY": 18,
+      "bodyHeight": 301
+    },
+    {
+      "x": 320,
+      "y": 0,
+      "width": 320,
+      "height": 320,
+      "centerX": 507,
+      "footY": 319,
+      "topY": 18,
+      "bodyHeight": 301
+    },
+    {
+      "x": 640,
+      "y": 0,
+      "width": 320,
+      "height": 320,
+      "centerX": 789,
+      "footY": 319,
+      "topY": 19,
+      "bodyHeight": 300
+    },
+    {
+      "x": 960,
+      "y": 0,
+      "width": 320,
+      "height": 320,
+      "centerX": 1074.5,
+      "footY": 319,
+      "topY": 18,
+      "bodyHeight": 301
+    },
+    {
+      "x": 0,
+      "y": 320,
+      "width": 320,
+      "height": 320,
+      "centerX": 240,
+      "footY": 637,
+      "topY": 333,
+      "bodyHeight": 304
+    },
+    {
+      "x": 320,
+      "y": 320,
+      "width": 320,
+      "height": 320,
+      "centerX": 528,
+      "footY": 636,
+      "topY": 333,
+      "bodyHeight": 303
+    },
+    {
+      "x": 640,
+      "y": 320,
+      "width": 320,
+      "height": 320,
+      "centerX": 817.5,
+      "footY": 637,
+      "topY": 334,
+      "bodyHeight": 303
+    },
+    {
+      "x": 960,
+      "y": 320,
+      "width": 320,
+      "height": 320,
+      "centerX": 1114,
+      "footY": 636,
+      "topY": 334,
+      "bodyHeight": 302
+    },
+    {
+      "x": 0,
+      "y": 640,
+      "width": 320,
+      "height": 320,
+      "centerX": 229.5,
+      "footY": 939,
+      "topY": 645,
+      "bodyHeight": 294
+    },
+    {
+      "x": 320,
+      "y": 640,
+      "width": 320,
+      "height": 320,
+      "centerX": 518.5,
+      "footY": 940,
+      "topY": 647,
+      "bodyHeight": 293
+    },
+    {
+      "x": 640,
+      "y": 640,
+      "width": 320,
+      "height": 320,
+      "centerX": 808,
+      "footY": 941,
+      "topY": 647,
+      "bodyHeight": 294
+    },
+    {
+      "x": 960,
+      "y": 640,
+      "width": 320,
+      "height": 320,
+      "centerX": 1101.5,
+      "footY": 940,
+      "topY": 647,
+      "bodyHeight": 293
+    },
+    {
+      "x": 0,
+      "y": 960,
+      "width": 320,
+      "height": 320,
+      "centerX": 226.5,
+      "footY": 1255,
+      "topY": 960,
+      "bodyHeight": 295
+    },
+    {
+      "x": 320,
+      "y": 960,
+      "width": 320,
+      "height": 320,
+      "centerX": 528,
+      "footY": 1253,
+      "topY": 960,
+      "bodyHeight": 293
+    },
+    {
+      "x": 640,
+      "y": 960,
+      "width": 320,
+      "height": 320,
+      "centerX": 808.5,
+      "footY": 1255,
+      "topY": 960,
+      "bodyHeight": 295
+    },
+    {
+      "x": 960,
+      "y": 960,
+      "width": 320,
+      "height": 320,
+      "centerX": 1102,
+      "footY": 1256,
+      "topY": 960,
+      "bodyHeight": 296
+    }
+  ],
+  "avatar-peach-actions": [
+    {
+      "x": 0,
+      "y": 0,
+      "width": 320,
+      "height": 320,
+      "centerX": 154,
+      "footY": 313,
+      "topY": 13,
+      "bodyHeight": 300
+    },
+    {
+      "x": 320,
+      "y": 0,
+      "width": 320,
+      "height": 320,
+      "centerX": 538,
+      "footY": 313,
+      "topY": 11,
+      "bodyHeight": 302
+    },
+    {
+      "x": 640,
+      "y": 0,
+      "width": 320,
+      "height": 320,
+      "centerX": 757.5,
+      "footY": 294,
+      "topY": 15,
+      "bodyHeight": 279
+    },
+    {
+      "x": 960,
+      "y": 0,
+      "width": 320,
+      "height": 320,
+      "centerX": 1111.5,
+      "footY": 296,
+      "topY": 14,
+      "bodyHeight": 282
+    },
+    {
+      "x": 0,
+      "y": 320,
+      "width": 320,
+      "height": 320,
+      "centerX": 182.5,
+      "footY": 633,
+      "topY": 320,
+      "bodyHeight": 313
+    },
+    {
+      "x": 320,
+      "y": 320,
+      "width": 320,
+      "height": 320,
+      "centerX": 507,
+      "footY": 633,
+      "topY": 321,
+      "bodyHeight": 312
+    },
+    {
+      "x": 640,
+      "y": 320,
+      "width": 320,
+      "height": 320,
+      "centerX": 779,
+      "footY": 628,
+      "topY": 320,
+      "bodyHeight": 308
+    },
+    {
+      "x": 960,
+      "y": 320,
+      "width": 320,
+      "height": 320,
+      "centerX": 1090.5,
+      "footY": 628,
+      "topY": 320,
+      "bodyHeight": 308
+    }
+  ],
+  "avatar-lavender-actions": [
+    {
+      "x": 0,
+      "y": 0,
+      "width": 320,
+      "height": 320,
+      "centerX": 148.5,
+      "footY": 319,
+      "topY": 15,
+      "bodyHeight": 304
+    },
+    {
+      "x": 320,
+      "y": 0,
+      "width": 320,
+      "height": 320,
+      "centerX": 545,
+      "footY": 319,
+      "topY": 15,
+      "bodyHeight": 304
+    },
+    {
+      "x": 640,
+      "y": 0,
+      "width": 320,
+      "height": 320,
+      "centerX": 752.5,
+      "footY": 310,
+      "topY": 14,
+      "bodyHeight": 296
+    },
+    {
+      "x": 960,
+      "y": 0,
+      "width": 320,
+      "height": 320,
+      "centerX": 1143,
+      "footY": 309,
+      "topY": 19,
+      "bodyHeight": 290
+    },
+    {
+      "x": 0,
+      "y": 320,
+      "width": 320,
+      "height": 320,
+      "centerX": 165.5,
+      "footY": 627,
+      "topY": 324,
+      "bodyHeight": 303
+    },
+    {
+      "x": 320,
+      "y": 320,
+      "width": 320,
+      "height": 320,
+      "centerX": 517,
+      "footY": 626,
+      "topY": 325,
+      "bodyHeight": 301
+    },
+    {
+      "x": 640,
+      "y": 320,
+      "width": 320,
+      "height": 320,
+      "centerX": 786,
+      "footY": 625,
+      "topY": 331,
+      "bodyHeight": 294
+    },
+    {
+      "x": 960,
+      "y": 320,
+      "width": 320,
+      "height": 320,
+      "centerX": 1108.5,
+      "footY": 625,
+      "topY": 327,
+      "bodyHeight": 298
+    }
+  ]
+}
