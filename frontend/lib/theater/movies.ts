@@ -1,3 +1,5 @@
+import { fallbackQueries, isCloseEnough, rankMovies } from "./movieSearch";
+
 const CACHE_MS = 5 * 60_000;
 const TIMEOUT_MS = 10_000;
 const CHECKS_AT_ONCE = 4;
@@ -13,6 +15,32 @@ export const shelves = [
   { key: "anime", label: "Hoạt hình" },
 ] as const;
 export type ShelfKey = (typeof shelves)[number]["key"];
+// Slugs are the primary source's. Only genres safe to offer: 18+ is never listed.
+export const genres = [
+  ["hanh-dong", "Hành Động"],
+  ["tinh-cam", "Tình Cảm"],
+  ["hai-huoc", "Hài Hước"],
+  ["kinh-di", "Kinh Dị"],
+  ["vien-tuong", "Viễn Tưởng"],
+  ["tam-ly", "Tâm Lý"],
+  ["hinh-su", "Hình Sự"],
+  ["co-trang", "Cổ Trang"],
+  ["phieu-luu", "Phiêu Lưu"],
+  ["chien-tranh", "Chiến Tranh"],
+  ["gia-dinh", "Gia Đình"],
+] as const;
+export const countries = [
+  ["au-my", "Âu Mỹ"],
+  ["han-quoc", "Hàn Quốc"],
+  ["trung-quoc", "Trung Quốc"],
+  ["nhat-ban", "Nhật Bản"],
+  ["thai-lan", "Thái Lan"],
+  ["viet-nam", "Việt Nam"],
+  ["dai-loan", "Đài Loan"],
+  ["an-do", "Ấn Độ"],
+] as const;
+export const YEARS_BACK = 10;
+export type MovieFilter = { kind: "genre" | "country" | "year"; value: string };
 
 /** `stream` is a direct HLS link we can play and sync; `embed` is a third-party page. */
 export type Episode = {
@@ -274,6 +302,59 @@ export const searchMovies = (
       )
     : nguoncPage(`${NGUONC}/films/search?keyword=${query}&page=${at}`);
 };
+
+const phimapiFilter = { genre: "the-loai", country: "quoc-gia", year: "nam" };
+const nguoncFilter = {
+  genre: "the-loai",
+  country: "quoc-gia",
+  year: "nam-phat-hanh",
+};
+// Where the backup names the same list differently.
+const nguoncSlug: Record<string, string> = {
+  "hai-huoc": "phim-hai",
+  "vien-tuong": "khoa-hoc-vien-tuong",
+  "au-my": "my",
+};
+export const filterMovies = (
+  source: MovieSource,
+  { kind, value }: MovieFilter,
+  at: number,
+) => {
+  const id = encodeURIComponent(
+    source === "nguonc" ? (nguoncSlug[value] ?? value) : value,
+  );
+  return source === "phimapi"
+    ? phimapiPage(`${PHIMAPI}/v1/api/${phimapiFilter[kind]}/${id}?limit=24&page=${at}`)
+    : nguoncPage(`${NGUONC}/films/${nguoncFilter[kind]}/${id}?page=${at}`);
+};
+
+const FEW_RESULTS = 8;
+/** Best title first. When the first page finds little, shorter wording widens it. */
+export async function smartSearch(
+  source: MovieSource,
+  keyword: string,
+  at: number,
+): Promise<MoviePage> {
+  const result = await searchMovies(source, keyword, at);
+  if (at > 1) return result;
+  let movies = result.movies;
+  // The backup checks every film it lists, so widening there costs dozens of requests.
+  if (source === "phimapi" && movies.length < FEW_RESULTS) {
+    const wider = await Promise.allSettled(
+      fallbackQueries(keyword).map((query) => searchMovies(source, query, 1)),
+    );
+    const known = new Set(movies.map((movie) => movie.slug));
+    for (const outcome of wider) {
+      if (outcome.status !== "fulfilled") continue;
+      for (const movie of outcome.value.movies) {
+        if (known.has(movie.slug) || !isCloseEnough(movie, keyword)) continue;
+        known.add(movie.slug);
+        movies = [...movies, movie];
+      }
+    }
+  }
+  return { ...result, movies: rankMovies(movies, keyword) };
+}
 
 const same = (value: string) => value.normalize("NFC").toLowerCase().trim();
 function isSameFilm(a: MovieCard, b: MovieCard) {

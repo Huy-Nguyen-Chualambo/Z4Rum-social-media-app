@@ -4,7 +4,9 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { createRoom } from "@/lib/theater/roomSocket";
+import type { FilmChoice } from "@/lib/theater/types";
 import { watchPath } from "@/lib/theater/watchLink";
+import LibraryShelf from "./_components/LibraryShelf";
 import MovieBrowser, { quiet } from "./_components/MovieBrowser";
 import MovieDetail, { type EpisodePick } from "./_components/MovieDetail";
 import { usePickMovie } from "./_components/usePickMovie";
@@ -15,19 +17,21 @@ export default function TheaterPage() {
   const { movie, opening, notice, pick, clear } = usePickMovie();
   const [creating, setCreating] = useState(false);
   const [problem, setProblem] = useState("");
-  const watch = async (episode: EpisodePick) => {
-    if (!movie) return;
-    const film = {
-      source: movie.source,
-      slug: movie.slug,
-      server: episode.server,
-      episode: episode.episode.slug,
-    };
-    if (!token) return router.push(watchPath(film));
+  const watch = (episode: EpisodePick) => {
+    if (movie)
+      start({
+        source: movie.source,
+        slug: movie.slug,
+        server: episode.server,
+        episode: episode.episode.slug,
+      });
+  };
+  const start = async (film: FilmChoice, position = 0) => {
+    if (!token) return router.push(watchPath(film, position));
     setCreating(true);
     setProblem("");
     try {
-      router.push(`/z4theater/${await createRoom(token, film)}`);
+      router.push(`/z4theater/${await createRoom(token, film, position)}`);
     } catch (reason) {
       setCreating(false);
       setProblem((reason as Error).message);
@@ -67,7 +71,10 @@ export default function TheaterPage() {
             <MovieDetail movie={movie} disabled={creating} onPlay={watch} />
           </>
         ) : (
-          <MovieBrowser busy={opening} onPick={pick} />
+          <>
+            <LibraryShelf busy={creating || opening} onResume={start} onPick={pick} />
+            <MovieBrowser busy={opening} onPick={pick} />
+          </>
         )}
       </section>
     </div>

@@ -16,6 +16,7 @@ import {
   otherSource,
   type Movie,
 } from "@/lib/theater/movies";
+import { recordWatched } from "@/lib/theater/library";
 import { sharedPosition } from "@/lib/theater/screeningSync";
 import type { Screening } from "@/lib/theater/types";
 import HlsPlayer, { type PlayerRole } from "./HlsPlayer";
@@ -25,6 +26,7 @@ import MovieDetail, {
   episodeTitle,
   type EpisodePick,
 } from "./MovieDetail";
+import SaveButton from "./SaveButton";
 import TheaterChat from "./TheaterChat";
 import TheaterDialog from "./TheaterDialog";
 import { usePickMovie } from "./usePickMovie";
@@ -32,6 +34,7 @@ import { usePickMovie } from "./usePickMovie";
 const primary =
   "min-h-10 rounded-sm bg-blue-500 px-3 text-sm font-semibold text-white";
 type Own = { movie: Movie; pick: EpisodePick };
+const REMEMBER_EVERY_MS = 5_000;
 
 function findEpisode(
   movie: Movie,
@@ -111,6 +114,28 @@ export default function TheaterScreen({
       ? findEpisode(shared, playback.server, playback.episode)
       : null;
   const canSync = Boolean(pick?.episode.stream);
+  // Remembers this viewer's own place, whether they steer the room or follow it.
+  const remembered = useRef(0);
+  const remember = (position: number, duration: number) => {
+    if (movie && pick)
+      recordWatched(
+        movie,
+        {
+          server: pick.server,
+          episode: pick.episode.slug,
+          episodeName: episodeTitle(pick.episode.name),
+        },
+        position,
+        duration,
+      );
+  };
+  const playingSlug = movie ? `${movie.source}:${movie.slug}` : "";
+  const playingEpisode = pick?.episode.slug;
+  useEffect(() => {
+    if (playingSlug && playingEpisode) remember(live.current.position, 0);
+    // Only a change of film or episode opens a new entry.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playingSlug, playingEpisode]);
   const role: PlayerRole =
     !playback || viewingOwn
       ? "solo"
@@ -246,8 +271,11 @@ export default function TheaterScreen({
                     : 0
                 }
                 onReport={room.sync}
-                onProgress={(playing, position) => {
+                onProgress={(playing, position, duration) => {
                   live.current = { playing, position };
+                  if (Date.now() - remembered.current < REMEMBER_EVERY_MS) return;
+                  remembered.current = Date.now();
+                  remember(position, duration);
                 }}
                 onDiverge={() => setDetached(true)}
                 onFatal={onFatal}
@@ -317,6 +345,7 @@ export default function TheaterScreen({
                   Theo lại người chiếu
                 </button>
               )}
+              {movie && <SaveButton film={movie} />}
               {!isHost && !viewingOwn && !detached && playback?.hostAway && (
                 <button className={primary} onClick={() => setDetached(true)}>
                   Xem tiếp một mình

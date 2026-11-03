@@ -13,6 +13,12 @@ the last commit with Z4world is `50da2fe`, and `/z4world` links redirect here.
   source, matched by title and year. Viewers can also switch by hand.
 - **18+ filter**: films labelled 18+, or with no categories, stay hidden on both sources and
   in rooms. phimapi lists carry categories; nguonc needs one lookup per film.
+- **Finding films**: genre, country and year filters work on both sources. Search puts the
+  best title first and, on the primary source only, widens with shorter wording when few
+  films match. The backup is not widened, because it looks up every film it lists.
+- **Library** (`frontend/lib/theater/library.ts`): saved films and "Xem tiếp" live in this
+  browser's localStorage, so guests have them too and nothing needs a migration. They do
+  not follow an account to another device, and logging out does not clear them.
 - **Guests**: no account is needed to browse, watch or follow an invite link. A guest who
   picks an episode watches alone at `/z4theater/watch`, a link that holds the film and the
   moment. Logging in, from "Mời bạn" or the chat, returns there and opens a room at that

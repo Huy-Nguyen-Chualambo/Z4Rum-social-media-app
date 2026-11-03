@@ -273,6 +273,47 @@ const PLAYER = '[title^="Trình phát"]';
     await h.context.close();
     console.log('PASS the seat skips guests and waits for the next account');
 
+    // The catalog narrows by genre, and a device remembers what was saved and watched.
+    const l = await open(null);
+    await button(l.page, 'Xem phim Phim Một').waitFor();
+    assert.equal(await l.page.getByRole('region', { name: 'Phim của bạn' }).count(), 0, 'nothing to show on a first visit');
+    await l.page.getByLabel('Thể loại').selectOption('tinh-cam');
+    await button(l.page, 'Xem phim Phim Hai').waitFor();
+    assert.equal(await button(l.page, 'Xem phim Phim Một').count(), 0, 'a genre narrows the list');
+    await l.page.getByLabel('Thể loại').selectOption('');
+    await button(l.page, 'Xem phim Phim Một').click();
+    await button(l.page, 'Lưu phim').click();
+    assert.equal(await button(l.page, 'Đã lưu').getAttribute('aria-pressed'), 'true');
+    await button(l.page, 'Xem Tập 02').click();
+    await l.page.waitForURL(/\/z4theater\/watch\?/);
+    await until(async () => (await time(l.page)) > 1, 'the film plays');
+    await l.page.locator(`video${PLAYER}`).evaluate(v => { v.currentTime = 30; });
+    await until(async () => (await l.page.evaluate(() => JSON.parse(localStorage.getItem('z4theater_library') || '{}').history?.[0]?.position)) >= 30, 'the place is remembered', 15000);
+    await l.page.goto(`${base}/z4theater`);
+    await button(l.page, 'Đã lưu (1)').waitFor();
+    await l.page.screenshot({ path: `${shots}/theater-library.png` });
+    await button(l.page, 'Xem tiếp Phim Một').click();
+    await l.page.waitForURL(/episode=tap-02.*t=\d+|t=\d+.*episode=tap-02/);
+    await until(async () => (await time(l.page)) >= 29, 'resuming lands on the same moment');
+    await l.page.goto(`${base}/z4theater`);
+    await button(l.page, 'Đã lưu (1)').click();
+    await button(l.page, 'Mở phim đã lưu Phim Một').click();
+    await button(l.page, 'Đã lưu').click();
+    await button(l.page, 'Lưu phim').waitFor();
+    await l.page.goto(`${base}/z4theater`);
+    await button(l.page, 'Xoá Phim Một khỏi lịch sử').click();
+    await button(l.page, 'Xem phim Phim Một').waitFor();
+    assert.equal(await l.page.getByRole('region', { name: 'Phim của bạn' }).count(), 0, 'the shelf empties');
+    await l.context.close();
+    const m = await open(13);
+    await m.page.evaluate(() => localStorage.setItem('z4theater_library', JSON.stringify({ saved: [], history: [{ source: 'phimapi', slug: 'phim-mot', name: 'Phim Một', originalName: '', year: '2026', poster: '', status: '', adult: false, server: 0, episode: 'tap-01', episodeName: 'Tập 01', position: 25, at: 1 }] })));
+    await m.page.reload();
+    await button(m.page, 'Xem tiếp Phim Một').click();
+    await m.page.waitForURL(/\/z4theater\/[\w-]{12}$/);
+    await until(async () => (await time(m.page)) >= 24, 'an account resumes in a room at that moment');
+    await m.context.close();
+    console.log('PASS genre filter, saved films and resuming from history');
+
     // The backup source takes over when the primary is down.
     const c = await open(7, '/z4theater');
     c.movies.primaryDown = true;

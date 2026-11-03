@@ -10,7 +10,7 @@ type Props = {
   shared: SharedPlayback | null;
   startAt: number;
   onReport: (playing: boolean, position: number) => void;
-  onProgress: (playing: boolean, position: number) => void;
+  onProgress: (playing: boolean, position: number, duration: number) => void;
   onDiverge: () => void;
   onFatal: () => void;
 };
@@ -131,7 +131,11 @@ export default function HlsPlayer(props: Props) {
     };
     const onTime = () => {
       lastTime = element.currentTime;
-      latest.current.onProgress(!element.paused, element.currentTime);
+      latest.current.onProgress(
+        !element.paused,
+        element.currentTime,
+        Number.isFinite(element.duration) ? element.duration : 0,
+      );
     };
     const tick = setInterval(() => {
       const { role: now, shared } = latest.current;

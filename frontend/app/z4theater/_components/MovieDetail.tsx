@@ -2,6 +2,7 @@
 import { useState } from "react";
 import type { Episode, Movie } from "@/lib/theater/movies";
 import { chip, chipOff, chipOn, SOURCE_LABEL } from "./MovieBrowser";
+import SaveButton from "./SaveButton";
 
 export type EpisodePick = { server: number; episode: Episode };
 
@@ -114,6 +115,9 @@ export default function MovieDetail({
             </p>
           )}
         </div>
+      </div>
+      <div className="mt-3">
+        <SaveButton film={movie} />
       </div>
       <p className="mt-3 text-xs text-[#969696]">
         Chọn tập để mở phòng riêng, rồi gửi link mời bạn bè xem cùng.

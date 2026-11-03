@@ -2,17 +2,39 @@
 import { useEffect, useState } from "react";
 import { Search } from "lucide-react";
 import {
+  countries,
+  filterMovies,
+  genres,
   listMovies,
   otherSource,
   PRIMARY_SOURCE,
-  searchMovies,
   shelves,
+  smartSearch,
+  YEARS_BACK,
   type MovieCard,
+  type MovieFilter,
   type MovieSource,
   type ShelfKey,
 } from "@/lib/theater/movies";
 
-type Browse = { shelf: ShelfKey } | { keyword: string };
+type Browse = { shelf: ShelfKey } | { keyword: string } | { filter: MovieFilter };
+const thisYear = new Date().getFullYear();
+const filters: {
+  kind: MovieFilter["kind"];
+  label: string;
+  options: readonly (readonly [string, string])[];
+}[] = [
+  { kind: "genre", label: "Thể loại", options: genres },
+  { kind: "country", label: "Quốc gia", options: countries },
+  {
+    kind: "year",
+    label: "Năm",
+    options: Array.from({ length: YEARS_BACK }, (_, i) => {
+      const year = String(thisYear - i);
+      return [year, year] as const;
+    }),
+  },
+];
 export const SOURCE_LABEL: Record<MovieSource, string> = {
   phimapi: "Nguồn chính",
   nguonc: "Nguồn dự phòng",
@@ -48,8 +70,10 @@ export default function MovieBrowser({
     let active = true;
     const request =
       "keyword" in browsing
-        ? searchMovies(source, browsing.keyword, page)
-        : listMovies(source, browsing.shelf, page);
+        ? smartSearch(source, browsing.keyword, page)
+        : "filter" in browsing
+          ? filterMovies(source, browsing.filter, page)
+          : listMovies(source, browsing.shelf, page);
     request
       .then((result) => {
         if (!active) return;
@@ -182,6 +206,33 @@ export default function MovieBrowser({
             </button>
           ))}
         </div>
+      </div>
+      <div className="mt-1 grid grid-cols-3 gap-1.5 sm:max-w-md">
+        {filters.map(({ kind, label, options }) => (
+          <select
+            key={kind}
+            aria-label={label}
+            value={
+              "filter" in browsing && browsing.filter.kind === kind
+                ? browsing.filter.value
+                : ""
+            }
+            onChange={(event) => {
+              setQuery("");
+              if (event.target.value)
+                browse({ filter: { kind, value: event.target.value } });
+              else browse({ shelf: "latest" });
+            }}
+            className="h-9 min-w-0 rounded-sm border border-[#303030] bg-[#101010] px-1.5 text-xs text-[#dedede] focus:border-blue-500"
+          >
+            <option value="">{label}</option>
+            {options.map(([value, name]) => (
+              <option key={value} value={value}>
+                {name}
+              </option>
+            ))}
+          </select>
+        ))}
       </div>
       {error ? (
         <div className="mt-6 text-center">

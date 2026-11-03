@@ -57,6 +57,7 @@ const backupFilm = (slug) => {
     },
   };
 };
+const byGenre = { "hanh-dong": "phim-mot", "tinh-cam": "phim-hai" };
 const matching = (keyword) =>
   Object.keys(films).filter((id) => !keyword || films[id][0].toLowerCase().includes(keyword.toLowerCase()));
 
@@ -67,7 +68,8 @@ exports.mockMovies = async (context) => {
     const { pathname, searchParams } = new URL(route.request().url());
     const slug = pathname.match(/^\/phim\/(.+)$/)?.[1];
     if (slug) return route.fulfill({ json: primaryFilm(slug) });
-    const items = matching(searchParams.get("keyword")).map(card);
+    const genre = pathname.match(/\/the-loai\/(.+)$/)?.[1];
+    const items = (genre ? [byGenre[genre]].filter(Boolean) : matching(searchParams.get("keyword"))).map(card);
     const pagination = { currentPage: 1, totalPages: 1 };
     return route.fulfill({
       json: pathname.startsWith("/v1/")
