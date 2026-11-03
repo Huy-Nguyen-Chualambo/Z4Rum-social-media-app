@@ -1,15 +1,47 @@
+/*
+ * Everything that moves has its own GPU layer and moves with `transform`, so walking
+ * and panning never repaint the rest of the scene. Nothing here may animate forever
+ * on low-power devices, and nothing inside .camera may use blur or filters there.
+ */
 .frame { position: absolute; inset: 0; margin: 0; overflow: hidden; background: #101010; }
-.scene { display: block; width: 100%; height: 100%; touch-action: none; -webkit-tap-highlight-color: transparent; }
-.prop { transition: opacity 180ms ease; }
-.interactive { cursor: pointer; outline: none; }
-.interactive image { transition: filter 140ms ease; }
-.interactive:hover image, .interactive:focus-visible image { filter: brightness(1.28) drop-shadow(0 0 7px #3b82f6); }
-.actionPill { cursor: pointer; outline: none; animation: appear 140ms ease-out; }
-.actionPill:hover rect[data-face], .actionPill:focus-visible rect[data-face] { fill: #2563eb; }
-.firefly { animation: firefly 4.2s ease-in-out infinite; }
-.bubble { animation: appear 140ms ease-out; }
-.ripple { animation: ripple 2400ms ease-out infinite; transform-box: fill-box; transform-origin: center; }
-@keyframes appear { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+.scene { position: absolute; inset: 0; overflow: hidden; touch-action: none; -webkit-tap-highlight-color: transparent; contain: strict; }
+.camera { position: absolute; left: 0; top: 0; width: 1760px; height: 1060px; transform-origin: 0 0; will-change: transform; }
+.smooth { transition: transform 180ms linear; }
+.ground { position: absolute; max-width: none; pointer-events: none; user-select: none; will-change: transform; }
+.prop { position: absolute; pointer-events: none; transition: opacity 180ms ease; }
+.prop img { display: block; width: 100%; height: 100%; max-width: none; pointer-events: none; user-select: none; -webkit-user-drag: none; }
+.interactive { pointer-events: auto; cursor: pointer; outline: none; }
+@media (hover: hover) {
+  .interactive img { transition: filter 140ms ease; }
+  .interactive:hover img, .interactive:focus-visible img { filter: brightness(1.28) drop-shadow(0 0 7px #3b82f6); }
+}
+.actor, .label, .destination { position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: none; }
+.actor { width: 1px; height: 1px; will-change: transform; transition: transform 100ms linear; }
+.label { z-index: 5000; transition: transform 100ms linear; }
+.ambient { opacity: .88; transition: transform 500ms linear; }
+.shadow { position: absolute; left: -13px; top: -4px; width: 26px; height: 12px; border-radius: 50%; background: rgb(0 0 0 / .35); }
+.ring { position: absolute; left: -17px; top: -6px; width: 34px; height: 16px; border-radius: 50%; border: 2.5px solid #3b82f6; }
+.sprite { position: absolute; left: -40px; top: -75px; width: 80px; height: 80px; background-repeat: no-repeat; }
+.nameTag { position: absolute; left: -54px; top: 12px; display: flex; width: 108px; height: 22px; padding-left: 12px; align-items: center; justify-content: center; overflow: hidden; border: 1px solid #303030; border-radius: 3px; background: rgb(20 20 20 / .92); color: #ededed; font-size: 12px; font-weight: 600; line-height: 1; white-space: nowrap; }
+.nameTagSelf { border-color: #3b82f6; }
+.nameDot { position: absolute; left: 8px; width: 6px; height: 6px; border-radius: 50%; }
+.emote { position: absolute; left: -40px; top: -99px; width: 80px; text-align: center; font-size: 27px; line-height: 1.2; }
+.bubble { position: absolute; left: 0; bottom: 78px; width: max-content; transform: translateX(-50%); padding: 7px 12px; border: 1px solid #383838; border-radius: 4px; background: #1c1c1c; color: #ededed; font-size: 13px; line-height: 18px; text-align: center; white-space: nowrap; animation: appear 140ms ease-out; }
+.bubble span { display: block; }
+.actionPill { position: absolute; left: 0; top: 43px; display: flex; height: 38px; transform: translateX(-50%); align-items: center; gap: 8px; padding: 0 14px; border-radius: 4px; background: #3b82f6; color: #fff; font-size: 14px; font-weight: 700; white-space: nowrap; pointer-events: auto; cursor: pointer; outline: none; animation: appear 140ms ease-out; }
+/* Larger invisible area: the pill alone is small on a phone. */
+.actionPill::before { content: ""; position: absolute; inset: -13px -8px; }
+.actionPill:hover, .actionPill:focus-visible { background: #2563eb; }
+.actionKey { display: flex; width: 22px; height: 22px; align-items: center; justify-content: center; border-radius: 3px; background: rgb(255 255 255 / .22); font-family: "SFMono-Regular", Consolas, monospace; font-size: 12px; }
+.destinationMark { position: absolute; left: -14px; top: -7px; width: 28px; height: 14px; border: 2px solid #3b82f6; border-radius: 50%; background: rgb(59 130 246 / .25); }
+.firefly { position: absolute; width: 4px; height: 4px; border-radius: 50%; background: #ffd98f; pointer-events: none; z-index: 4000; animation: firefly 4.2s ease-in-out infinite; }
+.ripple { position: absolute; border: 1.7px solid #bfe4ff; border-radius: 50%; animation: ripple 2400ms ease-out infinite; }
+.paused .firefly, .paused .ripple { animation-play-state: paused; }
+@keyframes appear { from { opacity: 0; } to { opacity: 1; } }
 @keyframes firefly { 0%, 100% { opacity: 0; transform: translateY(0); } 50% { opacity: .9; transform: translateY(-16px); } }
 @keyframes ripple { from { opacity: .65; transform: scale(.75); } to { opacity: 0; transform: scale(1.1); } }
-@media (prefers-reduced-motion: reduce) { .bubble, .ripple, .actionPill { animation: none; } .firefly { animation: none; opacity: .5; } .interactive image { transition: none; } .prop { transition: none; } .scene [data-player] { transition: none !important; } }
+@media (prefers-reduced-motion: reduce) {
+  .bubble, .ripple, .actionPill { animation: none; }
+  .firefly { animation: none; opacity: .5; }
+  .prop, .actor, .label, .ambient, .smooth, .interactive img { transition: none; }
+}

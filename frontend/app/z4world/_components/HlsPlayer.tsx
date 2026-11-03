@@ -46,12 +46,26 @@ export default function HlsPlayer(props: Props) {
         element.load();
       };
     };
+    // Apple devices decode HLS in hardware; doing it in JavaScript only adds heat.
+    if (
+      element.canPlayType("application/vnd.apple.mpegurl") &&
+      /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
+    ) {
+      native();
+      return () => {
+        dead = true;
+        destroy();
+      };
+    }
     import("hls.js")
       .then(({ default: Hls }) => {
         if (dead) return;
-        // iPhones have no MSE but play HLS themselves.
         if (!Hls.isSupported()) return native();
-        const hls = new Hls();
+        const hls = new Hls({
+          capLevelToPlayerSize: true,
+          maxBufferLength: 20,
+          backBufferLength: 15,
+        });
         let recoveries = 0;
         hls.on(Hls.Events.ERROR, (_event, data) => {
           if (!data.fatal) return;

@@ -163,7 +163,7 @@ const intersects = (a, b) => a.x < b.x + b.width && b.x < a.x + a.width && a.y <
       await page.getByRole('button', { name: 'Gửi', exact: true }).click();
       await page.getByRole('log').getByText(long, { exact: false }).waitFor();
       await delay(300);
-      const bubbleWords = await page.locator('[data-testid="world-scene"] text').allTextContents();
+      const bubbleWords = await page.locator('[data-testid="world-scene"] [data-bubble-line]').allTextContents();
       assert.ok(bubbleWords.join(' ').includes('buổi tối nha'), 'a long bubble wraps instead of being cut off');
       await page.screenshot({ path: `${shots}/seated-desktop.png` });
       await page.getByRole('button', { name: 'Đứng dậy', exact: true }).click();

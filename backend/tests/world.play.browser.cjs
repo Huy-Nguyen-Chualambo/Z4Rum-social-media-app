@@ -195,15 +195,18 @@ const api = "http://127.0.0.1:4400";
           ?.getAttribute("data-animation") === "wave",
     );
     console.log("PASS actual gait-frame animation, idle and wave pose");
-    // Click path routes around the fountain; transform uses the actual rendered SVG matrix.
+    // Click path routes around the fountain; uses the camera as it is actually rendered.
     async function clickGround(page, x, y) {
       const p = await page.locator('[data-testid="world-scene"]').evaluate(
-        (svg, { x, y }) => {
-          const p = new DOMPoint(
-            760 + 0.8 * (x - y),
-            220 + 0.4 * (x + y),
-          ).matrixTransform(svg.getScreenCTM());
-          return { x: p.x, y: p.y };
+        (scene, { x, y }) => {
+          const box = scene.getBoundingClientRect();
+          const m = new DOMMatrix(
+            getComputedStyle(scene.firstElementChild).transform,
+          );
+          return {
+            x: box.x + m.e + m.a * (760 + 0.8 * (x - y)),
+            y: box.y + m.f + m.d * (220 + 0.4 * (x + y)),
+          };
         },
         { x, y },
       );

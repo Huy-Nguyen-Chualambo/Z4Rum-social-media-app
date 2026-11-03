@@ -50,7 +50,6 @@ export default function WorldPlayPage() {
     scope,
     notice,
     panel,
-    now,
     me,
     inCinema,
     nearTable,
@@ -130,7 +129,7 @@ export default function WorldPlayPage() {
         messages={messages}
         emotes={world.emotes}
         motions={world.motions}
-        now={now}
+        paused={Boolean(panel)}
         follow={follow}
         onDestination={world.navigate}
         onInteract={world.interact}

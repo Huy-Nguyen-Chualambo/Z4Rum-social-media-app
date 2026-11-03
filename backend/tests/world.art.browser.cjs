@@ -51,10 +51,10 @@ const partial = process.argv.includes('--partial');
       if (name === 'mobile') {
         await page.getByRole('button', { name: 'Xem toàn cảnh', exact: true }).waitFor();
         await page.getByRole('button', { name: 'Xem toàn cảnh', exact: true }).click();
-        await page.waitForFunction(() => Number(document.querySelector('[data-testid="world-scene"]').getAttribute('viewBox').split(' ')[2]) === 1500);
+        await page.waitForFunction(() => Number(document.querySelector('[data-testid="world-scene"]').getAttribute('data-view').split(' ')[2]) === 1500);
       }
       await page.getByRole('button', { name: 'Theo chân nhân vật', exact: true }).click();
-      await page.waitForFunction(() => Number(document.querySelector('[data-testid="world-scene"]').getAttribute('viewBox').split(' ')[2]) < 1100);
+      await page.waitForFunction(() => Number(document.querySelector('[data-testid="world-scene"]').getAttribute('data-view').split(' ')[2]) < 1100);
       await scene.screenshot({ path: `/tmp/z4world-art-${name}-follow.png` });
       if (name === 'desktop') {
         async function goTo(x,y) {
@@ -74,7 +74,7 @@ const partial = process.argv.includes('--partial');
           }
         }
         await goTo(350,500); await goTo(240,500);
-        assert.equal(await page.locator('[data-prop="tree-2"]').evaluate(el => el.parentElement.getAttribute('opacity')), '0.35');
+        assert.equal(await page.locator('[data-prop="tree-2"]').evaluate(el => el.parentElement.style.opacity), '0.35');
         await delay(400);
         await scene.screenshot({ path: '/tmp/z4world-art-occlusion.png' });
         console.log('PASS ground-depth occlusion fades foliage behind the local player');

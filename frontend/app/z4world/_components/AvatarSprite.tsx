@@ -1,6 +1,7 @@
 "use client";
 import { useId, useSyncExternalStore } from "react";
 import atlas from "@/lib/world/avatar-frames.json";
+import { HAIR_COLORS, OUTFIT_COLORS } from "@/lib/world/avatarBake";
 import type { Appearance, Facing } from "@/lib/world/types";
 const directions: Facing[] = [
   "front-left",
@@ -57,13 +58,9 @@ export default function AvatarSprite({
     standing.reduce((sum, item) => sum + item.bodyHeight, 0) / standing.length;
   const size = body / 0.84,
     sourceHeight = actions ? 640 : 1280;
-  const hair = appearance.hair === "espresso" ? "#342923" : "#a85d35";
-  const outfit = {
-    original: "#fff",
-    mint: "#8dba9c",
-    sky: "#91b9d3",
-    rose: "#d698a9",
-  }[appearance.outfit];
+  const hair =
+    appearance.hair === "original" ? "" : HAIR_COLORS[appearance.hair];
+  const outfit = OUTFIT_COLORS[appearance.outfit];
   const image = (
     <image
       href={`/z4world/assets/${file}.webp`}

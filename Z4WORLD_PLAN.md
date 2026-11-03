@@ -76,6 +76,22 @@ and jitter; run new movement changes through it, not just the localhost E2E.
   from `backend/tests/fixtures/hls` (a synthetic ffmpeg `testsrc2` pattern).
 - `frontend/scripts/make-cinema-art.cjs` derives the building from the Game Club art.
 
+## 8. Phones and weak devices
+
+An iPhone repainted the whole SVG scene at 3x all the time, even standing still. The rules
+that fixed it, enforced by `backend/tests/world.perf.browser.cjs`:
+
+- Idle means no paints and no renders: no clocks or endless animations on low-power
+  devices (`useLowPower`: touch screens, 4 cores or fewer, 4 GB or less).
+- The camera and everyone in the scene move with `transform`, each on its own layer.
+- The ground is a baked bitmap (`frontend/scripts/make-ground-art.cjs`); rerun it after
+  changing the map. Avatars are baked once per appearance (`lib/world/avatarBake.ts`) and
+  animated by one timer that writes to the DOM. Never use SVG filters or masks in the scene.
+- Movement reaches React at most ten times a second; it stops behind an open window.
+- Apple devices play video through their native HLS, in hardware, not hls.js.
+
+The 80px avatars in the wardrobe and on the landing page still use `AvatarSprite.tsx`.
+
 ## Later milestones (outside the playable MVP)
 - Friend-specific notifications in addition to shareable room invitations.
 - Rich avatar animations, sound and further camera polish.

@@ -27,6 +27,7 @@ type Snapshot = {
   geometry: Geometry;
 };
 const tables = cafeTables;
+const MOVE_FLUSH_MS = 100; // Matches the transition that glides players between updates.
 const stamped = (value: Omit<Screening, "receivedAt"> | null) =>
   value && { ...value, receivedAt: Date.now() };
 
@@ -35,7 +36,8 @@ export function useWorldClient() {
   const socket = useSocketStore((s) => s.socket);
   const [players, setPlayers] = useState<Record<string, Player>>({});
   const positions = useRef<Record<string, Player>>({});
-  const [motions, setMotions] = useState<Record<string, Motion>>({});
+  // Read by the sprite timer, so a step never re-renders React.
+  const motions = useRef<Record<string, Motion>>({});
   const [self, setSelf] = useState("");
   const [room, setRoom] = useState("");
   const [status, setStatus] = useState("Đang kết nối thế giới…");
@@ -46,7 +48,6 @@ export function useWorldClient() {
   const [screening, setScreening] = useState<Screening | null>(null);
   const [scope, setScope] = useState("nearby");
   const [notice, setNotice] = useState("");
-  const [now, setNow] = useState(0);
   const keys = useRef(new Set<string>());
   const touch = useRef({ dx: 0, dy: 0 });
   const identity = useRef("");
@@ -80,7 +81,7 @@ export function useWorldClient() {
   const navigate = (target: Point) => {
     if (!me || !geometry.current || paused.current || me.table) return;
     const path = findPath(
-      moves.current.predict(me, Date.now()),
+      moves.current.predict(positions.current[identity.current] ?? me, Date.now()),
       target,
       geometry.current,
     );
@@ -141,7 +142,7 @@ export function useWorldClient() {
       moves.current.reset();
       route.current = [];
       setDestination(null);
-      setMotions({});
+      motions.current = {};
       setPlayers(data.players);
       setSelf(data.self);
       setRoom(data.roomId);
@@ -156,11 +157,7 @@ export function useWorldClient() {
     };
     const left = (id: string) => {
       delete positions.current[id];
-      setMotions((p) => {
-        const next = { ...p };
-        delete next[id];
-        return next;
-      });
+      delete motions.current[id];
       setPlayers((p) => {
         const next = { ...p };
         delete next[id];
@@ -172,6 +169,23 @@ export function useWorldClient() {
         return next;
       });
     };
+    // 20 walkers send about 300 updates a second; the screen needs ten.
+    const movedIds = new Set<string>();
+    let flushTimer: ReturnType<typeof setTimeout> | null = null;
+    const flushMoves = () => {
+      flushTimer = null;
+      const ids = [...movedIds];
+      movedIds.clear();
+      setPlayers((current) => {
+        const next = { ...current };
+        for (const id of ids) {
+          const position = positions.current[id];
+          if (next[id] && position)
+            next[id] = { ...next[id], x: position.x, y: position.y };
+        }
+        return next;
+      });
+    };
     const moved = ({ id, x, y }: { id: string; x: number; y: number }) => {
       const previous = positions.current[id];
       if (!previous) return;
@@ -180,16 +194,14 @@ export function useWorldClient() {
       if (id === identity.current) moves.current.confirmed();
       if (dx || dy) {
         if (id === identity.current) setHasWalked(true);
-        setMotions((m) => ({
-          ...m,
-          [id]: {
-            facing: facingFor(dx, dy, m[id]?.facing),
-            until: Date.now() + 180,
-          },
-        }));
+        motions.current[id] = {
+          facing: facingFor(dx, dy, motions.current[id]?.facing),
+          until: Date.now() + 180,
+        };
       }
       positions.current = { ...positions.current, [id]: { ...previous, x, y } };
-      setPlayers((p) => (p[id] ? { ...p, [id]: { ...p[id], x, y } } : p));
+      movedIds.add(id);
+      flushTimer ??= setTimeout(flushMoves, MOVE_FLUSH_MS);
     };
     const chat = (m: Message) =>
       setMessages((previous) => [...previous.slice(-39), m]);
@@ -251,6 +263,7 @@ export function useWorldClient() {
     socket.on("world:appearance", appearanceUpdate);
     if (socket.connected) join();
     return () => {
+      if (flushTimer) clearTimeout(flushTimer);
       socket.emit("world:leave");
       socket.off("connect", join);
       socket.off("disconnect", disconnected);
@@ -384,10 +397,8 @@ export function useWorldClient() {
         sendMove((target.x - at.x) / length, (target.y - at.y) / length, time);
       }
     }, 60);
-    const clock = setInterval(() => setNow(Date.now()), 100);
     return () => {
       clearInterval(tick);
-      clearInterval(clock);
       clear();
       window.removeEventListener("keydown", down);
       window.removeEventListener("keyup", up);
@@ -466,7 +477,6 @@ export function useWorldClient() {
     setScope,
     notice,
     setNotice,
-    now,
     destination,
     panel,
     me,

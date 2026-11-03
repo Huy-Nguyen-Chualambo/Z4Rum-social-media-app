@@ -45,6 +45,21 @@ export function useFullscreen() {
   return { active, supported };
 }
 
+const neverChanges = () => () => {};
+const isLowPower = () => {
+  const { hardwareConcurrency, deviceMemory } = navigator as Navigator & {
+    deviceMemory?: number;
+  };
+  return (
+    window.matchMedia("(pointer: coarse)").matches ||
+    hardwareConcurrency <= 4 ||
+    (deviceMemory ?? 8) <= 4
+  );
+};
+/** Phones and weak machines: decorations that never stop moving are left out. */
+export const useLowPower = () =>
+  useSyncExternalStore(neverChanges, isLowPower, () => false);
+
 /** True where the browser can actually hold landscape (not iPhone Safari). */
 export const canLockLandscape = () =>
   Boolean(document.fullscreenEnabled && orientation()?.lock);
