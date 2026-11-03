@@ -2,6 +2,7 @@
 import { useState } from "react";
 import type { Episode, Movie } from "@/lib/theater/movies";
 import { chip, chipOff, chipOn, SOURCE_LABEL } from "./MovieBrowser";
+import PosterImage from "./PosterImage";
 import SaveButton from "./SaveButton";
 
 export type EpisodePick = { server: number; episode: Episode };
@@ -80,10 +81,8 @@ export default function MovieDetail({
     <div>
       <div className="flex gap-4">
         {movie.poster && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <PosterImage
             src={movie.poster}
-            alt=""
             className="hidden aspect-[2/3] w-40 shrink-0 rounded-sm bg-[#1c1c1c] object-cover sm:block"
           />
         )}

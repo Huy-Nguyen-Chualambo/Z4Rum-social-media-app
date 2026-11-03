@@ -19,7 +19,7 @@ const FINISHED_AT = 0.95;
 const EMPTY: Library = { saved: [], history: [] };
 const ID = /^[\w-]{1,120}$/;
 
-const isCard = (value: unknown): value is MovieCard => {
+export const isCard = (value: unknown): value is MovieCard => {
   const film = value as Partial<MovieCard> | null;
   return (
     !!film &&
@@ -67,7 +67,7 @@ export function parseLibrary(raw: string | null): Library {
 
 const sameFilm = (a: MovieCard, b: Pick<MovieCard, "source" | "slug">) =>
   a.source === b.source && a.slug === b.slug;
-const cardOf = (film: MovieCard): MovieCard => ({
+export const cardOf = (film: MovieCard): MovieCard => ({
   source: film.source,
   slug: film.slug,
   name: film.name,

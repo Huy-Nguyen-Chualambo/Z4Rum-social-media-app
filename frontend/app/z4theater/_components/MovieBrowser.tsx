@@ -15,7 +15,9 @@ import {
   type MovieSource,
   type ShelfKey,
 } from "@/lib/theater/movies";
+import { onPageRefresh } from "@/lib/theater/pageCache";
 import MovieSearchBox from "./MovieSearchBox";
+import PosterImage from "./PosterImage";
 
 type Browse = { shelf: ShelfKey } | { keyword: string } | { filter: MovieFilter };
 const thisYear = new Date().getFullYear();
@@ -65,6 +67,9 @@ export default function MovieBrowser({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+
+  // An old list on screen turned out to have changed: show the new one.
+  useEffect(() => onPageRefresh(() => setAttempt((n) => n + 1)), []);
 
   useEffect(() => {
     let active = true;
@@ -254,11 +259,8 @@ export default function MovieBrowser({
             >
               <span className="relative block aspect-[2/3] overflow-hidden rounded-sm border border-[#292929] bg-[#1c1c1c] group-hover:border-blue-500">
                 {card.poster && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
+                  <PosterImage
                     src={card.poster}
-                    alt=""
-                    loading="lazy"
                     className="h-full w-full object-cover"
                   />
                 )}

@@ -7,6 +7,7 @@ import {
   type MovieCard,
   type MovieSource,
 } from "@/lib/theater/movies";
+import PosterImage from "./PosterImage";
 
 const MIN_LETTERS = 2;
 const MAX_SUGGESTIONS = 6;
@@ -161,11 +162,8 @@ export default function MovieSearchBox({
               >
                 <span className="block h-11 w-8 shrink-0 overflow-hidden rounded-sm bg-[#1c1c1c]">
                   {card.poster && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
+                    <PosterImage
                       src={card.poster}
-                      alt=""
-                      loading="lazy"
                       className="h-full w-full object-cover"
                     />
                   )}

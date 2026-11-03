@@ -1,7 +1,12 @@
 import { fallbackQueries, isCloseEnough, rankMovies } from "./movieSearch";
+import { cachedPage } from "./pageCache";
 
 const CACHE_MS = 5 * 60_000;
 const TIMEOUT_MS = 10_000;
+const RETRY_AFTER_MS = 2_000;
+// The backup lists one lookup per film: a slow source must not get twice the traffic.
+const MAX_SPARES = 3;
+let sparesInUse = 0;
 const CHECKS_AT_ONCE = 4;
 
 export type MovieSource = "phimapi" | "nguonc";
@@ -191,23 +196,71 @@ export function nguoncMovie(data: Raw): Movie {
 }
 
 const cache = new Map<string, { at: number; data: Promise<Raw> }>();
+async function attempt(url: string, signal: AbortSignal): Promise<Raw> {
+  const response = await fetch(url, {
+    headers: { Accept: "application/json" },
+    signal,
+  }).catch(() => {
+    throw new Error("Không kết nối được nguồn phim.");
+  });
+  if (response.status === 429)
+    throw new Error("Nguồn phim đang quá tải. Hãy thử lại sau ít phút.");
+  if (!response.ok) throw new Error("Không tải được dữ liệu phim.");
+  return (await response.json()) as Raw;
+}
+
+/** Most answers take under a second but some stall for 15, so a slow one gets a second try. */
+function fetchJson(url: string): Promise<Raw> {
+  return new Promise((resolve, reject) => {
+    const stop = new AbortController();
+    let trying = 0;
+    let done = false;
+    let spare = false;
+    let firstError: unknown;
+    const finish = (settle: () => void) => {
+      if (done) return;
+      done = true;
+      clearTimeout(second);
+      clearTimeout(limit);
+      if (spare) sparesInUse--;
+      stop.abort();
+      settle();
+    };
+    const start = () => {
+      trying++;
+      attempt(url, stop.signal).then(
+        (data) => finish(() => resolve(data)),
+        (reason) => {
+          firstError ??= reason;
+          if (--trying === 0) finish(() => reject(firstError));
+        },
+      );
+    };
+    const second = setTimeout(() => {
+      if (sparesInUse >= MAX_SPARES) return;
+      sparesInUse++;
+      spare = true;
+      start();
+    }, RETRY_AFTER_MS);
+    const limit = setTimeout(
+      () =>
+        finish(() =>
+          reject(
+            Object.assign(new Error("Nguồn phim phản hồi quá lâu."), {
+              name: "TimeoutError",
+            }),
+          ),
+        ),
+      TIMEOUT_MS,
+    );
+    start();
+  });
+}
+
 function getJson(url: string): Promise<Raw> {
   const hit = cache.get(url);
   if (hit && Date.now() - hit.at < CACHE_MS) return hit.data;
-  const data = fetch(url, {
-    headers: { Accept: "application/json" },
-    signal: AbortSignal.timeout(TIMEOUT_MS),
-  })
-    .catch((reason: Error) => {
-      if (reason.name === "TimeoutError") throw reason;
-      throw new Error("Không kết nối được nguồn phim.");
-    })
-    .then(async (response) => {
-    if (response.status === 429)
-      throw new Error("Nguồn phim đang quá tải. Hãy thử lại sau ít phút.");
-    if (!response.ok) throw new Error("Không tải được dữ liệu phim.");
-    return (await response.json()) as Raw;
-  });
+  const data = fetchJson(url);
   cache.set(url, { at: Date.now(), data });
   data.catch(() => cache.delete(url));
   return data;
@@ -286,10 +339,12 @@ async function nguoncPage(url: string): Promise<MoviePage> {
   };
 }
 
-export const listMovies = (source: MovieSource, shelf: ShelfKey, at: number) =>
-  source === "phimapi"
-    ? phimapiPage(`${phimapiShelf[shelf]}page=${at}`)
-    : nguoncPage(`${nguoncShelf[shelf]}page=${at}`);
+export function listMovies(source: MovieSource, shelf: ShelfKey, at: number) {
+  const url = `${(source === "phimapi" ? phimapiShelf : nguoncShelf)[shelf]}page=${at}`;
+  return cachedPage(url, () =>
+    source === "phimapi" ? phimapiPage(url) : nguoncPage(url),
+  );
+}
 export const searchMovies = (
   source: MovieSource,
   keyword: string,
@@ -323,9 +378,13 @@ export const filterMovies = (
   const id = encodeURIComponent(
     source === "nguonc" ? (nguoncSlug[value] ?? value) : value,
   );
-  return source === "phimapi"
-    ? phimapiPage(`${PHIMAPI}/v1/api/${phimapiFilter[kind]}/${id}?limit=24&page=${at}`)
-    : nguoncPage(`${NGUONC}/films/${nguoncFilter[kind]}/${id}?page=${at}`);
+  const url =
+    source === "phimapi"
+      ? `${PHIMAPI}/v1/api/${phimapiFilter[kind]}/${id}?limit=24&page=${at}`
+      : `${NGUONC}/films/${nguoncFilter[kind]}/${id}?page=${at}`;
+  return cachedPage(url, () =>
+    source === "phimapi" ? phimapiPage(url) : nguoncPage(url),
+  );
 };
 
 const FEW_RESULTS = 8;

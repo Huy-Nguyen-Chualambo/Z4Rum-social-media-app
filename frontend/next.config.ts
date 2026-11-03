@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Film posters run up to 2 MB. Their address never changes, so a small copy lasts.
+  images: {
+    remotePatterns: [{ protocol: "https", hostname: "phimimg.com" }],
+    minimumCacheTTL: 30 * 24 * 60 * 60,
+  },
   // The movie section is gone (bản quyền + z4phim tách riêng); Z4chat took its
   // slot. Old links and bookmarks land on the new feature instead of a 404.
   async redirects() {

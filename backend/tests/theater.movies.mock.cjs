@@ -12,7 +12,8 @@ const card = (slug) => ({
   name: films[slug][0],
   origin_name: `${films[slug][0]} (gốc)`,
   year: 2026,
-  poster_url: `https://img.example.test/${slug}.jpg`,
+  // One film as the real source sends it: a path on the image host.
+  poster_url: slug === "phim-hai" ? `uploads/${slug}.webp` : `https://img.example.test/${slug}.jpg`,
   episode_current: `Tập ${films[slug][2]}`,
   category: category(films[slug][1]),
 });
@@ -62,8 +63,9 @@ const matching = (keyword) =>
   Object.keys(films).filter((id) => !keyword || films[id][0].toLowerCase().includes(keyword.toLowerCase()));
 
 exports.mockMovies = async (context) => {
-  const state = { primaryDown: false, streamDown: false };
+  const state = { primaryDown: false, streamDown: false, optimizerDown: false, primaryRequests: 0 };
   await context.route("https://phimapi.com/**", (route) => {
+    state.primaryRequests++;
     if (state.primaryDown) return route.abort("connectionfailed");
     const { pathname, searchParams } = new URL(route.request().url());
     const slug = pathname.match(/^\/phim\/(.+)$/)?.[1];
@@ -99,6 +101,14 @@ exports.mockMovies = async (context) => {
       contentType: file.endsWith(".m3u8") ? "application/vnd.apple.mpegurl" : "video/mp2t",
     });
   });
+  const picture = {
+    contentType: "image/svg+xml",
+    body: '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="300"><rect width="200" height="300" fill="#334"/></svg>',
+  };
+  await context.route("https://phimimg.com/**", (route) => route.fulfill(picture));
+  await context.route("**/_next/image?**", (route) =>
+    state.optimizerDown ? route.fulfill({ status: 402, body: "" }) : route.fulfill(picture),
+  );
   await context.route("https://img.example.test/**", (route) =>
     route.fulfill({
       contentType: "image/svg+xml",

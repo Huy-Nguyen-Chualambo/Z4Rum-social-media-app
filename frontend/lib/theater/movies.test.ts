@@ -196,3 +196,75 @@ test("episodes match across naming styles", () => {
   assert.equal(matchEpisode(movie, "1")?.episode.slug, "tap-01");
   assert.equal(matchEpisode(movie, "99")?.episode.slug, "tap-01", "falls back to the first");
 });
+
+test("a stalled request gets a second try, and the first answer wins", async () => {
+  const original = globalThis.fetch;
+  let calls = 0;
+  let aborted = false;
+  globalThis.fetch = ((_url: string, init: RequestInit) => {
+    calls++;
+    if (calls === 1)
+      return new Promise((_, reject) => {
+        init.signal?.addEventListener("abort", () => {
+          aborted = true;
+          reject(new Error("aborted"));
+        });
+      });
+    return Promise.resolve(new Response(JSON.stringify(phimapiDetail("cham"))));
+  }) as typeof fetch;
+  try {
+    const started = Date.now();
+    assert.equal((await getMovie("phimapi", "cham")).slug, "cham");
+    assert.equal(calls, 2);
+    assert.ok(Date.now() - started >= 1900, "a quick answer never needs the spare");
+    assert.equal(aborted, true, "the stalled request is cancelled");
+  } finally {
+    globalThis.fetch = original;
+  }
+});
+
+test("a body that stalls after its headers counts as slow too", async () => {
+  const original = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = (async () => {
+    calls++;
+    if (calls === 1)
+      return { ok: true, status: 200, json: () => new Promise(() => {}) } as Response;
+    return new Response(JSON.stringify(phimapiDetail("nghen")));
+  }) as typeof fetch;
+  try {
+    assert.equal((await getMovie("phimapi", "nghen")).slug, "nghen");
+  } finally {
+    globalThis.fetch = original;
+  }
+});
+
+test("a quick failure reports at once rather than trying again", async () => {
+  const original = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = (async () => {
+    calls++;
+    return new Response("{}", { status: 500 });
+  }) as typeof fetch;
+  try {
+    await assert.rejects(getMovie("phimapi", "loi-nhanh"));
+    assert.equal(calls, 1);
+  } finally {
+    globalThis.fetch = original;
+  }
+});
+
+test("when both tries stall the wait still ends", async () => {
+  const original = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = (() => {
+    calls++;
+    return new Promise(() => {});
+  }) as typeof fetch;
+  try {
+    await assert.rejects(getMovie("phimapi", "ket"), { name: "TimeoutError" });
+    assert.equal(calls, 2);
+  } finally {
+    globalThis.fetch = original;
+  }
+});

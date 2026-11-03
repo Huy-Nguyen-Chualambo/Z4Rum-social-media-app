@@ -273,6 +273,57 @@ const PLAYER = '[title^="Trình phát"]';
     await h.context.close();
     console.log('PASS the seat skips guests and waits for the next account');
 
+    // Posters come small, and fall back to the original when the optimizer refuses.
+    const pic = await open(null);
+    const hai = button(pic.page, 'Xem phim Phim Hai').locator('img');
+    await hai.waitFor();
+    assert.match(await hai.getAttribute('src'), /^\/_next\/image\?url=https%3A%2F%2Fphimimg\.com%2Fuploads%2Fphim-hai\.webp&w=256/);
+    await until(() => hai.evaluate(img => img.complete && img.naturalWidth > 0), 'the small poster shows');
+    assert.match(await button(pic.page, 'Xem phim Phim Một').locator('img').getAttribute('src'), /^https:\/\/img\.example\.test/, 'other hosts are left alone');
+    pic.movies.optimizerDown = true;
+    await pic.page.reload();
+    await until(async () => (await hai.getAttribute('src')) === 'https://phimimg.com/uploads/phim-hai.webp', 'a refused poster falls back to the original');
+    await until(() => hai.evaluate(img => img.complete && img.naturalWidth > 0), 'the original shows');
+
+    // A returning viewer sees films at once, and an old list corrects itself.
+    pic.movies.primaryRequests = 0;
+    await pic.page.reload();
+    await button(pic.page, 'Xem phim Phim Một').waitFor();
+    assert.equal(pic.movies.primaryRequests, 0, 'a recent list needs no request');
+    pic.movies.primaryDown = true;
+    await pic.page.reload();
+    await button(pic.page, 'Xem phim Phim Một').waitFor();
+    assert.equal(await button(pic.page, 'Nguồn chính').getAttribute('aria-pressed'), 'true', 'a saved list rides out an outage');
+    pic.movies.primaryDown = false;
+    await pic.page.evaluate(() => {
+      const pages = JSON.parse(localStorage.getItem('z4theater_pages'));
+      for (const entry of Object.values(pages)) { entry.at -= 10 * 60_000; entry.page.movies[0].name = 'Phim Cũ'; }
+      localStorage.setItem('z4theater_pages', JSON.stringify(pages));
+    });
+    await pic.page.reload();
+    await button(pic.page, 'Xem phim Phim Một').waitFor({ timeout: 5000 });
+    assert.equal(await button(pic.page, 'Xem phim Phim Cũ').count(), 0, 'the old list gives way to the new one');
+    await pic.context.close();
+    console.log('PASS posters come small with a fallback, and lists open at once');
+
+    // A sleeping backend is a wait with an explanation, not an error.
+    const w = await open(14);
+    let asleep = true;
+    await w.context.route('**/socket.io/**', route => asleep ? route.abort() : route.continue());
+    await w.context.routeWebSocket(/socket\.io/, ws => { if (asleep) ws.close(); else ws.connectToServer(); });
+    await w.page.reload();
+    await button(w.page, 'Xem phim Phim Một').click();
+    await button(w.page, 'Xem Tập 01').click();
+    await w.page.getByText('Máy chủ đang khởi động', { exact: false }).waitFor({ timeout: 8000 });
+    await delay(9000);
+    assert.equal(new URL(w.page.url()).pathname, '/z4theater', 'still waiting past the old 8 second limit');
+    assert.equal(await w.page.getByText('Không tạo được phòng').count(), 0);
+    asleep = false;
+    await w.page.waitForURL(/\/z4theater\/[\w-]{12}$/, { timeout: 20000 });
+    await w.page.getByText('Bạn đang chiếu', { exact: false }).waitFor();
+    await w.context.close();
+    console.log('PASS opening a room waits for a sleeping backend');
+
     // Suggestions follow the typing, without a request per key or a late answer winning.
     const t = await open(null);
     await button(t.page, 'Xem phim Phim Một').waitFor();
@@ -371,6 +422,7 @@ const PLAYER = '[title^="Trình phát"]';
     // The backup source takes over when the primary is down.
     const c = await open(7, '/z4theater');
     c.movies.primaryDown = true;
+    await c.page.evaluate(() => localStorage.removeItem('z4theater_pages'));
     await c.page.reload();
     await c.page.getByText('chuyển sang nguồn dự phòng', { exact: false }).waitFor();
     await button(c.page, 'Xem phim Phim Một').waitFor();

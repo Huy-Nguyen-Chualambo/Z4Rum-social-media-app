@@ -11,6 +11,8 @@ import MovieBrowser, { quiet } from "./_components/MovieBrowser";
 import MovieDetail, { type EpisodePick } from "./_components/MovieDetail";
 import { usePickMovie } from "./_components/usePickMovie";
 
+const WAKING = "Máy chủ đang khởi động, có thể mất khoảng một phút…";
+
 export default function TheaterPage() {
   const router = useRouter();
   const token = useAuthStore((s) => s.token);
@@ -31,7 +33,7 @@ export default function TheaterPage() {
     setCreating(true);
     setProblem("");
     try {
-      router.push(`/z4theater/${await createRoom(token, film, position)}`);
+      router.push(`/z4theater/${await createRoom(token, film, position, () => setProblem(WAKING))}`);
     } catch (reason) {
       setCreating(false);
       setProblem((reason as Error).message);

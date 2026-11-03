@@ -18,6 +18,12 @@ the last commit with Z4world is `50da2fe`, and `/z4world` links redirect here.
   films match. The backup is not widened, because it looks up every film it lists.
 - **Suggestions** (`MovieSearchBox.tsx`): from two letters, after a pause in typing, longer
   on the backup because each of its results costs a lookup. Late answers are ignored.
+- **Speed**: a film request with no answer after 2 seconds gets one spare try and the first
+  answer wins, at most 3 spares at once. Catalog pages stay in localStorage for 3 days
+  (`pageCache.ts`): under 5 minutes old they need no request, older they show at once and
+  are checked in the background. Episode links are never kept, since they can expire.
+- **Posters**: `phimimg.com` images go through `/_next/image` at one width, falling back to
+  the original. wsrv.nl refuses that host by policy. The backup's images are not resized.
 - **Library** (`frontend/lib/theater/library.ts`): saved films and "Xem tiếp" live in this
   browser's localStorage, so guests have them too and nothing needs a migration. They do
   not follow an account to another device, and logging out does not clear them.

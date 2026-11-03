@@ -49,6 +49,7 @@ export default function TheaterWatchPage({
   const inBrowser = useSyncExternalStore(subscribeNever, () => true, () => false);
   const token = useAuthStore((s) => s.token);
   const [problem, setProblem] = useState("");
+  const [waking, setWaking] = useState(false);
   const started = useRef(false);
   useEffect(() => {
     if (!parsed) router.replace("/z4theater");
@@ -57,11 +58,19 @@ export default function TheaterWatchPage({
   useEffect(() => {
     if (!token || !film || started.current) return;
     started.current = true;
-    createRoom(token, film, position)
+    createRoom(token, film, position, () => setWaking(true))
       .then((roomId) => router.replace(`/z4theater/${roomId}`))
       .catch((reason: Error) => setProblem(reason.message));
   }, [token, film, position, router]);
   if (!parsed || !inBrowser) return <Waiting text="Đang tải…" />;
-  if (token && !problem) return <Waiting text="Đang mở phòng…" />;
+  if (token && !problem) return (
+      <Waiting
+        text={
+          waking
+            ? "Máy chủ đang khởi động, có thể mất khoảng một phút…"
+            : "Đang mở phòng…"
+        }
+      />
+    );
   return <SoloScreen {...parsed} notice={problem} />;
 }

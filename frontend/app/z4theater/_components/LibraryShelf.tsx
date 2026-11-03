@@ -9,6 +9,7 @@ import {
 import type { MovieCard } from "@/lib/theater/movies";
 import type { FilmChoice } from "@/lib/theater/types";
 import { chip, chipOff, chipOn } from "./MovieBrowser";
+import PosterImage from "./PosterImage";
 
 const clock = (seconds: number) => {
   const hours = Math.floor(seconds / 3600);
@@ -25,11 +26,8 @@ function Poster({ film }: { film: MovieCard }) {
   return (
     <span className={poster}>
       {film.poster && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
+        <PosterImage
           src={film.poster}
-          alt=""
-          loading="lazy"
           className="h-full w-full object-cover"
         />
       )}
