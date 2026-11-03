@@ -69,6 +69,13 @@ test('world isolates membership, validates moves, protects quiz and cleans disco
   assert.equal(snapshot.players.a.x, before);
   await a.send('world:move', { dx: 1, dy: 0 });
   assert.equal(snapshot.players.a.x, before+10);
+  // A burst is capped to the credit, and every move past it is still answered.
+  const beforeBurst = snapshot.players.a.y;
+  a.emitted.length = 0;
+  for (let i = 0; i < 12; i++) await a.send('world:move', { dx: 0, dy: 1 });
+  const accepted = (snapshot.players.a.y - beforeBurst) / 10;
+  assert.ok(accepted >= 1 && accepted <= 4, `accepted ${accepted} moves`);
+  assert.equal(a.emitted.filter(e => e.event === 'world:moved').length, 12 - accepted);
   await a.send('world:quiz:join');
   assert.deepEqual(snapshot.game.participants, []);
   await a.send('world:chat', 'hello');

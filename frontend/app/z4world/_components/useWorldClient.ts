@@ -5,6 +5,11 @@ import { useSocketStore } from "@/lib/store/useSocketStore";
 import { facingFor, screenDirection } from "@/lib/world/projection";
 import type { Point } from "@/lib/world/projection";
 import { findPath, type Geometry } from "@/lib/world/navigation";
+import {
+  advanceRoute,
+  createMoveTracker,
+  nearWaypoint,
+} from "@/lib/world/movement";
 import { cafeTables } from "@/lib/world/assets";
 import type {
   WorldPlayer as Player,
@@ -84,7 +89,8 @@ export function useWorldClient() {
   const identity = useRef("");
   const geometry = useRef<Geometry | null>(null);
   const route = useRef<Point[]>([]);
-  const routeProgress = useRef({ x: 0, y: 0, at: 0 });
+  const routeProgress = useRef({ gap: Infinity, at: 0 });
+  const moves = useRef(createMoveTracker());
   const [destination, setDestination] = useState<Point | null>(null);
   const [panel, setPanel] = useState<"games" | "wardrobe" | null>(null);
   const paused = useRef(false);
@@ -113,10 +119,14 @@ export function useWorldClient() {
   };
   const navigate = (target: Point) => {
     if (!me || !geometry.current || paused.current || me.table) return;
-    const path = findPath(me, target, geometry.current);
+    const path = findPath(
+      moves.current.predict(me, Date.now()),
+      target,
+      geometry.current,
+    );
     stop();
     route.current = path;
-    routeProgress.current = { x: me.x, y: me.y, at: Date.now() };
+    routeProgress.current = { gap: Infinity, at: Date.now() };
     setDestination(path.at(-1) ?? null);
     if (!path.length)
       setNotice(
@@ -168,6 +178,7 @@ export function useWorldClient() {
       positions.current = { ...data.players };
       identity.current = data.self;
       geometry.current = data.geometry;
+      moves.current.reset();
       route.current = [];
       setDestination(null);
       setMotions({});
@@ -208,6 +219,7 @@ export function useWorldClient() {
       if (!previous) return;
       const dx = x - previous.x,
         dy = y - previous.y;
+      if (id === identity.current) moves.current.confirmed();
       if (dx || dy) {
         if (id === identity.current) setHasWalked(true);
         setMotions((m) => ({
@@ -248,6 +260,7 @@ export function useWorldClient() {
     const clearWorld = () => {
       positions.current = {};
       identity.current = "";
+      moves.current.reset();
       route.current = [];
       keys.current.clear();
       touch.current = { dx: 0, dy: 0 };
@@ -349,6 +362,10 @@ export function useWorldClient() {
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
     window.addEventListener("blur", clear);
+    const sendMove = (dx: number, dy: number, now: number) => {
+      socket?.emit("world:move", { dx, dy });
+      moves.current.sent(dx, dy, now);
+    };
     const tick = setInterval(() => {
       const actor = positions.current[identity.current];
       if (paused.current || !actor || actor.table || !socket?.connected) return;
@@ -383,35 +400,36 @@ export function useWorldClient() {
         route.current = [];
         setDestination(null);
         const direction = screenDirection(dx, dy);
-        socket.emit("world:move", { dx: direction.x, dy: direction.y });
+        sendMove(direction.x, direction.y, Date.now());
       } else if (route.current.length) {
-        while (
-          route.current.length &&
-          Math.hypot(
-            actor.x - route.current[0].x,
-            actor.y - route.current[0].y,
-          ) <= 6
-        )
-          route.current.shift();
-        const target = route.current[0];
+        const time = Date.now();
+        const at = moves.current.predict(actor, time);
+        const remaining = advanceRoute(
+          route.current,
+          at,
+          moves.current.settled(time),
+        );
+        const advanced = remaining.length < route.current.length;
+        route.current = remaining;
+        const target = remaining[0];
         if (!target) {
           setDestination(null);
           return;
         }
-        const previous = routeProgress.current;
-        if (Math.hypot(actor.x - previous.x, actor.y - previous.y) > 5)
-          routeProgress.current = { x: actor.x, y: actor.y, at: Date.now() };
-        else if (Date.now() - previous.at > 1800) {
+        // Progress means getting closer: circling also changes position.
+        const gap = Math.hypot(target.x - actor.x, target.y - actor.y);
+        if (advanced || gap < routeProgress.current.gap - 1)
+          routeProgress.current = { gap, at: time };
+        else if (time - routeProgress.current.at > 1800) {
           route.current = [];
           setDestination(null);
           setNotice("Đường đi đang bị chặn. Hãy chọn lại một điểm gần đó.");
           return;
         }
-        const length = Math.hypot(target.x - actor.x, target.y - actor.y);
-        socket.emit("world:move", {
-          dx: (target.x - actor.x) / length,
-          dy: (target.y - actor.y) / length,
-        });
+        // Already there on paper: wait for the server to confirm.
+        if (remaining.length === 1 && nearWaypoint(at, target)) return;
+        const length = Math.hypot(target.x - at.x, target.y - at.y);
+        sendMove((target.x - at.x) / length, (target.y - at.y) / length, time);
       }
     }, 60);
     const clock = setInterval(() => setNow(Date.now()), 100);

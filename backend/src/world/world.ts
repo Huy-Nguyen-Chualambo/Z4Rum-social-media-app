@@ -1,13 +1,13 @@
 import type { Server, Socket } from 'socket.io';
 import type { PrismaClient } from '@prisma/client';
-import { QUESTIONS, step, TABLES, SIZE, BLOCKS, TREE_TRUNKS } from './rules';
+import { FULL_MOVE_CREDIT, moveCredit, QUESTIONS, step, TABLES, SIZE, BLOCKS, TREE_TRUNKS } from './rules';
 import { randomUUID } from 'node:crypto';
 import { FloorGame } from './floor';
 import { defaultAppearance, onAppearanceSaved, type Appearance } from './appearance';
 import { prismaProfileStore } from './profile.store';
 
 type Player = { id: string; username: string; x: number; y: number; color: string; table?: string; facing?:string; appearance: Appearance };
-type Member = { socket: Socket; player: Player; moved: number; chatted: number; emoted: number };
+type Member = { socket: Socket; player: Player; moved: number; moveCredit: number; chatted: number; emoted: number };
 type Game = { phase: 'waiting' | 'question' | 'results'; players: Set<string>; scores: Record<string, number>; answered: Set<string>; index: number; round: string; endsAt: number; timer?: ReturnType<typeof setTimeout> };
 type Room = { id: string; members: Map<string, Member>; game: Game; floor: FloorGame };
 const colors = ['#fb7185', '#a78bfa', '#38bdf8', '#fbbf24', '#34d399'];
@@ -104,7 +104,7 @@ export function initWorld(io: Server, prisma: PrismaClient) {
         const slots = Array.from({ length: 20 }, (_, i) => ({ x: 350+(i%5)*34, y: 440+Math.floor(i/5)*32 }));
         const spawn = slots.find(p => [...room.members.values()].every(m => Math.hypot(m.player.x-p.x, m.player.y-p.y) > 26)) ?? slots[room.members.size];
         const player: Player = { ...user, ...spawn, appearance: appearance!, color: colors[room.members.size % colors.length] };
-        room.members.set(socket.id, { socket, player, moved: 0, chatted: 0, emoted: 0 });
+        room.members.set(socket.id, { socket, player, moved: 0, moveCredit: FULL_MOVE_CREDIT, chatted: 0, emoted: 0 });
         memberships.set(socket.id, room);
         await socket.join(room.id);
         if (memberships.get(socket.id) !== room) return;
@@ -121,10 +121,15 @@ export function initWorld(io: Server, prisma: PrismaClient) {
     socket.on('disconnect', () => { pending.delete(socket.id); leave(socket); });
     socket.on('world:move', (value: unknown) => {
       const room = memberships.get(socket.id), m = room?.members.get(socket.id);
-      if (!room || !m || Date.now() - m.moved < 45) return;
+      if (!room || !m) return;
       const { dx, dy } = record(value);
       if (typeof dx !== 'number' || typeof dy !== 'number' || !Number.isFinite(dx) || !Number.isFinite(dy) || Math.abs(dx) > 1 || Math.abs(dy) > 1) return;
-      m.moved = Date.now();
+      const at = Date.now();
+      m.moveCredit = moveCredit(m.moveCredit, at - m.moved);
+      m.moved = at;
+      // Every move gets an answer: the client counts them to know where it really is.
+      if (m.moveCredit < 1) return socket.emit('world:moved', { id: socket.id, x: m.player.x, y: m.player.y });
+      m.moveCredit -= 1;
       if (m.player.table) return;
       Object.assign(m.player, step(m.player.x, m.player.y, dx, dy));
       io.to(room.id).emit('world:moved', { id: socket.id, x: m.player.x, y: m.player.y });

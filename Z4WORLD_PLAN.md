@@ -44,6 +44,15 @@
 - Mini games are deferred: they still work, reached by tapping Game Club, and only
   received the new colors. Their redesign is a later milestone.
 
+## 6. Movement over real networks
+
+Localhost hides latency, so tap-to-walk looked fine there and circled forever in
+production from about 80ms round trip. The client now steers by the server
+position plus its unconfirmed moves (`frontend/lib/world/movement.ts`). The server
+limits the average move rate rather than each gap, and answers every move it
+drops. `movement.test.ts` plays routes against the real server rules with delay
+and jitter; run new movement changes through it, not just the localhost E2E.
+
 ## Later milestones (outside the playable MVP)
 - Friend-specific notifications in addition to shareable room invitations.
 - Rich avatar animations, sound and further camera polish.

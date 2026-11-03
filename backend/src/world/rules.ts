@@ -21,6 +21,13 @@ export function step(x: number, y: number, dx: number, dy: number) {
   const acceptedX = walkable(nx, y) ? nx : x;
   return { x: acceptedX, y: walkable(acceptedX, ny) ? ny : y };
 }
+const MOVE_INTERVAL = 45;
+const MOVE_BURST = 4;
+export const FULL_MOVE_CREDIT = MOVE_BURST;
+/** Limits the average rate, not each gap: jitter bunches moves that were sent evenly. */
+export function moveCredit(credit: number, elapsed: number) {
+  return Math.min(MOVE_BURST, credit + elapsed / MOVE_INTERVAL);
+}
 export const QUESTIONS = [
   { text: 'Một phút có bao nhiêu giây?', options: ['30', '60', '90', '100'], answer: 1 },
   { text: 'Hành tinh nào gần Mặt Trời nhất?', options: ['Trái Đất', 'Sao Hỏa', 'Sao Thủy', 'Sao Kim'], answer: 2 },
