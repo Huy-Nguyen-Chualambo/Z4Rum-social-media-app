@@ -23,10 +23,12 @@ type Snapshot = {
   roomId: string;
   self: string;
   players: Record<string, Player>;
-  screening: Screening | null;
+  screening: Omit<Screening, "receivedAt"> | null;
   geometry: Geometry;
 };
 const tables = cafeTables;
+const stamped = (value: Omit<Screening, "receivedAt"> | null) =>
+  value && { ...value, receivedAt: Date.now() };
 
 /** Owns the realtime connection, world state and movement input for one visit. */
 export function useWorldClient() {
@@ -143,7 +145,7 @@ export function useWorldClient() {
       setPlayers(data.players);
       setSelf(data.self);
       setRoom(data.roomId);
-      setScreening(data.screening);
+      setScreening(stamped(data.screening ?? null));
       setStatus("");
       setMessages([]);
       setEmotes({});
@@ -197,6 +199,8 @@ export function useWorldClient() {
         [id]: { text: emoji, until: Date.now() + 3500 },
       }));
     const showNotice = (value: string) => setNotice(value);
+    const screeningUpdate = (value: Omit<Screening, "receivedAt"> | null) =>
+      setScreening(stamped(value));
     const appearanceUpdate = ({
       id,
       appearance,
@@ -240,7 +244,7 @@ export function useWorldClient() {
     socket.on("world:moved", moved);
     socket.on("world:chat", chat);
     socket.on("world:emote", emote);
-    socket.on("world:screening", setScreening);
+    socket.on("world:screening", screeningUpdate);
     socket.on("world:error", error);
     socket.on("world:notice", showNotice);
     socket.on("connect_error", disconnected);
@@ -256,7 +260,7 @@ export function useWorldClient() {
       socket.off("world:moved", moved);
       socket.off("world:chat", chat);
       socket.off("world:emote", emote);
-      socket.off("world:screening", setScreening);
+      socket.off("world:screening", screeningUpdate);
       socket.off("world:error", error);
       socket.off("world:notice", showNotice);
       socket.off("connect_error", disconnected);
@@ -419,8 +423,10 @@ export function useWorldClient() {
     setScope("nearby");
   };
   const sendEmote = (emoji: string) => socket?.emit("world:emote", emoji);
-  const showFilm = (slug: string, server: number, episode: string) =>
-    socket?.emit("world:screening:start", { slug, server, episode });
+  const showFilm = (film: Omit<Screening, "host" | "hostName" | "receivedAt">) =>
+    socket?.emit("world:screening:start", film);
+  const syncFilm = (playing: boolean, position: number) =>
+    socket?.emit("world:screening:sync", { playing, position });
   const stopShowing = () => socket?.emit("world:screening:stop");
   const retry = () => {
     if (socket?.connected) socket.emit("world:join");
@@ -477,6 +483,7 @@ export function useWorldClient() {
     stand,
     sendEmote,
     showFilm,
+    syncFilm,
     stopShowing,
     retry,
     invite,

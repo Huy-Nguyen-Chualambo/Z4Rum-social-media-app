@@ -218,7 +218,7 @@ const intersects = (a, b) => a.x < b.x + b.width && b.x < a.x + a.width && a.y <
       await delay(200);
       await page.screenshot({ path: `${shots}/cinema-browse-phone-${name}.png` });
       await page.getByRole('button', { name: 'Xem phim Phim Một', exact: true }).click();
-      await page.getByRole('button', { name: 'Xem tập 1', exact: true }).click();
+      await page.getByRole('button', { name: 'Xem Tập 01', exact: true }).click();
       const player = await page.getByTitle('Trình phát Phim Một').boundingBox();
       const frame = await dialog.boundingBox();
       assert.ok(player.x >= frame.x && player.x + player.width <= frame.x + frame.width, `${name}: player fits the dialog`);

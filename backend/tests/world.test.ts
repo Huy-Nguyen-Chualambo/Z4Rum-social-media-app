@@ -17,6 +17,8 @@ test('movement rejects boundaries, solids and keeps diagonal speed constant', ()
   assert.ok(Math.abs(Math.hypot(diagonal.x-350, diagonal.y-440)-10) < 0.00001);
 });
 
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 test('world isolates membership, validates moves, protects screenings and cleans disconnects', async () => {
   let connect: (socket: Socket) => void = () => {};
   const broadcasts: { event: string; payload: unknown }[] = [];
@@ -49,14 +51,17 @@ test('world isolates membership, validates moves, protects screenings and cleans
   const accepted = (snapshot.players.a.y - beforeBurst) / 10;
   assert.ok(accepted >= 1 && accepted <= 4, `accepted ${accepted} moves`);
   assert.equal(a.emitted.filter(e => e.event === 'world:moved').length, 12 - accepted);
-  const film = { slug: 'ten-phim', server: 0, episode: 'tap-1' };
+  const film = { source: 'phimapi', slug: 'ten-phim', server: 0, episode: 'tap-1', playing: true, position: 30 };
+  type Shared = typeof film & { host: string; hostName: string };
+  const latest = () => screenings().at(-1) as Shared;
   await a.send('world:screening:start', film);
   assert.equal(screenings().length, 0, 'a screening must be started at the cinema');
   Object.assign(snapshot.players.a, { x: 805, y: 250 });
-  for (const bad of [{ ...film, slug: '../admin' }, { ...film, episode: '<b>' }, { ...film, server: -1 }, { ...film, server: 1.5 }, { ...film, slug: 1 }]) await a.send('world:screening:start', bad);
+  for (const bad of [{ ...film, slug: '../admin' }, { ...film, episode: '<b>' }, { ...film, server: -1 }, { ...film, server: 1.5 }, { ...film, slug: 1 }, { ...film, source: 'evil' }, { ...film, playing: 'yes' }, { ...film, position: -1 }, { ...film, position: Infinity }]) await a.send('world:screening:start', bad);
   assert.equal(screenings().length, 0, 'malformed films are rejected');
   await a.send('world:screening:start', { ...film, name: 'spam', embed: 'https://evil.example' });
-  assert.deepEqual(screenings().at(-1), { ...film, host: 'a', hostName: 'a' }, 'only ids are stored, never text or URLs');
+  assert.deepEqual(Object.keys(latest()).sort(), ['episode', 'host', 'hostName', 'playing', 'position', 'server', 'slug', 'source'], 'only ids and playback are shared, never text or URLs');
+  assert.equal(latest().host, 'a');
   await a.send('world:screening:start', { ...film, episode: 'tap-2' });
   assert.equal(screenings().length, 1, 'restarting is rate limited');
   Object.assign(snapshot.players.b, { x: 805, y: 250 });
@@ -64,9 +69,24 @@ test('world isolates membership, validates moves, protects screenings and cleans
   assert.equal(screenings().length, 1, 'another player cannot take over');
   assert.ok(b.emitted.some(e => e.event === 'world:notice'));
   await b.send('world:screening:stop');
-  assert.equal(screenings().length, 1, 'another player cannot stop it');
-  await a.send('world:chat', 'hello');
-  assert.ok(b.emitted.some(e => e.event === 'world:chat'));
+  await b.send('world:screening:sync', { playing: false, position: 1 });
+  assert.equal(screenings().length, 1, 'another player cannot stop or steer it');
+  // The host's clock moves everyone, and a late joiner lands on the moment being shown.
+  await delay(120);
+  await a.send('world:screening:sync', { playing: true, position: Infinity });
+  assert.equal(screenings().length, 1, 'malformed positions are rejected');
+  await a.send('world:screening:sync', { playing: false, position: 100 });
+  assert.deepEqual([latest().playing, latest().position], [false, 100]);
+  await a.send('world:screening:sync', { playing: true, position: 200 });
+  assert.equal(latest().position, 100, 'sync messages are rate limited');
+  await delay(120);
+  await a.send('world:screening:sync', { playing: true, position: 200 });
+  await delay(300);
+  const late = client('late');
+  await late.send('world:join');
+  const seen = (late.emitted.find(e => e.event === 'world:snapshot')?.payload as { screening: Shared }).screening;
+  assert.ok(seen.position >= 200.25 && seen.position < 201, `late joiner sees ${seen.position}`);
+  await late.send('disconnect');
   await a.send('disconnect');
   assert.equal(screenings().at(-1), null, 'a screening ends when its host leaves');
   await b.send('disconnect');

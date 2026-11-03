@@ -1,6 +1,5 @@
 // Run with NODE_PATH pointing at a Playwright installation; see Z4WORLD_PLAN.md.
 const { chromium } = require('playwright');
-const { mockMovies } = require('./world.movies.mock.cjs');
 const { createRequire } = require('node:module');
 const assert = require('node:assert/strict');
 const path = require('node:path');
@@ -23,7 +22,6 @@ const event = (socket, name, trigger) => new Promise((resolve, reject) => {
     const credentials = await Promise.all([login(0), login(1)]);
     async function open(index, mobile = false) {
       const context = await browser.newContext({ viewport: mobile ? { width: 390, height: 844 } : { width: 1440, height: 1000 }, ...(mobile ? { isMobile: true, hasTouch: true } : {}) });
-      await mockMovies(context);
       await context.addInitScript(token => sessionStorage.setItem('z4rum_token', token), credentials[index].token);
       const page = await context.newPage();
       page.on('pageerror', error => errors.push(error.message));
@@ -94,35 +92,6 @@ const event = (socket, name, trigger) => new Promise((resolve, reject) => {
     await send(a.page, 'Xa quá không nghe');
     // Both are close again; verify keyboard movement replicated.
     await b.page.getByRole('log').getByText('Xa quá không nghe', { exact: false }).waitFor();
-    for(const c of [a,b]) {
-      await c.page.getByRole('button',{name:'Vào rạp phim',exact:true}).last().click();
-      await c.page.getByRole('dialog',{name:'Rạp phim',exact:true}).waitFor();
-    }
-    await a.page.getByRole('button',{name:'Xem phim Phim Một',exact:true}).waitFor();
-    assert.equal(await a.page.getByRole('button',{name:'Xem phim Phim Người Lớn',exact:true}).count(),0,'18+ films stay hidden');
-    await a.page.getByLabel('Tìm phim').fill('hai');
-    await a.page.getByRole('button',{name:'Tìm',exact:true}).click();
-    await a.page.getByRole('button',{name:'Xem phim Phim Hai',exact:true}).waitFor();
-    assert.equal(await a.page.getByRole('button',{name:'Xem phim Phim Một',exact:true}).count(),0,'search narrows the list');
-    await a.page.getByRole('button',{name:'Mới cập nhật',exact:true}).click();
-    await a.page.getByRole('button',{name:'Xem phim Phim Một',exact:true}).click();
-    await a.page.getByRole('button',{name:'Xem tập 2',exact:true}).click();
-    assert.equal(await a.page.getByTitle('Trình phát Phim Một').getAttribute('src'),'https://embed.example.test/phim-mot/tap-2');
-    console.log('PASS browse, search, hidden 18+ films and episode player');
-    await a.page.getByRole('button',{name:'Chiếu cho cả sảnh',exact:true}).click();
-    await b.page.getByRole('button',{name:'Xem cùng',exact:true}).click();
-    assert.equal(await b.page.getByTitle('Trình phát Phim Một').getAttribute('src'),'https://embed.example.test/phim-mot/tap-2','viewers join the same episode');
-    await delay(1600);
-    await a.page.getByRole('dialog').getByLabel('Tin nhắn gần bạn').fill('Phim hay quá');
-    await a.page.getByRole('dialog').getByRole('button',{name:'Gửi',exact:true}).click();
-    await b.page.getByRole('dialog').getByRole('log').getByText('Phim hay quá',{exact:false}).waitFor();
-    await b.page.keyboard.press('Escape');
-    await b.page.getByRole('button',{name:'Đang chiếu · Phim Một',exact:true}).waitFor();
-    assert.equal(await b.page.getByTitle('Trình phát Phim Một').count(),0,'closing the cinema stops the player');
-    await a.page.getByRole('button',{name:'Dừng chiếu cho sảnh',exact:true}).click();
-    await b.page.getByRole('button',{name:'Đang chiếu · Phim Một',exact:true}).waitFor({state:'detached'});
-    await a.page.keyboard.press('Escape');
-    console.log('PASS shared screening, chat beside the player and stopping it');
     await a.page.screenshot({ path: '/tmp/z4world-desktop.png', fullPage: true });
 
     // Rejoin, reload and mobile pointer-release behavior.

@@ -6,11 +6,15 @@ import { defaultAppearance, onAppearanceSaved, type Appearance } from './appeara
 import { prismaProfileStore } from './profile.store';
 
 type Player = { id: string; username: string; x: number; y: number; color: string; table?: string; facing?:string; appearance: Appearance };
-type Member = { socket: Socket; player: Player; moved: number; moveCredit: number; chatted: number; emoted: number; screened: number };
+type Member = { socket: Socket; player: Player; moved: number; moveCredit: number; chatted: number; emoted: number; screened: number; synced: number };
 // Only ids are shared: every viewer looks the film up itself, so no one can push text or a player URL.
-type Screening = { slug: string; server: number; episode: string; host: string; hostName: string };
+type Screening = { source: string; slug: string; server: number; episode: string; host: string; hostName: string; playing: boolean; position: number; at: number };
 type Room = { id: string; members: Map<string, Member>; screening: Screening | null };
 const MOVIE_ID = /^[\w-]{1,120}$/;
+const MOVIE_SOURCES = ['phimapi', 'nguonc'];
+const validPosition = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 86_400;
+/** What viewers receive: the position right now, so a late joiner lands on the right moment. */
+const screeningView = ({ at, ...screening }: Screening) => ({ ...screening, position: screening.playing ? screening.position + (Date.now() - at) / 1000 : screening.position });
 const colors = ['#fb7185', '#a78bfa', '#38bdf8', '#fbbf24', '#34d399'];
 const record = (v: unknown): Record<string, unknown> => v !== null && typeof v === 'object' ? v as Record<string, unknown> : {};
 
@@ -79,11 +83,11 @@ export function initWorld(io: Server, prisma: PrismaClient) {
         const slots = Array.from({ length: 20 }, (_, i) => ({ x: 350+(i%5)*34, y: 440+Math.floor(i/5)*32 }));
         const spawn = slots.find(p => [...room.members.values()].every(m => Math.hypot(m.player.x-p.x, m.player.y-p.y) > 26)) ?? slots[room.members.size];
         const player: Player = { ...user, ...spawn, appearance: appearance!, color: colors[room.members.size % colors.length] };
-        room.members.set(socket.id, { socket, player, moved: 0, moveCredit: FULL_MOVE_CREDIT, chatted: 0, emoted: 0, screened: 0 });
+        room.members.set(socket.id, { socket, player, moved: 0, moveCredit: FULL_MOVE_CREDIT, chatted: 0, emoted: 0, screened: 0, synced: 0 });
         memberships.set(socket.id, room);
         await socket.join(room.id);
         if (memberships.get(socket.id) !== room) return;
-        socket.emit('world:snapshot', { roomId: room.id, self: socket.id, geometry:{...SIZE,blocks:BLOCKS,trunks:TREE_TRUNKS}, players: Object.fromEntries([...room.members].map(([id, m]) => [id, m.player])), screening: room.screening });
+        socket.emit('world:snapshot', { roomId: room.id, self: socket.id, geometry:{...SIZE,blocks:BLOCKS,trunks:TREE_TRUNKS}, players: Object.fromEntries([...room.members].map(([id, m]) => [id, m.player])), screening: room.screening && screeningView(room.screening) });
         socket.to(room.id).emit('world:joined', { id: socket.id, player });
       } catch {
         if (pending.get(socket.id) === ticket) {
@@ -147,12 +151,20 @@ export function initWorld(io: Server, prisma: PrismaClient) {
     });
     socket.on('world:screening:start', (value: unknown) => {
       const room = memberships.get(socket.id), m = room?.members.get(socket.id);
-      const { slug, server, episode } = record(value);
-      if (!room || !m || !atCinema(m.player.x, m.player.y) || typeof slug !== 'string' || !MOVIE_ID.test(slug) || typeof episode !== 'string' || !MOVIE_ID.test(episode) || !Number.isInteger(server) || Number(server) < 0 || Number(server) > 50 || Date.now() - m.screened < 2000) return;
+      const { source, slug, server, episode, playing, position } = record(value);
+      if (!room || !m || !atCinema(m.player.x, m.player.y) || typeof source !== 'string' || !MOVIE_SOURCES.includes(source) || typeof slug !== 'string' || !MOVIE_ID.test(slug) || typeof episode !== 'string' || !MOVIE_ID.test(episode) || !Number.isInteger(server) || Number(server) < 0 || Number(server) > 50 || typeof playing !== 'boolean' || !validPosition(position) || Date.now() - m.screened < 2000) return;
       if (room.screening && room.screening.host !== socket.id) return socket.emit('world:notice', 'Rạp đang có suất chiếu của người khác.');
       m.screened = Date.now();
-      room.screening = { slug, server: Number(server), episode, host: socket.id, hostName: m.player.username };
-      io.to(room.id).emit('world:screening', room.screening);
+      room.screening = { source, slug, server: Number(server), episode, host: socket.id, hostName: m.player.username, playing, position, at: m.screened };
+      io.to(room.id).emit('world:screening', screeningView(room.screening));
+    });
+    socket.on('world:screening:sync', (value: unknown) => {
+      const room = memberships.get(socket.id), m = room?.members.get(socket.id);
+      const { playing, position } = record(value);
+      if (!room?.screening || !m || room.screening.host !== socket.id || typeof playing !== 'boolean' || !validPosition(position) || Date.now() - m.synced < 100) return;
+      m.synced = Date.now();
+      Object.assign(room.screening, { playing, position, at: m.synced });
+      io.to(room.id).emit('world:screening', screeningView(room.screening));
     });
     socket.on('world:screening:stop', () => {
       const room = memberships.get(socket.id);

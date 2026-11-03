@@ -56,17 +56,24 @@ and jitter; run new movement changes through it, not just the localhost E2E.
 
 - Quiz and disappearing floor are removed; commit `a19859d` is the last one with
   them, if they come back. Sections 2 and 2b describe that earlier work.
-- `frontend/lib/world/movies.ts` calls phim.nguonc.com from the browser, with a
-  5 minute cache and one request per URL.
-- List items carry no categories, so each film is looked up before it is shown. Films
-  labelled 18+, or with no categories at all, stay hidden, including in screenings.
-- A player can open a screening for the room from the cinema. The server shares only
-  ids and each viewer looks the film up itself, so nobody can push text or a player
-  URL to others. The host's screening ends when they stop it or leave.
-- The player is a third-party iframe: playback cannot be synced or controlled from
-  here. It is sandboxed against popups and redirects, and needs a referrer.
-- The source's bot protection blocks automated browsers, so E2E uses a fake catalog
-  and player (`backend/tests/world.movies.mock.cjs`). Real playback needs a person.
+- `frontend/lib/world/movies.ts` reads two sources from the browser, with a 5 minute
+  cache and one request per URL. phimapi.com is primary: it gives direct HLS links, played
+  by `HlsPlayer.tsx` with hls.js. phim.nguonc.com is the backup: embeds only.
+- If the primary fails while listing, the cinema moves to the backup by itself, unless
+  the viewer chose that source. A stream that fails moves to the same film on the other
+  source, matched by title and year. Viewers can also switch by hand.
+- Films labelled 18+, or with no categories, stay hidden on both sources and in
+  screenings. phimapi lists carry categories; nguonc needs one lookup per film.
+- A screening shares only ids and playback state, so nobody can push text or a player
+  URL to others. The server holds the position (the host reports play, pause, seek and a
+  5 second heartbeat). `screeningSync.ts` keeps viewers on it: small drift by speed,
+  more than 3 seconds by seeking. A viewer who pauses or seeks leaves until they rejoin.
+- It ends when the host stops or leaves; closing the player pauses the room.
+- Backup embeds cannot be synced or controlled. They are sandboxed against popups and
+  redirects, need a referrer, and their bot protection blocks automated browsers, so
+  real embed playback still needs a person to check it.
+- `backend/tests/world.cinema.browser.cjs` runs both sources against mocks, with real video
+  from `backend/tests/fixtures/hls` (a synthetic ffmpeg `testsrc2` pattern).
 - `frontend/scripts/make-cinema-art.cjs` derives the building from the Game Club art.
 
 ## Later milestones (outside the playable MVP)

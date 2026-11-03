@@ -13,8 +13,9 @@ at `/z4world/play`. It fills the whole screen on desktop and mobile; phones are
 invited (not forced) to rotate to landscape. Rooms hold up to 20 people, with
 keyboard/touch movement, server-checked collision, proximity chat, emotes, café
 seating and private table chat. Share the room link to meet friends, or tap the cinema
-to browse films from phim.nguonc.com and invite the room to watch. Positions are
-authoritative on the server; viewers each press play, so playback is not synced.
+to pick a film and show it to the room: viewers stay on the host's moment, with
+phim.nguonc.com as a backup source that cannot sync. Positions are authoritative
+on the server.
 
 This version uses one backend process and ephemeral room/game state; only avatar
 appearance is stored in the database. See [Z4WORLD_PLAN.md](./Z4WORLD_PLAN.md) for

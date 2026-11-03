@@ -18,10 +18,14 @@ import WorldScene, { type SceneAction } from "../_components/WorldScene";
 import WorldDialog from "../_components/WorldDialog";
 import Wardrobe from "../_components/Wardrobe";
 import Joystick from "../_components/Joystick";
-import CinemaPanel, { useScreeningMovie } from "../_components/CinemaPanel";
+import CinemaPanel, {
+  useScreeningMovie,
+  type CinemaSource,
+} from "../_components/CinemaPanel";
 import WorldChat from "../_components/WorldChat";
 import RotateHint from "../_components/RotateHint";
 import { useWorldClient } from "../_components/useWorldClient";
+import { PRIMARY_SOURCE } from "@/lib/world/movies";
 import {
   COMPACT_QUERY,
   enterImmersive,
@@ -60,6 +64,11 @@ export default function WorldPlayPage() {
   const [chatChoice, setChatChoice] = useState<boolean | null>(null);
   const chatOpen = chatChoice ?? !compact;
   const [emotesOpen, setEmotesOpen] = useState(false);
+  // Kept here so a source that failed is not retried each time the cinema opens.
+  const [movieSource, setMovieSource] = useState<CinemaSource>({
+    source: PRIMARY_SOURCE,
+    chosen: false,
+  });
   const [typing, setTyping] = useState(false);
   const composing = compact && chatOpen && typing;
   const [seenMessage, setSeenMessage] = useState("");
@@ -344,7 +353,10 @@ export default function WorldPlayPage() {
             screening={screening}
             self={self}
             chat={cinemaChat}
+            choice={movieSource}
+            onChoice={setMovieSource}
             onShow={world.showFilm}
+            onSync={world.syncFilm}
             onStop={world.stopShowing}
           />
         </WorldDialog>
