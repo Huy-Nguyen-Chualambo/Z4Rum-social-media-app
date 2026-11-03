@@ -4,7 +4,6 @@ import type { Server, Socket } from 'socket.io';
 import type { PrismaClient } from '@prisma/client';
 import { initWorld } from '../src/world/world';
 import { step, walkable } from '../src/world/rules';
-import { FloorGame } from '../src/world/floor';
 
 test('movement rejects boundaries, solids and keeps diagonal speed constant', () => {
   assert.equal(walkable(0, 0), false);
@@ -18,37 +17,11 @@ test('movement rejects boundaries, solids and keeps diagonal speed constant', ()
   assert.ok(Math.abs(Math.hypot(diagonal.x-350, diagonal.y-440)-10) < 0.00001);
 });
 
-test('floor validates adjacency, prevents duplicate join and cleans round timers', t => {
-  t.mock.timers.enable({ apis: ['setTimeout'] });
-  const states: ReturnType<FloorGame['state']>[] = [];
-  const floor = new FloorGame(state => states.push(state));
-  floor.move('outsider', 1);
-  floor.join('a'); floor.join('a');
-  assert.equal(Object.keys(floor.state().pieces).length, 1);
-  floor.join('b');
-  assert.equal(floor.state().phase, 'running');
-  floor.move('a', 35);
-  assert.equal(floor.state().pieces.a.cell, 0);
-  floor.move('a', Infinity);
-  assert.equal(floor.state().pieces.a.cell, 0);
-  floor.move('a', 1);
-  assert.equal(floor.state().pieces.a.cell, 1);
-  floor.join('c');
-  assert.equal(floor.state().pieces.c, undefined);
-  floor.leave('b');
-  assert.equal(floor.state().phase, 'results');
-  const count = states.length;
-  t.mock.timers.tick(60_000);
-  assert.equal(states.length, count);
-  floor.join('a');
-  assert.equal(floor.state().phase, 'waiting');
-  assert.deepEqual(floor.state().fallen, []);
-  floor.dispose();
-});
-
-test('world isolates membership, validates moves, protects quiz and cleans disconnects', async () => {
+test('world isolates membership, validates moves, protects screenings and cleans disconnects', async () => {
   let connect: (socket: Socket) => void = () => {};
-  const io = { on: (_event: string, handler: typeof connect) => { connect = handler; }, to: () => ({ emit: () => {} }) };
+  const broadcasts: { event: string; payload: unknown }[] = [];
+  const screenings = () => broadcasts.filter(e => e.event === 'world:screening').map(e => e.payload);
+  const io = { on: (_event: string, handler: typeof connect) => { connect = handler; }, to: () => ({ emit: (event: string, payload: unknown) => broadcasts.push({ event, payload }) }) };
   const prisma = { user: { findUnique: async ({ where }: { where: { id: string } }) => ({ id: where.id, username: where.id }) } };
   initWorld(io as unknown as Server, prisma as unknown as PrismaClient);
   function client(id: string) {
@@ -62,7 +35,7 @@ test('world isolates membership, validates moves, protects quiz and cleans disco
   const a = client('a'), b = client('b');
   await a.send('world:move', { dx: 1, dy: 0 });
   await a.send('world:join'); await b.send('world:join');
-  const snapshot = b.emitted.find(e => e.event === 'world:snapshot')?.payload as { players: Record<string, { x: number; y: number }>; game: { participants: string[] } };
+  const snapshot = b.emitted.find(e => e.event === 'world:snapshot')?.payload as { players: Record<string, { x: number; y: number }>; screening: unknown };
   assert.equal(Object.keys(snapshot.players).length, 2);
   const before = snapshot.players.a.x;
   await a.send('world:move', { dx: Infinity, dy: 0 });
@@ -76,11 +49,27 @@ test('world isolates membership, validates moves, protects quiz and cleans disco
   const accepted = (snapshot.players.a.y - beforeBurst) / 10;
   assert.ok(accepted >= 1 && accepted <= 4, `accepted ${accepted} moves`);
   assert.equal(a.emitted.filter(e => e.event === 'world:moved').length, 12 - accepted);
-  await a.send('world:quiz:join');
-  assert.deepEqual(snapshot.game.participants, []);
+  const film = { slug: 'ten-phim', server: 0, episode: 'tap-1' };
+  await a.send('world:screening:start', film);
+  assert.equal(screenings().length, 0, 'a screening must be started at the cinema');
+  Object.assign(snapshot.players.a, { x: 805, y: 250 });
+  for (const bad of [{ ...film, slug: '../admin' }, { ...film, episode: '<b>' }, { ...film, server: -1 }, { ...film, server: 1.5 }, { ...film, slug: 1 }]) await a.send('world:screening:start', bad);
+  assert.equal(screenings().length, 0, 'malformed films are rejected');
+  await a.send('world:screening:start', { ...film, name: 'spam', embed: 'https://evil.example' });
+  assert.deepEqual(screenings().at(-1), { ...film, host: 'a', hostName: 'a' }, 'only ids are stored, never text or URLs');
+  await a.send('world:screening:start', { ...film, episode: 'tap-2' });
+  assert.equal(screenings().length, 1, 'restarting is rate limited');
+  Object.assign(snapshot.players.b, { x: 805, y: 250 });
+  await b.send('world:screening:start', { ...film, slug: 'phim-khac' });
+  assert.equal(screenings().length, 1, 'another player cannot take over');
+  assert.ok(b.emitted.some(e => e.event === 'world:notice'));
+  await b.send('world:screening:stop');
+  assert.equal(screenings().length, 1, 'another player cannot stop it');
   await a.send('world:chat', 'hello');
   assert.ok(b.emitted.some(e => e.event === 'world:chat'));
-  await a.send('disconnect'); await b.send('disconnect');
+  await a.send('disconnect');
+  assert.equal(screenings().at(-1), null, 'a screening ends when its host leaves');
+  await b.send('disconnect');
   const c = client('c'); await c.send('world:join');
   const last = c.emitted.find(e => e.event === 'world:snapshot')?.payload as { players: Record<string, unknown> };
   assert.deepEqual(Object.keys(last.players), ['c']);

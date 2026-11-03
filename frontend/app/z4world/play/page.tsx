@@ -18,7 +18,7 @@ import WorldScene, { type SceneAction } from "../_components/WorldScene";
 import WorldDialog from "../_components/WorldDialog";
 import Wardrobe from "../_components/Wardrobe";
 import Joystick from "../_components/Joystick";
-import GameClubPanel from "../_components/GameClubPanel";
+import CinemaPanel, { useScreeningMovie } from "../_components/CinemaPanel";
 import WorldChat from "../_components/WorldChat";
 import RotateHint from "../_components/RotateHint";
 import { useWorldClient } from "../_components/useWorldClient";
@@ -37,21 +37,18 @@ const EMOTES = ["👋", "❤️", "😂", "🎉"];
 export default function WorldPlayPage() {
   const world = useWorldClient();
   const {
-    socket,
     players,
     self,
     room,
     status,
     messages,
-    game,
-    floor,
+    screening,
     scope,
     notice,
     panel,
     now,
     me,
-    inLobby,
-    participating,
+    inCinema,
     nearTable,
     open,
   } = world;
@@ -92,20 +89,28 @@ export default function WorldPlayPage() {
             label: "Ngồi bàn cà phê",
             run: () => world.sit(nearTable.id),
           }
-        : inLobby
+        : inCinema
           ? {
-              label: "Vào Game Club",
-              run: () => world.interact("club"),
+              label: "Vào rạp phim",
+              run: () => world.interact("cinema"),
             }
           : null;
-  const matchLabel =
-    game.phase === "question"
-      ? `Câu ${game.question?.number ?? ""}`
-      : floor.phase === "running"
-        ? `Vòng ${floor.round}`
-        : game.phase === "results" || floor.phase === "results"
-          ? "Xem kết quả"
-          : "Đang chờ người chơi";
+  const showing = useScreeningMovie(screening);
+  const cinemaChat = (onClose: () => void) => (
+    <WorldChat
+      open
+      composing={false}
+      messages={messages}
+      seated={false}
+      scope="nearby"
+      alone={playerCount <= 1}
+      canSend={Boolean(me)}
+      onScope={world.setScope}
+      onSend={world.sendChat}
+      onClose={onClose}
+      onComposing={() => {}}
+    />
+  );
 
   return (
     <div className={`${styles.stage} font-sans`} data-testid="world-stage">
@@ -241,15 +246,14 @@ export default function WorldPlayPage() {
 
       {!compactChat && (
         <div className={styles.bottomRight}>
-          {(participating || Boolean(floor.pieces[self])) &&
-            panel !== "games" && (
-              <button
-                className={styles.matchButton}
-                onClick={() => open("games")}
-              >
-                Mở lại trận đấu · {matchLabel}
-              </button>
-            )}
+          {showing && panel !== "cinema" && (
+            <button
+              className={styles.screeningButton}
+              onClick={() => world.interact("cinema")}
+            >
+              Đang chiếu · {showing.name}
+            </button>
+          )}
           {emotesOpen && (
             <div className={`${styles.panel} ${styles.emotes}`}>
               {EMOTES.map((emoji) => (
@@ -334,19 +338,14 @@ export default function WorldPlayPage() {
           />
         </WorldDialog>
       )}
-      {panel === "games" && (
-        <WorldDialog title="Game Club" onClose={() => open(null)}>
-          <GameClubPanel
-            socket={socket}
-            game={game}
-            floor={floor}
-            players={players}
+      {panel === "cinema" && (
+        <WorldDialog wide title="Rạp phim" onClose={() => open(null)}>
+          <CinemaPanel
+            screening={screening}
             self={self}
-            now={now}
-            inLobby={inLobby}
-            participating={participating}
-            answered={world.answered}
-            floorMember={world.floorMember}
+            chat={cinemaChat}
+            onShow={world.showFilm}
+            onStop={world.stopShowing}
           />
         </WorldDialog>
       )}

@@ -1,7 +1,7 @@
 // Deterministic format/size derivatives only; original generated PNGs stay intact.
 const specs = {
   cafe: 768,
-  "game-club": 768,
+  cinema: 768,
   fountain: 512,
   tree: 384,
   bench: 384,

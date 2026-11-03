@@ -162,7 +162,7 @@ export default function WorldScene({
         viewBox="0 0 1760 1060"
         className={styles.scene}
         role="group"
-        aria-label="Z4world isometric: quán cà phê, Game Club và quảng trường với người chơi realtime"
+        aria-label="Z4world isometric: quán cà phê, rạp phim và quảng trường với người chơi realtime"
         onClick={(event) => {
           const matrix = event.currentTarget.getScreenCTM();
           if (!matrix) return;
@@ -227,7 +227,7 @@ export default function WorldScene({
               local.y > p.y - h * asset.anchor &&
               local.y < p.y + 10;
             const interactive =
-              prop.key === "club" ||
+              prop.key === "cinema" ||
               prop.key === "cafe" ||
               cafeTables.some((t) => t.id === prop.key);
             return (
@@ -239,8 +239,8 @@ export default function WorldScene({
                 tabIndex={interactive ? 0 : undefined}
                 aria-label={
                   interactive
-                    ? prop.key === "club"
-                      ? "Vào Game Club"
+                    ? prop.key === "cinema"
+                      ? "Vào rạp phim"
                       : prop.key === "cafe"
                         ? "Đến quán cà phê"
                         : `Ngồi ${prop.key}`

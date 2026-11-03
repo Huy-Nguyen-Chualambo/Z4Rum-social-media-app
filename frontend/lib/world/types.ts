@@ -25,3 +25,10 @@ export type WorldMessage = {
 export type WorldEmote = { text: string; until: number };
 export type Facing = "front-left" | "front-right" | "back-left" | "back-right";
 export type Motion = { facing: Facing; until: number };
+export type Screening = {
+  slug: string;
+  server: number;
+  episode: string;
+  host: string;
+  hostName: string;
+};

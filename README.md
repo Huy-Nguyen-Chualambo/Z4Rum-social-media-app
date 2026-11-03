@@ -12,9 +12,9 @@ Visit `/z4world` after signing in, then choose "Vào thế giới" to open the g
 at `/z4world/play`. It fills the whole screen on desktop and mobile; phones are
 invited (not forced) to rotate to landscape. Rooms hold up to 20 people, with
 keyboard/touch movement, server-checked collision, proximity chat, emotes, café
-seating and private table chat. Share the room link to meet friends, or tap Game Club
-to walk there for multiplayer quiz or disappearing floor. Scores and positions are
-authoritative on the server.
+seating and private table chat. Share the room link to meet friends, or tap the cinema
+to browse films from phim.nguonc.com and invite the room to watch. Positions are
+authoritative on the server; viewers each press play, so playback is not synced.
 
 This version uses one backend process and ephemeral room/game state; only avatar
 appearance is stored in the database. See [Z4WORLD_PLAN.md](./Z4WORLD_PLAN.md) for

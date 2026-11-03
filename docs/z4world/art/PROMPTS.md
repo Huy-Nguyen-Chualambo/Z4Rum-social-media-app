@@ -15,6 +15,7 @@ derivatives with `frontend/scripts/prepare-world-assets.cjs`.
 | --- | --- |
 | cafe | Vietnamese café, peach terracotta roof, cream wall, sage shutters, mint/cream striped awning, dark timber door, single CAFE sign and modest flower pots; rectangular 230×130 footprint, compact 1.5 floors, entrance facing down-left. |
 | game-club | Lavender Game Club, cream trim, rounded facade, controller sign, glass double door, restrained warm glow; same footprint/height as café, single GAME CLUB sign. |
+| cinema | Not generated: `frontend/scripts/make-cinema-art.cjs` repaints `game-club.png` (red walls, film reel, RẠP PHIM sign, posters in the windows). |
 | fountain | Round warm-cream two-tier stone fountain, turquoise water, delicate streams, subtle moss and two flowers at base, no surrounding garden. |
 | tree | Rounded sage/mint shade tree, warm brown trunk visible, softly clumped foliage, 2–3 pink flowers near roots, no terrain base. |
 | bench | Honey wood slats, dark sage curved metal arms and four feet, facing down-left, no plants or terrain. |

@@ -149,7 +149,11 @@
 .emotes button:hover {
   background: #292929;
 }
-.matchButton {
+.screeningButton {
+  max-width: min(360px, 100vw - 24px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   min-height: 40px;
   border-radius: 4px;
   background: #3b82f6;

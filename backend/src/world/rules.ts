@@ -28,10 +28,7 @@ export const FULL_MOVE_CREDIT = MOVE_BURST;
 export function moveCredit(credit: number, elapsed: number) {
   return Math.min(MOVE_BURST, credit + elapsed / MOVE_INTERVAL);
 }
-export const QUESTIONS = [
-  { text: 'Một phút có bao nhiêu giây?', options: ['30', '60', '90', '100'], answer: 1 },
-  { text: 'Hành tinh nào gần Mặt Trời nhất?', options: ['Trái Đất', 'Sao Hỏa', 'Sao Thủy', 'Sao Kim'], answer: 2 },
-  { text: '5 × 7 bằng bao nhiêu?', options: ['25', '30', '35', '40'], answer: 2 },
-  { text: 'Thủ đô của Việt Nam là gì?', options: ['Huế', 'Đà Nẵng', 'TP.HCM', 'Hà Nội'], answer: 3 },
-  { text: 'Tam giác có bao nhiêu cạnh?', options: ['3', '4', '5', '6'], answer: 0 },
-];
+/** The pavement in front of the cinema, where a screening can be started. */
+export function atCinema(x: number, y: number) {
+  return x >= 650 && y <= 300;
+}

@@ -1,5 +1,6 @@
 // Full-screen route and responsive HUD. Run with the fixture and frontend from Z4WORLD_PLAN.md.
 const { chromium } = require('playwright');
+const { mockMovies } = require('./world.movies.mock.cjs');
 const assert = require('node:assert/strict');
 const base = 'http://localhost:3300';
 const shots = process.env.WORLD_SHOT_DIR || '/tmp';
@@ -20,6 +21,7 @@ const intersects = (a, b) => a.x < b.x + b.width && b.x < a.x + a.width && a.y <
     const login = await (await fetch('http://127.0.0.1:4400/fixture/login/10')).json();
     const open = async (viewport, extra) => {
       const context = await browser.newContext({ viewport, ...extra });
+      await mockMovies(context);
       await context.addInitScript(token => sessionStorage.setItem('z4rum_token', token), login.token);
       const page = await context.newPage();
       page.on('pageerror', e => errors.push(e.message));
@@ -170,7 +172,7 @@ const intersects = (a, b) => a.x < b.x + b.width && b.x < a.x + a.width && a.y <
       await delay(250);
       await page.screenshot({ path: `${shots}/near-table-desktop.png` });
       // Walking away by hand cancels a pending one-tap action.
-      await page.getByRole('button', { name: 'Vào Game Club', exact: true }).first().click();
+      await page.getByRole('button', { name: 'Vào rạp phim', exact: true }).first().click();
       await delay(150);
       await page.locator('h1').click();
       await page.keyboard.down('ArrowLeft'); await delay(200); await page.keyboard.up('ArrowLeft');
@@ -197,41 +199,35 @@ const intersects = (a, b) => a.x < b.x + b.width && b.x < a.x + a.width && a.y <
       await context.close();
     }
 
-    // A live match stays usable on a short landscape phone.
-    {
-      const phone = { width: 844, height: 390 }, touch = { isMobile: true, hasTouch: true };
-      const logins = await Promise.all([11, 12].map(async id => (await fetch(`http://127.0.0.1:4400/fixture/login/${id}`)).json()));
-      const players = [];
-      for (const [i, auth] of logins.entries()) {
-        const context = await browser.newContext({ viewport: phone, ...touch });
-        await context.addInitScript(token => sessionStorage.setItem('z4rum_token', token), auth.token);
-        const page = await context.newPage();
-        page.on('pageerror', e => errors.push(e.message));
-        await page.goto(`${base}/z4world/play`);
-        await page.locator(`[data-username="Tester${11 + i}"]`).waitFor();
-        players.push({ context, page });
-      }
-      for (const { page } of players) {
-        // One tap on the building: the avatar walks over and the club opens.
-        await page.getByRole('button', { name: 'Vào Game Club', exact: true }).first().click();
-        await page.getByRole('dialog', { name: 'Game Club' }).waitFor({ timeout: 20000 });
-      }
-      await players[0].page.screenshot({ path: `${shots}/club-phone-landscape.png` });
-      for (const { page } of players) await page.getByRole('button', { name: 'Chơi sàn biến mất', exact: true }).click();
-      const { page } = players[0];
-      await page.getByText('Vòng 1/8', { exact: false }).waitFor();
-      assert.equal(await page.getByText('Đố vui anh em', { exact: false }).count(), 0, 'quiz is hidden during a floor round');
-      const dialog = await page.getByRole('dialog', { name: 'Game Club' }).boundingBox();
-      await page.screenshot({ path: `${shots}/floor-phone-landscape.png` });
-      const close = await page.getByRole('button', { name: 'Đóng cửa sổ' }).boundingBox();
-      assert.ok(close.y >= dialog.y, 'close button is not cut off during a round');
-      assert.equal(await page.getByRole('dialog', { name: 'Game Club' }).evaluate(el => el.scrollHeight > el.clientHeight), false, 'a live round needs no dialog scrolling');
-      for (const cell of ['Ô 1', 'Ô 6', 'Ô 31', 'Ô 36']) {
-        const tile = await page.getByRole('button', { name: cell, exact: true }).boundingBox();
-        assert.ok(tile.y >= dialog.y && tile.y + tile.height <= Math.min(dialog.y + dialog.height, phone.height), `${cell} is visible without scrolling`);
-      }
-      console.log('PASS floor board fits a landscape phone without scrolling');
-      for (const { context } of players) await context.close();
+    // The cinema stays usable on a short landscape phone and in portrait.
+    for (const [name, phone] of [['landscape', { width: 844, height: 390 }], ['portrait', { width: 390, height: 844 }]]) {
+      const auth = await (await fetch(`http://127.0.0.1:4400/fixture/login/11`)).json();
+      const context = await browser.newContext({ viewport: phone, isMobile: true, hasTouch: true });
+      await mockMovies(context);
+      await context.addInitScript(token => sessionStorage.setItem('z4rum_token', token), auth.token);
+      const page = await context.newPage();
+      page.on('pageerror', e => errors.push(e.message));
+      await page.goto(`${base}/z4world/play`);
+      await page.locator('[data-username="Tester11"]').waitFor();
+      await page.getByRole('button', { name: 'Xem toàn cảnh', exact: true }).click();
+      // One tap on the building: the avatar walks over and the cinema opens.
+      await page.getByRole('button', { name: 'Vào rạp phim', exact: true }).first().click();
+      const dialog = page.getByRole('dialog', { name: 'Rạp phim' });
+      await dialog.waitFor({ timeout: 20000 });
+      await page.getByRole('button', { name: 'Xem phim Phim Một', exact: true }).waitFor();
+      await delay(200);
+      await page.screenshot({ path: `${shots}/cinema-browse-phone-${name}.png` });
+      await page.getByRole('button', { name: 'Xem phim Phim Một', exact: true }).click();
+      await page.getByRole('button', { name: 'Xem tập 1', exact: true }).click();
+      const player = await page.getByTitle('Trình phát Phim Một').boundingBox();
+      const frame = await dialog.boundingBox();
+      assert.ok(player.x >= frame.x && player.x + player.width <= frame.x + frame.width, `${name}: player fits the dialog`);
+      assert.ok(player.y + player.height <= phone.height, `${name}: player is fully on screen`);
+      assert.equal(await dialog.evaluate(el => el.scrollWidth > el.clientWidth), false, `${name}: no sideways scrolling`);
+      await delay(200);
+      await page.screenshot({ path: `${shots}/cinema-player-phone-${name}.png` });
+      await context.close();
+      console.log(`PASS cinema fits a ${name} phone`);
     }
 
     assert.deepEqual(errors, []);

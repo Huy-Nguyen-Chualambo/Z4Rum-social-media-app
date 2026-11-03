@@ -13,7 +13,7 @@ import AvatarSprite from "./AvatarSprite";
 const scenery = [
   { asset: "tree", x: 112, y: 262, scale: 0.8 },
   { asset: "cafe", x: 262, y: 262, scale: 0.86 },
-  { asset: "club", x: 640, y: 262, scale: 0.86 },
+  { asset: "cinema", x: 640, y: 262, scale: 0.86 },
   { asset: "tree", x: 806, y: 280, scale: 0.8 },
   { asset: "lamp", x: 368, y: 330, scale: 0.8 },
   { asset: "fountain", x: 452, y: 318, scale: 0.84 },
@@ -26,7 +26,7 @@ const tips = [
   },
   {
     title: "Ghé chơi",
-    text: "Bấm vào bàn cà phê là nhân vật tự đi tới và ngồi xuống. Tin nhắn chỉ tới người ở gần bạn.",
+    text: "Bấm vào bàn cà phê để ngồi, hoặc vào rạp phim để chọn phim và rủ cả sảnh xem cùng. Tin nhắn chỉ tới người ở gần bạn.",
   },
   {
     title: "Trên điện thoại",
@@ -118,7 +118,7 @@ export default function WorldLanding() {
         viewBox="30 10 840 480"
         className="block w-full border-b border-[#292929]"
         role="img"
-        aria-label="Quán cà phê, Game Club, đài phun nước và nhân vật của bạn trong Z4world về đêm"
+        aria-label="Quán cà phê, rạp phim, đài phun nước và nhân vật của bạn trong Z4world về đêm"
       >
         <defs>
           <radialGradient id="landing-warm">

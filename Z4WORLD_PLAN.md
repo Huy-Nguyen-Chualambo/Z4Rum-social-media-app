@@ -41,8 +41,7 @@
   The current action appears under the player's name, with E on desktop.
 - [x] Surrounding city, lamp light and three decorative passers-by. They are local
   only: not players, not synced, not counted in the room.
-- Mini games are deferred: they still work, reached by tapping Game Club, and only
-  received the new colors. Their redesign is a later milestone.
+- Mini games were deferred in this round, then removed in section 7.
 
 ## 6. Movement over real networks
 
@@ -52,6 +51,23 @@ position plus its unconfirmed moves (`frontend/lib/world/movement.ts`). The serv
 limits the average move rate rather than each gap, and answers every move it
 drops. `movement.test.ts` plays routes against the real server rules with delay
 and jitter; run new movement changes through it, not just the localhost E2E.
+
+## 7. Cinema replaces Game Club
+
+- Quiz and disappearing floor are removed; commit `a19859d` is the last one with
+  them, if they come back. Sections 2 and 2b describe that earlier work.
+- `frontend/lib/world/movies.ts` calls phim.nguonc.com from the browser, with a
+  5 minute cache and one request per URL.
+- List items carry no categories, so each film is looked up before it is shown. Films
+  labelled 18+, or with no categories at all, stay hidden, including in screenings.
+- A player can open a screening for the room from the cinema. The server shares only
+  ids and each viewer looks the film up itself, so nobody can push text or a player
+  URL to others. The host's screening ends when they stop it or leave.
+- The player is a third-party iframe: playback cannot be synced or controlled from
+  here. It is sandboxed against popups and redirects, and needs a referrer.
+- The source's bot protection blocks automated browsers, so E2E uses a fake catalog
+  and player (`backend/tests/world.movies.mock.cjs`). Real playback needs a person.
+- `frontend/scripts/make-cinema-art.cjs` derives the building from the Game Club art.
 
 ## Later milestones (outside the playable MVP)
 - Friend-specific notifications in addition to shareable room invitations.
@@ -74,25 +90,19 @@ Use two different accounts in separate browsers (one account has one active
 world presence). Confirm both appear in the same room, movement is visible,
 the fountain/buildings block walking, and nearby chat arrives on both screens.
 Separate by more than 250 map units and verify chat no longer arrives remotely.
-Walk both avatars to the area below Game Club at the top right, join quiz,
+Walk both avatars to the area below the cinema at the top right, open a film,
 submit answers, wait for all five rounds, then compare the final leaderboard.
 Disconnect one browser and verify its avatar is removed; reopen and verify
 rejoin. Mobile checks: hold/release the joystick, open chat and type without
 moving the avatar, then rotate the phone in both directions.
 
 Deploy frontend and backend together using the existing environment variables.
-The backend must run as one instance: room membership and quiz timers are held
-in memory. Restarting it clears rooms and unfinished matches. Multiple backend
+The backend must run as one instance: room membership and screenings are held
+in memory. Restarting it clears rooms and screenings. Multiple backend
 instances need shared state/room ownership and Socket.IO adapter work first.
 No persistent rewards are granted by this alpha. Café tables below the building
 accept up to two players; stand up before moving. Select the table channel for
 messages visible only to people currently seated at the same table.
-
-Quiz and floor each have their own queue, and a player can join only one at a
-time. Floor players tap a neighboring tile in the 6×6 arena to move; the server
-checks adjacency, rate and tile availability. Warned tiles fall after 2.5 seconds.
-An eight-round cap ends the match even if multiple players survive (a draw).
-Leaving a live match forfeits participation; disconnecting removes the avatar.
 
 ## Reproducible checks
 

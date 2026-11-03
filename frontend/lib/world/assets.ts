@@ -1,7 +1,7 @@
 /** Anchors refer to the center of each object's ground footprint, not its canvas. */
 export const worldAssets = {
   cafe: { src: '/z4world/assets/cafe-night.webp', width: 350, height: 350, anchor: 0.84 },
-  club: { src: '/z4world/assets/game-club-night.webp', width: 350, height: 350, anchor: 0.84 },
+  cinema: { src: '/z4world/assets/cinema-night.webp', width: 350, height: 350, anchor: 0.84 },
   fountain: { src: '/z4world/assets/fountain-night.webp', width: 190, height: 190, anchor: 0.82 },
   tree: { src: '/z4world/assets/tree-night.webp', width: 124, height: 150, anchor: 0.87 },
   bench: { src: '/z4world/assets/bench-night.webp', width: 118, height: 94, anchor: 0.8 },
@@ -14,7 +14,7 @@ export const cafeTables = [{ id: 'cafe-1', x: 180, y: 300 }, { id: 'cafe-2', x: 
 export const streetLamps = [{ x: 320, y: 230 }, { x: 675, y: 230 }, { x: 320, y: 570 }, { x: 675, y: 570 }];
 export const props: Prop[] = [
   { key: 'cafe', asset: 'cafe', x: 195, y: 130 },
-  { key: 'club', asset: 'club', x: 805, y: 130 },
+  { key: 'cinema', asset: 'cinema', x: 805, y: 130 },
   { key: 'fountain', asset: 'fountain', x: 500, y: 350 },
   { key: 'bench-left', asset: 'bench', x: 145, y: 495 },
   { key: 'bench-right', asset: 'bench', x: 815, y: 495 },

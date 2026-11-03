@@ -2,10 +2,12 @@
 import { useEffect, useRef, type ReactNode } from "react";
 export default function WorldDialog({
   title,
+  wide = false,
   onClose,
   children,
 }: {
   title: string;
+  wide?: boolean;
   onClose: () => void;
   children: ReactNode;
 }) {
@@ -30,7 +32,7 @@ export default function WorldDialog({
         if (event.key !== "Tab") return;
         const controls = Array.from(
           event.currentTarget.querySelectorAll<HTMLElement>(
-            'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+            'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), iframe, [tabindex]:not([tabindex="-1"])',
           ),
         ).filter((element) => element.getClientRects().length > 0);
         const first = controls[0],
@@ -46,7 +48,7 @@ export default function WorldDialog({
         }
       }}
       aria-label={title}
-      className="m-auto max-h-[85dvh] w-[min(620px,calc(100%-24px))] overflow-y-auto rounded-md border border-[#303030] bg-[#141414] p-4 pt-0 text-neutral-100 shadow-2xl backdrop:bg-black/70 sm:p-6 sm:pt-0 [@media(max-height:500px)]:max-h-[96dvh] [@media(max-height:500px)]:w-[min(720px,calc(100%-24px))] [@media(max-height:500px)]:px-3 [@media(max-height:500px)]:pb-2"
+      className={`m-auto max-h-[85dvh] ${wide ? "w-[min(1120px,calc(100%-24px))] sm:max-h-[92dvh]" : "w-[min(620px,calc(100%-24px))]"} overflow-y-auto rounded-md border border-[#303030] bg-[#141414] p-4 pt-0 text-neutral-100 shadow-2xl backdrop:bg-black/70 sm:p-6 sm:pt-0 [@media(max-height:500px)]:max-h-[96dvh] [@media(max-height:500px)]:px-3 [@media(max-height:500px)]:pb-2 ${wide ? "" : "[@media(max-height:500px)]:w-[min(720px,calc(100%-24px))]"}`}
     >
       <header className="sticky top-0 z-10 flex items-center justify-between gap-3 bg-[#141414] py-3 sm:pt-5 [@media(max-height:500px)]:py-1.5">
         <h2 className="text-xl font-bold [@media(max-height:500px)]:text-base">

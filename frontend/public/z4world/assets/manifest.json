@@ -1,6 +1,6 @@
 {
   "generator": "Built-in image_gen; approved-study.png style reference",
-  "totalBytes": 2078358,
+  "totalBytes": 2076342,
   "assets": [
     {
       "name": "cafe",
@@ -16,16 +16,16 @@
       "transparent": true
     },
     {
-      "name": "game-club",
-      "source": "docs/z4world/art/sources/game-club.png",
+      "name": "cinema",
+      "source": "docs/z4world/art/sources/cinema.png",
       "sourceWidth": 1254,
       "sourceHeight": 1254,
-      "sourceSha256": "ceb5a51afda45e5584cbf85fbd644bfd111798541265ac624fa1f26db006df4b",
-      "runtime": "/z4world/assets/game-club-night.webp",
+      "sourceSha256": "5c4cd3e644b8dec194b2ee3a706ebba4e8e1b00376cb5c0f284aa9873de99163",
+      "runtime": "/z4world/assets/cinema-night.webp",
       "grade": "night-v1",
       "width": 768,
       "height": 768,
-      "bytes": 117244,
+      "bytes": 115228,
       "transparent": true
     },
     {

@@ -16,52 +16,15 @@ import type {
   WorldMessage as Message,
   Motion,
   Appearance,
+  Screening,
 } from "@/lib/world/types";
 
-export type Game = {
-  phase: "waiting" | "question" | "results";
-  round: string;
-  participants: string[];
-  scores: Record<string, number>;
-  endsAt: number;
-  question: {
-    text: string;
-    options: string[];
-    number: number;
-    total: number;
-  } | null;
-};
-export type Floor = {
-  phase: "waiting" | "running" | "results";
-  pieces: Record<string, { cell: number; alive: boolean }>;
-  fallen: number[];
-  warning: number[];
-  round: number;
-  endsAt: number;
-};
 type Snapshot = {
   roomId: string;
   self: string;
   players: Record<string, Player>;
-  game: Game;
-  floor: Floor;
+  screening: Screening | null;
   geometry: Geometry;
-};
-const initialGame: Game = {
-  phase: "waiting",
-  round: "",
-  participants: [],
-  scores: {},
-  endsAt: 0,
-  question: null,
-};
-const initialFloor: Floor = {
-  phase: "waiting",
-  pieces: {},
-  fallen: [],
-  warning: [],
-  round: 0,
-  endsAt: 0,
 };
 const tables = cafeTables;
 
@@ -78,11 +41,9 @@ export function useWorldClient() {
   const [emotes, setEmotes] = useState<
     Record<string, { text: string; until: number }>
   >({});
-  const [game, setGame] = useState<Game>(initialGame);
-  const [floor, setFloor] = useState<Floor>(initialFloor);
+  const [screening, setScreening] = useState<Screening | null>(null);
   const [scope, setScope] = useState("nearby");
   const [notice, setNotice] = useState("");
-  const [answeredRound, setAnsweredRound] = useState("");
   const [now, setNow] = useState(0);
   const keys = useRef(new Set<string>());
   const touch = useRef({ dx: 0, dy: 0 });
@@ -92,19 +53,16 @@ export function useWorldClient() {
   const routeProgress = useRef({ gap: Infinity, at: 0 });
   const moves = useRef(createMoveTracker());
   const [destination, setDestination] = useState<Point | null>(null);
-  const [panel, setPanel] = useState<"games" | "wardrobe" | null>(null);
+  const [panel, setPanel] = useState<"cinema" | "wardrobe" | null>(null);
   const paused = useRef(false);
   /** Tapping a place walks there and then acts, instead of asking for a second tap. */
   const arrival = useRef<string | null>(null);
   const [hasWalked, setHasWalked] = useState(false);
   const interaction = useRef<() => void>(() => {});
   const me = players[self];
-  const inLobby = Boolean(me && me.x >= 650 && me.y <= 300);
-  const participating = game.participants.includes(self);
-  const answered = answeredRound === game.round;
+  const inCinema = Boolean(me && me.x >= 650 && me.y <= 300);
   const nearTable =
     me && tables.find((t) => Math.hypot(me.x - t.x, me.y - t.y) <= 85);
-  const floorMember = Boolean(floor.phase !== "results" && floor.pieces[self]);
   const stop = () => {
     keys.current.clear();
     touch.current = { dx: 0, dy: 0 };
@@ -112,7 +70,7 @@ export function useWorldClient() {
     arrival.current = null;
     setDestination(null);
   };
-  const open = (value: "games" | "wardrobe" | null) => {
+  const open = (value: "cinema" | "wardrobe" | null) => {
     stop();
     paused.current = Boolean(value);
     setPanel(value);
@@ -135,8 +93,8 @@ export function useWorldClient() {
   };
   const interact = (id: string) => {
     if (!me) return;
-    if (id === "club") {
-      if (inLobby) open("games");
+    if (id === "cinema") {
+      if (inCinema) open("cinema");
       else {
         navigate({ x: 805, y: 250 });
         arrival.current = id;
@@ -162,7 +120,7 @@ export function useWorldClient() {
         stop();
         socket?.emit("world:stand");
       } else if (nearTable) interact(nearTable.id);
-      else if (inLobby) interact("club");
+      else if (inCinema) interact("cinema");
     };
   });
 
@@ -185,12 +143,10 @@ export function useWorldClient() {
       setPlayers(data.players);
       setSelf(data.self);
       setRoom(data.roomId);
-      setGame(data.game);
-      setFloor(data.floor);
+      setScreening(data.screening);
       setStatus("");
       setMessages([]);
       setEmotes({});
-      setAnsweredRound("");
     };
     const joined = ({ id, player }: { id: string; player: Player }) => {
       positions.current = { ...positions.current, [id]: player };
@@ -240,10 +196,7 @@ export function useWorldClient() {
         ...p,
         [id]: { text: emoji, until: Date.now() + 3500 },
       }));
-    const gameUpdate = (value: Game) => setGame(value);
-    const floorUpdate = (value: Floor) => setFloor(value);
     const showNotice = (value: string) => setNotice(value);
-    const accepted = (round: string) => setAnsweredRound(round);
     const appearanceUpdate = ({
       id,
       appearance,
@@ -269,8 +222,7 @@ export function useWorldClient() {
       setDestination(null);
       setPlayers({});
       setRoom("");
-      setGame(initialGame);
-      setFloor(initialFloor);
+      setScreening(null);
     };
     const disconnected = () => {
       setStatus("Mất kết nối. Đang thử lại…");
@@ -288,10 +240,8 @@ export function useWorldClient() {
     socket.on("world:moved", moved);
     socket.on("world:chat", chat);
     socket.on("world:emote", emote);
-    socket.on("world:game", gameUpdate);
-    socket.on("world:quiz:accepted", accepted);
+    socket.on("world:screening", setScreening);
     socket.on("world:error", error);
-    socket.on("world:floor", floorUpdate);
     socket.on("world:notice", showNotice);
     socket.on("connect_error", disconnected);
     socket.on("world:appearance", appearanceUpdate);
@@ -306,10 +256,8 @@ export function useWorldClient() {
       socket.off("world:moved", moved);
       socket.off("world:chat", chat);
       socket.off("world:emote", emote);
-      socket.off("world:game", gameUpdate);
-      socket.off("world:quiz:accepted", accepted);
+      socket.off("world:screening", setScreening);
       socket.off("world:error", error);
-      socket.off("world:floor", floorUpdate);
       socket.off("world:notice", showNotice);
       socket.off("connect_error", disconnected);
       socket.off("world:appearance", appearanceUpdate);
@@ -370,11 +318,11 @@ export function useWorldClient() {
       const actor = positions.current[identity.current];
       if (paused.current || !actor || actor.table || !socket?.connected) return;
       const goal = arrival.current;
-      if (goal === "club" && actor.x >= 650 && actor.y <= 300) {
+      if (goal === "cinema" && actor.x >= 650 && actor.y <= 300) {
         arrival.current = null;
         clear();
         paused.current = true;
-        setPanel("games");
+        setPanel("cinema");
         return;
       }
       const goalTable = tables.find((t) => t.id === goal);
@@ -471,6 +419,9 @@ export function useWorldClient() {
     setScope("nearby");
   };
   const sendEmote = (emoji: string) => socket?.emit("world:emote", emoji);
+  const showFilm = (slug: string, server: number, episode: string) =>
+    socket?.emit("world:screening:start", { slug, server, episode });
+  const stopShowing = () => socket?.emit("world:screening:stop");
   const retry = () => {
     if (socket?.connected) socket.emit("world:join");
     else socket?.connect();
@@ -504,21 +455,17 @@ export function useWorldClient() {
     status,
     messages,
     emotes,
-    game,
-    floor,
+    screening,
     scope,
     setScope,
     notice,
     setNotice,
-    answered,
     now,
     destination,
     panel,
     me,
-    inLobby,
-    participating,
+    inCinema,
     nearTable,
-    floorMember,
     hasWalked,
     open,
     stop,
@@ -529,6 +476,8 @@ export function useWorldClient() {
     sit,
     stand,
     sendEmote,
+    showFilm,
+    stopShowing,
     retry,
     invite,
     saveAppearance,

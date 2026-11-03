@@ -1,15 +1,16 @@
 import type { Server, Socket } from 'socket.io';
 import type { PrismaClient } from '@prisma/client';
-import { FULL_MOVE_CREDIT, moveCredit, QUESTIONS, step, TABLES, SIZE, BLOCKS, TREE_TRUNKS } from './rules';
+import { atCinema, FULL_MOVE_CREDIT, moveCredit, step, TABLES, SIZE, BLOCKS, TREE_TRUNKS } from './rules';
 import { randomUUID } from 'node:crypto';
-import { FloorGame } from './floor';
 import { defaultAppearance, onAppearanceSaved, type Appearance } from './appearance';
 import { prismaProfileStore } from './profile.store';
 
 type Player = { id: string; username: string; x: number; y: number; color: string; table?: string; facing?:string; appearance: Appearance };
-type Member = { socket: Socket; player: Player; moved: number; moveCredit: number; chatted: number; emoted: number };
-type Game = { phase: 'waiting' | 'question' | 'results'; players: Set<string>; scores: Record<string, number>; answered: Set<string>; index: number; round: string; endsAt: number; timer?: ReturnType<typeof setTimeout> };
-type Room = { id: string; members: Map<string, Member>; game: Game; floor: FloorGame };
+type Member = { socket: Socket; player: Player; moved: number; moveCredit: number; chatted: number; emoted: number; screened: number };
+// Only ids are shared: every viewer looks the film up itself, so no one can push text or a player URL.
+type Screening = { slug: string; server: number; episode: string; host: string; hostName: string };
+type Room = { id: string; members: Map<string, Member>; screening: Screening | null };
+const MOVIE_ID = /^[\w-]{1,120}$/;
 const colors = ['#fb7185', '#a78bfa', '#38bdf8', '#fbbf24', '#34d399'];
 const record = (v: unknown): Record<string, unknown> => v !== null && typeof v === 'object' ? v as Record<string, unknown> : {};
 
@@ -26,44 +27,18 @@ export function initWorld(io: Server, prisma: PrismaClient) {
     }
   });
   io.engine?.once('close', unsubscribe);
-  const gameState = (room: Room) => {
-    const g = room.game;
-    const q = QUESTIONS[g.index];
-    return { phase: g.phase, round: g.round, endsAt: g.endsAt, participants: [...g.players], scores: g.phase === 'results' ? g.scores : {},
-      question: g.phase === 'question' ? { text: q.text, options: q.options, number: g.index + 1, total: QUESTIONS.length } : null };
-  };
-  const broadcastGame = (room: Room) => io.to(room.id).emit('world:game', gameState(room));
-  function advance(room: Room) {
-    const g = room.game;
-    if (!rooms.has(room.id)) return;
-    g.index++;
-    g.answered.clear();
-    if (g.index >= QUESTIONS.length) {
-      g.phase = 'results'; g.endsAt = 0;
-      broadcastGame(room);
-      return;
-    }
-    g.phase = 'question'; g.endsAt = Date.now() + 12_000;
-    g.round = randomUUID();
-    broadcastGame(room);
-    g.timer = setTimeout(() => advance(room), 12_000);
-  }
   function leave(socket: Socket) {
     const room = memberships.get(socket.id);
     if (!room) return;
     memberships.delete(socket.id);
     room.members.delete(socket.id);
-    room.game.players.delete(socket.id);
-    room.floor.leave(socket.id);
-    delete room.game.scores[socket.id];
     socket.leave(room.id);
     io.to(room.id).emit('world:left', socket.id);
-    if (!room.members.size) {
-      clearTimeout(room.game.timer); room.floor.dispose(); rooms.delete(room.id);
-    } else if (room.game.players.size < 2 && room.game.phase === 'question') {
-      clearTimeout(room.game.timer); room.game.phase = 'results'; room.game.endsAt = 0;
+    if (!room.members.size) rooms.delete(room.id);
+    else if (room.screening?.host === socket.id) {
+      room.screening = null;
+      io.to(room.id).emit('world:screening', null);
     }
-    broadcastGame(room);
   }
 
   io.on('connection', socket => {
@@ -98,17 +73,17 @@ export function initWorld(io: Server, prisma: PrismaClient) {
         room ??= [...rooms.values()].find(r => r.members.size < 20);
         if (!room) {
           const id = `world:${randomUUID().slice(0, 8)}`;
-          room = { id, members: new Map(), game: { phase: 'waiting', players: new Set(), scores: {}, answered: new Set(), index: -1, round: '', endsAt: 0 }, floor: new FloorGame(state => io.to(id).emit('world:floor', state)) };
+          room = { id, members: new Map(), screening: null };
           rooms.set(room.id, room);
         }
         const slots = Array.from({ length: 20 }, (_, i) => ({ x: 350+(i%5)*34, y: 440+Math.floor(i/5)*32 }));
         const spawn = slots.find(p => [...room.members.values()].every(m => Math.hypot(m.player.x-p.x, m.player.y-p.y) > 26)) ?? slots[room.members.size];
         const player: Player = { ...user, ...spawn, appearance: appearance!, color: colors[room.members.size % colors.length] };
-        room.members.set(socket.id, { socket, player, moved: 0, moveCredit: FULL_MOVE_CREDIT, chatted: 0, emoted: 0 });
+        room.members.set(socket.id, { socket, player, moved: 0, moveCredit: FULL_MOVE_CREDIT, chatted: 0, emoted: 0, screened: 0 });
         memberships.set(socket.id, room);
         await socket.join(room.id);
         if (memberships.get(socket.id) !== room) return;
-        socket.emit('world:snapshot', { roomId: room.id, self: socket.id, geometry:{...SIZE,blocks:BLOCKS,trunks:TREE_TRUNKS}, players: Object.fromEntries([...room.members].map(([id, m]) => [id, m.player])), game: gameState(room), floor: room.floor.state() });
+        socket.emit('world:snapshot', { roomId: room.id, self: socket.id, geometry:{...SIZE,blocks:BLOCKS,trunks:TREE_TRUNKS}, players: Object.fromEntries([...room.members].map(([id, m]) => [id, m.player])), screening: room.screening });
         socket.to(room.id).emit('world:joined', { id: socket.id, player });
       } catch {
         if (pending.get(socket.id) === ticket) {
@@ -170,37 +145,20 @@ export function initWorld(io: Server, prisma: PrismaClient) {
       delete m.player.table;
       io.to(room.id).emit('world:joined', { id: socket.id, player: m.player });
     });
-    socket.on('world:quiz:leave', () => {
-      const room = memberships.get(socket.id);
-      if (!room || room.game.phase === 'question') return;
-      room.game.players.delete(socket.id); delete room.game.scores[socket.id]; broadcastGame(room);
-    });
-    socket.on('world:floor:join', () => {
+    socket.on('world:screening:start', (value: unknown) => {
       const room = memberships.get(socket.id), m = room?.members.get(socket.id);
-      if (room && m && m.player.x >= 650 && m.player.y <= 300 && !(room.game.phase !== 'results' && room.game.players.has(socket.id))) room.floor.join(socket.id);
+      const { slug, server, episode } = record(value);
+      if (!room || !m || !atCinema(m.player.x, m.player.y) || typeof slug !== 'string' || !MOVIE_ID.test(slug) || typeof episode !== 'string' || !MOVIE_ID.test(episode) || !Number.isInteger(server) || Number(server) < 0 || Number(server) > 50 || Date.now() - m.screened < 2000) return;
+      if (room.screening && room.screening.host !== socket.id) return socket.emit('world:notice', 'Rạp đang có suất chiếu của người khác.');
+      m.screened = Date.now();
+      room.screening = { slug, server: Number(server), episode, host: socket.id, hostName: m.player.username };
+      io.to(room.id).emit('world:screening', room.screening);
     });
-    socket.on('world:floor:move', (value: unknown) => memberships.get(socket.id)?.floor.move(socket.id, value));
-    socket.on('world:floor:leave', () => memberships.get(socket.id)?.floor.leave(socket.id));
-    socket.on('world:quiz:join', () => {
-      const room = memberships.get(socket.id), m = room?.members.get(socket.id);
-      if (!room || !m || m.player.x < 650 || m.player.y > 300 || room.game.phase === 'question' || room.floor.has(socket.id)) return;
-      const g = room.game;
-      if (g.phase === 'results') { g.phase = 'waiting'; g.players.clear(); g.scores = {}; }
-      g.players.add(socket.id); g.scores[socket.id] = 0;
-      if (g.players.size >= 2) { g.index = -1; advance(room); }
-      else broadcastGame(room);
-    });
-    socket.on('world:quiz:answer', (value: unknown) => {
+    socket.on('world:screening:stop', () => {
       const room = memberships.get(socket.id);
-      if (!room) return;
-      const g = room.game;
-      const input = record(value);
-      const answer = input.answer;
-      if (g.phase !== 'question' || input.round !== g.round || Date.now() >= g.endsAt || !g.players.has(socket.id) || g.answered.has(socket.id) || !Number.isInteger(answer) || Number(answer) < 0 || Number(answer) > 3) return;
-      g.answered.add(socket.id);
-      if (answer === QUESTIONS[g.index].answer) g.scores[socket.id] += 100;
-      socket.emit('world:quiz:accepted', g.round);
-      // Do not reveal correctness or scores until the match ends.
+      if (room?.screening?.host !== socket.id) return;
+      room.screening = null;
+      io.to(room.id).emit('world:screening', null);
     });
   });
 }

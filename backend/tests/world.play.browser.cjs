@@ -1,4 +1,5 @@
 const { chromium } = require("playwright");
+const { mockMovies } = require("./world.movies.mock.cjs");
 const assert = require("node:assert/strict");
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const api = "http://127.0.0.1:4400";
@@ -62,6 +63,7 @@ const api = "http://127.0.0.1:4400";
           : { width: 1440, height: 1000 },
         ...(i ? { isMobile: true, hasTouch: true } : {}),
       });
+      await mockMovies(context);
       contexts.push(context);
       await context.addInitScript(
         (token) => sessionStorage.setItem("z4rum_token", token),
@@ -225,10 +227,10 @@ const api = "http://127.0.0.1:4400";
     await clickGround(a, 650, 350);
     await arrive(a, "Tester22", 650, 350);
     console.log("PASS real ground clicks and obstacle-aware fountain route");
-    const clubBuilding = a
-      .getByRole("button", { name: "Vào Game Club", exact: true })
+    const cinemaBuilding = a
+      .getByRole("button", { name: "Vào rạp phim", exact: true })
       .first();
-    await clubBuilding.click();
+    await cinemaBuilding.click();
     await a.keyboard.down("ArrowLeft");
     await delay(250);
     await a.keyboard.up("ArrowLeft");
@@ -240,20 +242,20 @@ const api = "http://127.0.0.1:4400";
       overridden,
       "keyboard cancels route even when its opener button has focus",
     );
-    // One tap: the avatar walks over and the club opens on arrival.
-    await clubBuilding.click();
+    // One tap: the avatar walks over and the cinema opens on arrival.
+    await cinemaBuilding.click();
     await a
-      .getByRole("dialog", { name: "Game Club", exact: true })
+      .getByRole("dialog", { name: "Rạp phim", exact: true })
       .waitFor({ timeout: 15000 });
     await a.keyboard.press("Escape");
     assert.equal(await a.getByRole("dialog").count(), 0);
-    await clubBuilding.click();
-    await a.getByRole("dialog", { name: "Game Club", exact: true }).waitFor();
+    await cinemaBuilding.click();
+    await a.getByRole("dialog", { name: "Rạp phim", exact: true }).waitFor();
     await a.keyboard.press("Escape");
     assert.equal(await a.getByRole("dialog").count(), 0);
     assert.equal(
       await a
-        .getByRole("button", { name: "Vào Game Club", exact: true })
+        .getByRole("button", { name: "Vào rạp phim", exact: true })
         .first()
         .evaluate((el) => el === document.activeElement),
       true,
@@ -261,17 +263,10 @@ const api = "http://127.0.0.1:4400";
     );
     await a.locator("h1").click();
     await a.keyboard.press("e");
-    await a.getByRole("dialog", { name: "Game Club", exact: true }).waitFor();
+    await a.getByRole("dialog", { name: "Rạp phim", exact: true }).waitFor();
     await a.keyboard.press("Escape");
-    assert.equal(
-      await a
-        .getByRole("button", { name: "Tham gia quiz", exact: true })
-        .count(),
-      0,
-      "minigames not permanently displayed",
-    );
     console.log(
-      "PASS contextual Game Club, native modal, Escape and collapsed panels",
+      "PASS contextual cinema, native modal, Escape and collapsed panels",
     );
     const stick = b.getByRole("group", { name: "Joystick di chuyển" });
     await stick.evaluate((el) => el.scrollIntoView({ block: "center" }));
