@@ -70,7 +70,16 @@ export default function TheaterPage() {
               <ArrowLeft size={16} />
               Danh sách phim
             </button>
-            <MovieDetail movie={movie} disabled={creating} onPlay={watch} />
+            <MovieDetail
+              movie={movie}
+              hint={
+                token
+                  ? "Chọn tập để mở phòng riêng, rồi gửi link mời bạn bè xem cùng."
+                  : "Chọn tập để xem ngay. Đăng nhập khi muốn mời bạn bè xem cùng."
+              }
+              disabled={creating}
+              onPlay={watch}
+            />
           </>
         ) : (
           <>

@@ -5,6 +5,8 @@
   "main": "dist/server.js",
   "scripts": {
     "test": "node --import tsx --test tests/*.test.ts",
+    "test:frontend": "node --import tsx --test ../frontend/lib/theater/*.test.ts ../frontend/lib/utils/*.test.ts",
+    "test:theater:live": "node --import tsx tests/theater.live.ts",
     "test:theater:fixture": "node --import tsx tests/theater.fixture.ts",
     "test:theater:browser": "node tests/theater.browser.cjs",
     "dev": "tsx watch src/server.ts",

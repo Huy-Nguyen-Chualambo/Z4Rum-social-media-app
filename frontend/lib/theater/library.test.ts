@@ -34,6 +34,12 @@ test("a film watched to the end starts over", () => {
   assert.equal(withWatched(empty, film, place, 900, 0, 1).history[0].position, 900, "unknown length");
 });
 
+test("the card's quality, language and score are kept, and bad ones refused", () => {
+  const rich = { ...film, quality: "FHD", language: "Vietsub", rating: 8.5 };
+  assert.deepEqual(withSaved(empty, { ...rich, altNames: ["x"] }).saved, [rich]);
+  assert.deepEqual(parseLibrary(JSON.stringify({ saved: [rich, { ...rich, rating: 50 }, { ...rich, quality: 1 }] })).saved, [rich]);
+});
+
 test("damaged or edited storage is ignored entry by entry", () => {
   assert.deepEqual(parseLibrary("{not json"), empty);
   assert.deepEqual(parseLibrary(null), empty);

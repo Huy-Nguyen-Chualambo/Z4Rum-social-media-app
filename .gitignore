@@ -96,3 +96,5 @@ frontend/node_modules/
 # Optional: OS-specific swap files
 *~
 *.swp
+
+docs/tài liệu api phim.txt

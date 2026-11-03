@@ -1,9 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  backupFilters,
   findOnSource,
   getMovie,
   listMovies,
+  nguoncListUrl,
+  phimapiListUrl,
   matchEpisode,
   nguoncMovie,
   phimapiMovie,
@@ -267,4 +270,52 @@ test("when both tries stall the wait still ends", async () => {
   } finally {
     globalThis.fetch = original;
   }
+});
+
+test("filters combine on the primary source", () => {
+  assert.equal(phimapiListUrl("latest", {}, 2), `${PHIMAPI}danh-sach/phim-moi-cap-nhat-v3?page=2`);
+  const params = (url: string) => Object.fromEntries(new URL(url).searchParams);
+  const single = phimapiListUrl("single", { genre: "kinh-di", country: "nhat-ban", year: "2010,2015", language: "long-tieng", sort: "year" }, 3);
+  assert.ok(single.startsWith(`${PHIMAPI}v1/api/danh-sach/phim-le?`));
+  assert.deepEqual(params(single), { limit: "24", page: "3", category: "kinh-di", country: "nhat-ban", year: "2010,2015", sort_lang: "long-tieng", sort_field: "year", sort_type: "desc" });
+  assert.ok(phimapiListUrl("latest", { genre: "tam-ly" }, 1).startsWith(`${PHIMAPI}v1/api/danh-sach?`));
+  assert.ok(phimapiListUrl("cinema", {}, 1).includes("/danh-sach/phim-chieu-rap?"));
+});
+
+test("the backup takes one filter, under its own names", () => {
+  assert.deepEqual(backupFilters({ genre: "tam-ly", country: "my", language: "vietsub" }), { genre: "tam-ly" });
+  assert.deepEqual(backupFilters({ year: "2010,2015", language: "vietsub", sort: "year" }), {});
+  assert.equal(nguoncListUrl("latest", { genre: "hai-huoc", year: "2024" }, 1), `${NGUONC}films/the-loai/phim-hai?page=1`);
+  assert.equal(nguoncListUrl("latest", { country: "au-my" }, 2), `${NGUONC}films/quoc-gia/my?page=2`);
+  assert.equal(nguoncListUrl("latest", { year: "2024" }, 1), `${NGUONC}films/nam-phat-hanh/2024?page=1`);
+  assert.equal(nguoncListUrl("tv", { language: "vietsub" }, 1), `${NGUONC}films/danh-sach/tv-shows?page=1`);
+});
+
+test("the primary source's details reach the film, and unsafe or empty ones do not", () => {
+  const base = phimapiDetail("chi-tiet");
+  const movie = phimapiMovie({
+    ...base,
+    movie: { ...base.movie, quality: "FHD", lang: "Vietsub", tmdb: { vote_average: 8.46, vote_count: 10 }, alternative_names: ["Other", "", "Khác"], country: [{ name: "Nhật Bản" }], director: ["Đang cập nhật"], actor: ["A", "", "B"], trailer_url: "https://www.youtube.com/watch?v=x" },
+    episodes: [{ server_name: "Vietsub", is_ai: true, server_data: base.episodes[0].server_data }],
+  });
+  assert.deepEqual(
+    [movie.quality, movie.language, movie.rating, movie.altNames, movie.countries, movie.directors, movie.actors, movie.trailer],
+    ["FHD", "Vietsub", 8.46, ["Other", "Khác"], ["Nhật Bản"], [], ["A", "B"], "https://www.youtube.com/watch?v=x"],
+  );
+  assert.equal(movie.servers[0].name, "Vietsub (AI)");
+  const shaky = (extra: object) => phimapiMovie({ ...base, movie: { ...base.movie, ...extra } });
+  assert.equal(shaky({ tmdb: { vote_average: 9, vote_count: 2 } }).rating, 0, "too few votes");
+  assert.equal(shaky({ tmdb: { vote_average: 99, vote_count: 50 } }).rating, 0);
+  for (const trailer_url of ["javascript:alert(1)", "https://evil.example/youtube.com/x", "http://www.youtube.com/x", "https://youtube.com.evil.example/x", ""])
+    assert.equal(shaky({ trailer_url }).trailer, "", trailer_url);
+});
+
+test("another title helps find the same film on the other source", async (t) => {
+  const film = { ...phimapiMovie(phimapiDetail("ten-khac")), altNames: ["Tên Chung"] };
+  const other = nguoncDetail("ben-kia");
+  mockApi(t, {
+    [`${NGUONC}films/search?keyword=${encodeURIComponent(film.name)}&page=1`]: { items: [{ slug: "ben-kia" }] },
+    [`${NGUONC}film/ben-kia`]: { movie: { ...other.movie, name: "Tên Chung", original_name: "Khác hẳn" } },
+  });
+  assert.equal((await findOnSource(film, "nguonc"))?.slug, "ben-kia");
 });

@@ -45,3 +45,9 @@ test("a wider search drops films matching too few words", () => {
   assert.equal(isCloseEnough(film("Người Nhện"), "nguoi nhen giang ho"), true);
   assert.equal(isCloseEnough(film("Người Vợ"), "nguoi nhen giang ho"), false);
 });
+
+test("another title of the film counts in a search", () => {
+  const list = [film("Khác"), { ...film("Xe Lăn"), altNames: ["TANK CHAIR"] }];
+  assert.equal(rankMovies(list, "tank chair")[0].name, "Xe Lăn");
+  assert.equal(isCloseEnough(list[1], "tank chair"), true);
+});

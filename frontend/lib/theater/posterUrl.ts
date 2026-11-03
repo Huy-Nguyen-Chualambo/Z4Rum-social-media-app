@@ -1,11 +1,12 @@
-const OPTIMIZED_HOST = "phimimg.com";
+// Listed in next.config.ts too, which refuses any other host.
+const OPTIMIZED_HOSTS = ["phimimg.com", "img.nguonc.com"];
 // One width for every poster: the same copy serves all sizes and uses up fewer conversions.
 const WIDTH = 256;
 
-/** The primary source's posters run up to 2 MB; this asks our own optimizer for a small copy. */
+/** Source posters run up to 2 MB; this asks our own optimizer for a small copy. */
 export function posterUrl(src: string) {
   try {
-    if (new URL(src).hostname !== OPTIMIZED_HOST) return src;
+    if (!OPTIMIZED_HOSTS.includes(new URL(src).hostname)) return src;
   } catch {
     return src;
   }

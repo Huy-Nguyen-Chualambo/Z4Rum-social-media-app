@@ -255,7 +255,7 @@ export default function TheaterScreen({
         </button>
       </header>
       <div
-        className={`grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)] overflow-hidden ${chatOpen ? "lg:grid-cols-[minmax(0,1fr)_340px] lg:grid-rows-1 [@media(max-height:500px)]:grid-cols-[minmax(0,1fr)_260px] [@media(max-height:500px)]:grid-rows-1" : ""}`}
+        className={`grid min-h-0 flex-1 overflow-hidden ${chatOpen ? "grid-rows-[minmax(0,auto)_minmax(11rem,1fr)] lg:grid-cols-[minmax(0,1fr)_340px] lg:grid-rows-1 [@media(max-height:500px)]:grid-cols-[minmax(0,1fr)_260px] [@media(max-height:500px)]:grid-rows-1" : "grid-rows-1"}`}
       >
         <div className="min-h-0 min-w-0 overflow-y-auto">
           {pick && movie ? (
@@ -441,6 +441,11 @@ export default function TheaterScreen({
               </button>
               <MovieDetail
                 movie={chooser.movie}
+                hint={
+                  solo
+                    ? "Chọn tập để xem."
+                    : "Chọn tập để chiếu cho cả phòng."
+                }
                 onPlay={(next) => {
                   play(chooser.movie!, next);
                   setChanging(false);

@@ -13,7 +13,14 @@ the last commit with Z4world is `50da2fe`, and `/z4world` links redirect here.
   source, matched by title and year. Viewers can also switch by hand.
 - **18+ filter**: films labelled 18+, or with no categories, stay hidden on both sources and
   in rooms. phimapi lists carry categories; nguonc needs one lookup per film.
-- **Finding films**: genre, country and year filters work on both sources. Search puts the
+- **Primary source** (KKPhim API, base `https://phimapi.com`): genre, country, year or year
+  range, language and sort combine with each other and with shelves and search. Cards show
+  quality, language and TMDB score; details add cast, trailer link and an "(AI)" mark on AI
+  voiced versions. Lists ignore the documented `limit` above 24. `/images` and `/peoples`
+  are unused, to keep pages light.
+- **Backup source**: takes one filter at a time, with no language, sort, year range or
+  cinema list. Lists it does not have (`backupLacks` in `movies.ts`) are hidden while on it.
+- **Finding films**: search puts the
   best title first and, on the primary source only, widens with shorter wording when few
   films match. The backup is not widened, because it looks up every film it lists.
 - **Suggestions** (`MovieSearchBox.tsx`): from two letters, after a pause in typing, longer
@@ -22,8 +29,8 @@ the last commit with Z4world is `50da2fe`, and `/z4world` links redirect here.
   answer wins, at most 3 spares at once. Catalog pages stay in localStorage for 3 days
   (`pageCache.ts`): under 5 minutes old they need no request, older they show at once and
   are checked in the background. Episode links are never kept, since they can expire.
-- **Posters**: `phimimg.com` images go through `/_next/image` at one width, falling back to
-  the original. wsrv.nl refuses that host by policy. The backup's images are not resized.
+- **Posters**: images from both sources go through `/_next/image` at one width, falling back
+  to the original. wsrv.nl refuses `phimimg.com` by policy.
 - **Library** (`frontend/lib/theater/library.ts`): saved films and "Xem tiếp" live in this
   browser's localStorage, so guests have them too and nothing needs a migration. They do
   not follow an account to another device, and logging out does not clear them.
@@ -56,8 +63,9 @@ the last commit with Z4world is `50da2fe`, and `/z4world` links redirect here.
 
 ## Test
 
-Backend: `npm test`. Frontend unit tests, from `backend/`:
-`node --import tsx --test ../frontend/lib/theater/*.test.ts`.
+From `backend/`: `npm test` for the backend, `npm run test:frontend` for frontend unit tests.
+`npm run test:theater:live` checks both real film sources, so run it when one seems to have
+changed. It needs network access and is not part of `npm test`.
 
 Browser checks need the production frontend on port 3300, pointed at the fixture:
 

@@ -33,7 +33,13 @@ export const isCard = (value: unknown): value is MovieCard => {
     typeof film.status === "string" &&
     typeof film.poster === "string" &&
     (film.poster === "" || film.poster.startsWith("https://")) &&
-    film.adult === false
+    film.adult === false &&
+    (film.quality === undefined || typeof film.quality === "string") &&
+    (film.language === undefined || typeof film.language === "string") &&
+    (film.rating === undefined ||
+      (typeof film.rating === "number" &&
+        film.rating >= 0 &&
+        film.rating <= 10))
   );
 };
 const isWatched = (value: unknown): value is WatchedFilm => {
@@ -76,6 +82,9 @@ export const cardOf = (film: MovieCard): MovieCard => ({
   poster: film.poster,
   status: film.status,
   adult: false,
+  ...(film.quality ? { quality: film.quality } : {}),
+  ...(film.language ? { language: film.language } : {}),
+  ...(film.rating ? { rating: film.rating } : {}),
 });
 
 export function withSaved(library: Library, film: MovieCard): Library {

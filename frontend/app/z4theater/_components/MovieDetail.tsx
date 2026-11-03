@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
+import { ExternalLink } from "lucide-react";
 import type { Episode, Movie } from "@/lib/theater/movies";
-import { chip, chipOff, chipOn, SOURCE_LABEL } from "./MovieBrowser";
+import { chip, chipOff, chipOn, quiet, SOURCE_LABEL } from "./MovieBrowser";
 import PosterImage from "./PosterImage";
 import SaveButton from "./SaveButton";
 
@@ -70,10 +71,13 @@ export function EpisodeList({
 
 export default function MovieDetail({
   movie,
+  hint,
   disabled,
   onPlay,
 }: {
   movie: Movie;
+  /** What choosing an episode will do. */
+  hint: string;
   disabled?: boolean;
   onPlay: (pick: EpisodePick) => void;
 }) {
@@ -93,6 +97,7 @@ export default function MovieDetail({
           )}
           <p className="mt-1 text-xs text-[#a3a3a3]">
             {[
+              movie.rating ? `★ ${movie.rating.toFixed(1)} TMDB` : "",
               movie.year,
               movie.time,
               movie.quality,
@@ -105,7 +110,17 @@ export default function MovieDetail({
           </p>
           {movie.genres.length > 0 && (
             <p className="mt-1 text-xs text-[#a3a3a3]">
-              {movie.genres.join(", ")}
+              {[...movie.genres, ...movie.countries].join(", ")}
+            </p>
+          )}
+          {movie.directors.length > 0 && (
+            <p className="mt-1 text-xs text-[#a3a3a3]">
+              Đạo diễn: {movie.directors.join(", ")}
+            </p>
+          )}
+          {movie.actors.length > 0 && (
+            <p className="mt-1 line-clamp-2 text-xs text-[#a3a3a3]">
+              Diễn viên: {movie.actors.join(", ")}
             </p>
           )}
           {movie.description && (
@@ -115,12 +130,21 @@ export default function MovieDetail({
           )}
         </div>
       </div>
-      <div className="mt-3">
+      <div className="mt-3 flex flex-wrap gap-2">
         <SaveButton film={movie} />
+        {movie.trailer && (
+          <a
+            className={quiet}
+            href={movie.trailer}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <ExternalLink size={16} />
+            Xem trailer
+          </a>
+        )}
       </div>
-      <p className="mt-3 text-xs text-[#969696]">
-        Chọn tập để mở phòng riêng, rồi gửi link mời bạn bè xem cùng.
-      </p>
+      <p className="mt-3 text-xs text-[#969696]">{hint}</p>
       <EpisodeList movie={movie} current={null} disabled={disabled} onPlay={onPlay} />
     </div>
   );

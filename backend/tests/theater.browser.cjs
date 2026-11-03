@@ -204,6 +204,21 @@ const PLAYER = '[title^="Trình phát"]';
     await g.context.close();
     console.log('PASS inviting asks for a login, then opens a room at the same moment');
 
+    // Signing up from the login page keeps the way back too.
+    const reg = await open(null, `/login?next=${encodeURIComponent('/z4theater/watch?source=phimapi&slug=phim-mot&server=0&episode=tap-01')}`);
+    await reg.page.getByRole('link', { name: 'Đăng ký ngay' }).click();
+    await reg.page.waitForURL(/\/register\?next=/);
+    const inputs = reg.page.locator('form input:not([type=radio])');
+    await inputs.nth(0).fill('Khach Moi');
+    await inputs.nth(1).fill('khach@example.test');
+    await inputs.nth(2).fill('matkhau123');
+    await inputs.nth(3).fill('matkhau123');
+    await reg.page.locator('button[type=submit]').click();
+    await reg.page.waitForURL(/\/z4theater\/[\w-]{12}$/);
+    await reg.page.getByText('Bạn đang chiếu', { exact: false }).waitFor();
+    await reg.context.close();
+    console.log('PASS signing up returns to the film as well');
+
     // A link cannot use the login page to send people elsewhere.
     const evil = await open(null, '/login?next=https%3A%2F%2Fevil.example');
     await evil.page.getByPlaceholder('Email').waitFor();
@@ -385,8 +400,36 @@ const PLAYER = '[title^="Trình phát"]';
     await l.page.getByLabel('Thể loại').selectOption('tinh-cam');
     await button(l.page, 'Xem phim Phim Hai').waitFor();
     assert.equal(await button(l.page, 'Xem phim Phim Một').count(), 0, 'a genre narrows the list');
-    await l.page.getByLabel('Thể loại').selectOption('');
+    await l.page.getByLabel('Quốc gia').selectOption('nhat-ban');
+    await l.page.getByLabel('Năm').selectOption('2010,2015');
+    await l.page.getByLabel('Ngôn ngữ').selectOption('long-tieng');
+    await l.page.getByLabel('Sắp xếp').selectOption('year');
+    await button(l.page, 'Chiếu rạp').click();
+    await until(async () => l.movies.primaryUrls.at(-1).includes('/danh-sach/phim-chieu-rap?'), 'a shelf keeps the filters');
+    const asked = new URL(l.movies.primaryUrls.at(-1)).searchParams;
+    assert.deepEqual([asked.get('category'), asked.get('country'), asked.get('year'), asked.get('sort_lang'), asked.get('sort_field')], ['tinh-cam', 'nhat-ban', '2010,2015', 'long-tieng', 'year'], 'filters combine');
+    await button(l.page, 'Xem phim Phim Hai').waitFor();
+    assert.match(await button(l.page, 'Xem phim Phim Hai').innerText(), /FHD · Vietsub \+ TM[\s\S]*★ 8\.5/, 'a card shows quality, language and score');
+    await l.page.screenshot({ path: `${shots}/theater-filters.png` });
+    await button(l.page, 'Mới cập nhật').click();
+    await button(l.page, 'Nguồn dự phòng').click();
+    assert.equal(await l.page.getByLabel('Ngôn ngữ').count(), 0, 'the backup has no language filter');
+    assert.equal(await l.page.getByLabel('Sắp xếp').count(), 0, 'the backup has no sort');
+    assert.equal(await button(l.page, 'Chiếu rạp').count(), 0, 'the backup has no cinema list');
+    assert.equal(await l.page.getByLabel('Thể loại').inputValue(), 'tinh-cam', 'the backup applies one filter');
+    assert.equal(await l.page.getByLabel('Quốc gia').inputValue(), '', 'and shows only that one');
+    await l.page.getByLabel('Quốc gia').selectOption('han-quoc');
+    assert.equal(await l.page.getByLabel('Thể loại').inputValue(), '', 'choosing another replaces it');
+    assert.equal(await l.page.getByLabel('Thể loại').locator('option[value="the-thao"]').count(), 0, 'lists the backup lacks are hidden');
+    await button(l.page, 'Nguồn chính').click();
+    assert.equal(await l.page.getByLabel('Thể loại').locator('option[value="the-thao"]').count(), 1);
+    await button(l.page, 'Xoá lọc').click();
     await button(l.page, 'Xem phim Phim Một').click();
+    await l.page.getByText('★ 8.5 TMDB', { exact: false }).waitFor();
+    await l.page.getByText('Đạo diễn: Đạo Diễn A').waitFor();
+    await l.page.getByText('Diễn viên: Diễn Viên B').waitFor();
+    assert.equal(await l.page.getByRole('link', { name: 'Xem trailer' }).getAttribute('href'), 'https://www.youtube.com/watch?v=abc');
+    await l.page.screenshot({ path: `${shots}/theater-detail.png` });
     await button(l.page, 'Lưu phim').click();
     assert.equal(await button(l.page, 'Đã lưu').getAttribute('aria-pressed'), 'true');
     await button(l.page, 'Xem Tập 02').click();
@@ -453,6 +496,41 @@ const PLAYER = '[title^="Trình phát"]';
     await c.page.getByText('chuyển sang nguồn còn lại', { exact: false }).waitFor();
     await c.context.close();
     console.log('PASS switching source keeps the episode, and a dead stream moves by itself');
+
+    // Choosing another film inside a room has suggestions too, and says what it will do.
+    const d = await open(16);
+    await openRoom(d.page, 'Phim Một', 'Tập 01');
+    await button(d.page, 'Đổi phim').click();
+    const dialog = d.page.getByRole('dialog');
+    await dialog.getByLabel('Tìm phim').fill('phim h');
+    const inDialog = dialog.getByRole('listbox', { name: 'Gợi ý phim' }).getByRole('option');
+    await until(async () => (await inDialog.count()) === 1, 'the dialog suggests films');
+    const suggestion = await inDialog.first().boundingBox();
+    const seen = await d.page.evaluate(({ x, y }) => { const el = document.elementFromPoint(x, y); return Boolean(el && el.closest('[role=option]')); }, { x: suggestion.x + 40, y: suggestion.y + 20 });
+    assert.ok(seen, 'the list is not hidden behind anything');
+    await inDialog.first().click();
+    await dialog.getByText('Chọn tập để chiếu cho cả phòng.').waitFor();
+    await dialog.getByRole('button', { name: 'Xem Tập 01', exact: true }).click();
+    await d.page.getByRole('heading', { name: 'Phim Hai · Tập 01' }).waitFor();
+    await d.context.close();
+    console.log('PASS the change-film dialog suggests films');
+
+    // A long series on a small phone: the chat box stays reachable.
+    const small = await open(17, '/z4theater', { viewport: { width: 320, height: 568 }, isMobile: true, hasTouch: true });
+    await openRoom(small.page, 'Truyện Dài', 'Tập 40');
+    await small.page.getByLabel('Tin nhắn trong phòng').waitFor();
+    const chatBox = await small.page.getByLabel('Tin nhắn trong phòng').boundingBox();
+    assert.ok(chatBox.y + chatBox.height <= 568, `the chat box is on screen at ${chatBox.y}`);
+    const top = small.page.locator('main > div > div').first();
+    assert.ok(await top.evaluate(el => el.scrollHeight > el.clientHeight && getComputedStyle(el).overflowY === 'auto'), 'the rest scrolls above it');
+    await top.evaluate(el => { el.scrollTop = el.scrollHeight; });
+    await button(small.page, 'Xem Tập 40').waitFor();
+    await button(small.page, 'Ẩn trò chuyện').evaluate(el => el.click());
+    await until(async () => (await small.page.getByLabel('Tin nhắn trong phòng').count()) === 0, 'the chat closes');
+    assert.ok(await top.evaluate(el => el.clientHeight > 450), 'with chat closed the film area takes the whole screen');
+    await small.page.screenshot({ path: `${shots}/theater-small-phone.png` });
+    await small.context.close();
+    console.log('PASS a long series on a small phone keeps the chat reachable');
 
     // The room fits a phone both ways, with the picture and the chat box on screen.
     for (const [name, viewport] of [['portrait', { width: 390, height: 844 }], ['landscape', { width: 844, height: 390 }]]) {

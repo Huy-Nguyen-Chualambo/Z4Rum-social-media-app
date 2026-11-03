@@ -1,17 +1,22 @@
 "use client";
 import { useEffect, useState } from "react";
 import {
+  backupFilters,
+  backupLacks,
   countries,
-  filterMovies,
   genres,
+  languages,
   listMovies,
   otherSource,
   PRIMARY_SOURCE,
+  primaryOnlyShelves,
   shelves,
   smartSearch,
+  sorts,
+  yearRanges,
   YEARS_BACK,
   type MovieCard,
-  type MovieFilter,
+  type MovieFilters,
   type MovieSource,
   type ShelfKey,
 } from "@/lib/theater/movies";
@@ -19,24 +24,30 @@ import { onPageRefresh } from "@/lib/theater/pageCache";
 import MovieSearchBox from "./MovieSearchBox";
 import PosterImage from "./PosterImage";
 
-type Browse = { shelf: ShelfKey } | { keyword: string } | { filter: MovieFilter };
+type Browse = { shelf: ShelfKey } | { keyword: string };
 const thisYear = new Date().getFullYear();
-const filters: {
-  kind: MovieFilter["kind"];
+const years = [
+  ...Array.from({ length: YEARS_BACK }, (_, i) => {
+    const year = String(thisYear - i);
+    return [year, year] as const;
+  }),
+];
+const filterMenus: {
+  kind: keyof MovieFilters;
   label: string;
   options: readonly (readonly [string, string])[];
+  primaryOptions?: readonly (readonly [string, string])[];
+  primaryOnly?: boolean;
 }[] = [
   { kind: "genre", label: "Thể loại", options: genres },
   { kind: "country", label: "Quốc gia", options: countries },
-  {
-    kind: "year",
-    label: "Năm",
-    options: Array.from({ length: YEARS_BACK }, (_, i) => {
-      const year = String(thisYear - i);
-      return [year, year] as const;
-    }),
-  },
+  { kind: "year", label: "Năm", options: years, primaryOptions: yearRanges },
+  { kind: "language", label: "Ngôn ngữ", options: languages, primaryOnly: true },
+  { kind: "sort", label: "Sắp xếp", options: sorts, primaryOnly: true },
 ];
+/** Viewers on one line: the source writes "Vietsub + Thuyết Minh + Lồng Tiếng". */
+const shortLanguage = (language: string) =>
+  language.replace(/Thuyết Minh/gi, "TM").replace(/Lồng Tiếng/gi, "LT");
 export const SOURCE_LABEL: Record<MovieSource, string> = {
   phimapi: "Nguồn chính",
   nguonc: "Nguồn dự phòng",
@@ -59,6 +70,7 @@ export default function MovieBrowser({
   const [source, setSource] = useState<MovieSource>(PRIMARY_SOURCE);
   const [chosen, setChosen] = useState(false);
   const [browsing, setBrowsing] = useState<Browse>({ shelf: "latest" });
+  const [filters, setFilters] = useState<MovieFilters>({});
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
   const [attempt, setAttempt] = useState(0);
@@ -75,10 +87,8 @@ export default function MovieBrowser({
     let active = true;
     const request =
       "keyword" in browsing
-        ? smartSearch(source, browsing.keyword, page)
-        : "filter" in browsing
-          ? filterMovies(source, browsing.filter, page)
-          : listMovies(source, browsing.shelf, page);
+        ? smartSearch(source, browsing.keyword, page, filters)
+        : listMovies(source, browsing.shelf, page, filters);
     request
       .then((result) => {
         if (!active) return;
@@ -114,10 +124,31 @@ export default function MovieBrowser({
     return () => {
       active = false;
     };
-  }, [source, chosen, browsing, page, attempt]);
+  }, [source, chosen, browsing, filters, page, attempt]);
 
+  const applied =
+    source === PRIMARY_SOURCE
+      ? filters
+      : "keyword" in browsing
+        ? {}
+        : backupFilters(filters);
+  const filtering = Object.values(applied).some(Boolean);
+  const narrow = (next: MovieFilters) => {
+    setFilters(next);
+    // The backup cannot search within a filter, so choosing one replaces the search.
+    if (source !== PRIMARY_SOURCE && "keyword" in browsing) {
+      setBrowsing({ shelf: "latest" });
+      setQuery("");
+    }
+    setPage(1);
+    setMovies([]);
+    setError("");
+    setLoading(true);
+  };
   const browse = (next: Browse) => {
     setBrowsing(next);
+    // The backup lists one thing at a time: its shelves and filters replace each other.
+    if (source !== PRIMARY_SOURCE && "shelf" in next) setFilters({});
     setPage(1);
     setMovies([]);
     setError("");
@@ -162,8 +193,17 @@ export default function MovieBrowser({
       />
       <div className="mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
         <div className="flex min-w-0 gap-1.5 overflow-x-auto pb-1">
-          {shelves.map((shelf) => {
-            const active = "shelf" in browsing && browsing.shelf === shelf.key;
+          {shelves
+            .filter(
+              (shelf) =>
+                source === PRIMARY_SOURCE ||
+                !primaryOnlyShelves.includes(shelf.key),
+            )
+            .map((shelf) => {
+            const active =
+              "shelf" in browsing &&
+              browsing.shelf === shelf.key &&
+              (source === PRIMARY_SOURCE || !filtering);
             return (
               <button
                 key={shelf.key}
@@ -196,32 +236,53 @@ export default function MovieBrowser({
           ))}
         </div>
       </div>
-      <div className="mt-1 grid grid-cols-3 gap-1.5 sm:max-w-md">
-        {filters.map(({ kind, label, options }) => (
-          <select
-            key={kind}
-            aria-label={label}
-            value={
-              "filter" in browsing && browsing.filter.kind === kind
-                ? browsing.filter.value
-                : ""
-            }
-            onChange={(event) => {
-              setQuery("");
-              if (event.target.value)
-                browse({ filter: { kind, value: event.target.value } });
-              else browse({ shelf: "latest" });
-            }}
-            className="h-9 min-w-0 rounded-sm border border-[#303030] bg-[#101010] px-1.5 text-xs text-[#dedede] focus:border-blue-500"
+      <div className="mt-1 grid grid-cols-3 gap-1.5 sm:grid-cols-6">
+        {filterMenus
+          .filter((menu) => source === PRIMARY_SOURCE || !menu.primaryOnly)
+          // A search has its own order: best title first.
+          .filter((menu) => menu.kind !== "sort" || !("keyword" in browsing))
+          .map(({ kind, label, options, primaryOptions }) => (
+            <select
+              key={kind}
+              aria-label={label}
+              value={applied[kind] ?? ""}
+              onChange={(event) => {
+                const value = event.target.value || undefined;
+                narrow(
+                  source === PRIMARY_SOURCE
+                    ? { ...filters, [kind]: value }
+                    : { [kind]: value },
+                );
+              }}
+              className="h-9 min-w-0 rounded-sm border border-[#303030] bg-[#101010] px-1.5 text-xs text-[#dedede] focus:border-blue-500"
+            >
+              <option value="">{label}</option>
+              {options
+                .filter(
+                  ([value]) =>
+                    source === PRIMARY_SOURCE || !backupLacks.has(value),
+                )
+                .map(([value, name]) => (
+                  <option key={value} value={value}>
+                    {name}
+                  </option>
+                ))}
+              {source === PRIMARY_SOURCE &&
+                primaryOptions?.map(([value, name]) => (
+                  <option key={value} value={value}>
+                    {name}
+                  </option>
+                ))}
+            </select>
+          ))}
+        {filtering && (
+          <button
+            className={`${chip} ${chipOff} min-w-0`}
+            onClick={() => narrow({})}
           >
-            <option value="">{label}</option>
-            {options.map(([value, name]) => (
-              <option key={value} value={value}>
-                {name}
-              </option>
-            ))}
-          </select>
-        ))}
+            Xoá lọc
+          </button>
+        )}
       </div>
       {error ? (
         <div className="mt-6 text-center">
@@ -269,13 +330,25 @@ export default function MovieBrowser({
                     {card.status}
                   </span>
                 )}
+                {(card.quality || card.language) && (
+                  <span className="absolute inset-x-1 bottom-1 truncate rounded-sm bg-black/80 px-1.5 py-0.5 text-[10px] text-[#dedede]">
+                    {[card.quality, shortLanguage(card.language ?? "")]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </span>
+                )}
               </span>
               <span className="mt-1 line-clamp-2 block text-[13px] font-semibold leading-snug text-[#dedede]">
                 {card.name}
               </span>
-              {card.year && (
-                <span className="text-xs text-[#858585]">{card.year}</span>
-              )}
+              <span className="block text-xs text-[#858585]">
+                {card.year}
+                {card.rating ? (
+                  <span className="ml-1.5 text-[#dedede]">
+                    ★ {card.rating.toFixed(1)}
+                  </span>
+                ) : null}
+              </span>
             </button>
           ))}
           {loading &&

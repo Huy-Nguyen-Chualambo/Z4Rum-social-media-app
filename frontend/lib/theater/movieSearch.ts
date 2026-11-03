@@ -18,9 +18,11 @@ const tokensOf = (keyword: string) =>
 
 export function scoreMovie(movie: MovieCard, keyword: string) {
   const wanted = normalizeTitle(keyword);
-  const titles = [movie.name, ...movie.originalName.split(",")].map(
-    normalizeTitle,
-  );
+  const titles = [
+    movie.name,
+    ...movie.originalName.split(","),
+    ...(movie.altNames ?? []),
+  ].map(normalizeTitle);
   const tokens = tokensOf(keyword);
   const all = titles.join(" ");
   const matched = tokens.filter((token) => all.includes(token)).length;
@@ -56,7 +58,9 @@ export function fallbackQueries(keyword: string) {
 /** A wider search brings in noise: keep films matching at least half of the words. */
 export function isCloseEnough(movie: MovieCard, keyword: string) {
   const tokens = tokensOf(keyword);
-  const all = normalizeTitle(`${movie.name} ${movie.originalName}`);
+  const all = normalizeTitle(
+    `${movie.name} ${movie.originalName} ${(movie.altNames ?? []).join(" ")}`,
+  );
   const matched = tokens.filter((token) => all.includes(token)).length;
   return matched > 0 && matched * 2 >= tokens.length;
 }

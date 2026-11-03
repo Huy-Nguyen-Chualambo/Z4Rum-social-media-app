@@ -1,120 +1,151 @@
-# Z4rum - Social Platform
+<div align="center">
 
-Z4rum is a full-stack social media project built with Next.js and Node.js, focused on real-time interaction, community content, and modern UI/UX.
+<img src="frontend/app/icon.png" alt="Z4rum logo" width="88" />
 
-This repository contains both frontend and backend code in a monorepo structure.
+# Z4rum
 
-## Demo Scope
+**A Vietnamese social platform for posting, chatting, role-playing with AI and watching films together.**
 
-### Z4theater
+![Next.js](https://img.shields.io/badge/Next.js_16-101010?logo=nextdotjs&logoColor=white)
+![React](https://img.shields.io/badge/React_19-101010?logo=react&logoColor=61DAFB)
+![TypeScript](https://img.shields.io/badge/TypeScript-101010?logo=typescript&logoColor=3178C6)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_4-101010?logo=tailwindcss&logoColor=06B6D4)
+![Express](https://img.shields.io/badge/Express_5-101010?logo=express&logoColor=white)
+![Socket.IO](https://img.shields.io/badge/Socket.IO-101010?logo=socketdotio&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma-101010?logo=prisma&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-101010?logo=postgresql&logoColor=4169E1)
 
-Visit `/z4theater`, pick a film and choose an episode. No account is needed to watch, or to
-follow an invite link. Signed in, choosing an episode opens a private room with an invite
-link: up to 20 people watch the same moment and chat beside the picture. The host plays,
-pauses and seeks for everyone; a viewer can step out and rejoin. Guests can read the chat,
-but inviting and sending messages ask them to sign in and then bring them back. Films come from phimapi.com, with phim.nguonc.com as a backup that cannot sync.
+[Features](#features) · [Architecture](#architecture) · [Getting started](#getting-started) · [Testing](#testing) · [Deployment](#deployment)
 
-Rooms live in one backend process and are not stored. See
-[Z4THEATER_PLAN.md](./Z4THEATER_PLAN.md) for how it works and how to test it.
+</div>
 
-### Social platform
+<br />
 
-Core user flows implemented:
+<p align="center">
+  <img src="docs/images/catalog.webp" alt="The Z4theater catalog with search, filters and film posters" width="100%" />
+</p>
 
-- Authentication with JWT (register, login, current user)
-- Profile view and profile update
-- Social post feed with search, pagination cursor, likes, and comments
-- Friend request flow
-- One-to-one messaging API
-- Real-time matching flow (Socket.IO)
-- Voting topics with options, votes, and topic comments
-- Z4chat: AI role-play chat with user-authored characters and stories, layered
-  memory so the plot is not forgotten, anti-repetition, and characters that
-  message you first
-- Responsive web UI with desktop and mobile navigation
-- Vercel Speed Insights integration on frontend
+## Features
 
-## Tech Stack
+### 🎬 Z4theater: watch together
 
-### Frontend
+Pick a film, open a private room and send the link. Everyone sees the same moment and chats beside the picture.
 
-- Next.js 16 (App Router)
-- React 19 + TypeScript
-- Tailwind CSS 4
-- TanStack Query
-- Zustand
-- Axios
-- Socket.IO client
-- Vercel Speed Insights
+- **Real playback sync.** The host plays, pauses and seeks for the room. Viewers are corrected by playback speed for small drift and by seeking for large drift. Anyone can step out and rejoin.
+- **No account needed to watch.** Guests can browse, watch alone and follow an invite link. Logging in to invite or chat brings them back to the same moment.
+- **Finding films.** Suggestions as you type, ranked search, and filters by genre, country, year, language and sort that combine freely.
+- **Two film sources.** If the primary source fails, the catalog and the player move to the backup. Viewers can also switch by hand.
+- **Your library.** "Continue watching" remembers the exact moment, and films can be saved. Both stay on the device, so guests have them too.
+- **Built for phones.** Native HLS on Apple devices, posters shrunk to about 13 KB each, and lists that open instantly on a return visit. A stalled request gets a second try after 2 seconds.
 
-### Backend
+<table>
+  <tr>
+    <td width="76%"><img src="docs/images/film-detail.webp" alt="A film's detail page with rating, cast, trailer and episodes" /></td>
+    <td width="24%"><img src="docs/images/catalog-phone.webp" alt="The catalog on a phone" /></td>
+  </tr>
+</table>
 
-- Node.js + Express 5
-- TypeScript
-- Prisma ORM
-- PostgreSQL
-- JWT authentication
-- Socket.IO
+### ✨ Z4chat: AI role-play
 
-### Deployment
+Write your own characters and stories, then chat with them. Layered memory keeps the plot from being forgotten, replies avoid repeating themselves, and characters can message you first. It works with OpenRouter, Gemini, Groq, DeepSeek and OpenAI; the model picker shows whichever have a key.
 
-- Frontend: Vercel
-- Backend: Render (see render.yaml)
+### 💬 Social
 
-## Repository Structure
+| | |
+|---|---|
+| **Feed** | Posts with likes, comments, search, cursor pagination and keyword moderation |
+| **People** | Profiles, friend requests and one-to-one messages |
+| **Chat với người lạ** | Real-time matching with a stranger, with reporting |
+| **Bình chọn** | Vote topics with options, trending and discussion |
+| **Accounts** | Email and password or Google sign-in |
+| **App** | Responsive desktop and mobile navigation, installable as a PWA |
+
+## Architecture
+
+```mermaid
+flowchart LR
+    B["Browser"]
+
+    subgraph V["Vercel"]
+        N["Next.js app"]
+        O["Poster optimizer"]
+        A["AI routes"]
+    end
+
+    subgraph R["Render"]
+        E["Express API"]
+        S["Socket.IO"]
+    end
+
+    P[("PostgreSQL")]
+    AI["AI providers"]
+    F["phimapi.com<br/>phim.nguonc.com"]
+
+    B --> N
+    B -->|REST| E
+    B <-->|"realtime, rooms"| S
+    B -->|"catalog and streams"| F
+    B --> A --> AI
+    O --> F
+    E --> P
+    S --> P
+```
+
+A few decisions worth knowing:
+
+- **Film data goes straight from the browser to the sources.** Rooms share only ids and playback state, so nobody can push text or a player URL to other viewers.
+- **Rooms live in memory in one backend process.** They are not stored, and a restart closes them, so the backend must run as a single instance.
+- **Guests have a separate Socket.IO namespace.** `/theater` makes the token optional. The main namespace still refuses connections without one, so guests never reach account events.
+- **AI keys stay on the frontend host.** Inference runs in Next.js route handlers and never passes through the browser or the Express API.
+
+The theater is described in more depth in [docs/Z4THEATER_PLAN.md](docs/Z4THEATER_PLAN.md).
+
+### Repository layout
 
 ```text
 Z4rum/
-├─ frontend/   # Next.js app
-├─ backend/    # Express + Prisma API
-├─ render.yaml # Render service config for backend
-└─ README.md
+├─ frontend/                Next.js app
+│  ├─ app/                  Pages and API routes
+│  │  ├─ z4theater/         Catalog, rooms and solo watching
+│  │  └─ z4chat/            AI role-play
+│  └─ lib/                  Stores, API clients, theater and chat logic
+├─ backend/                 Express and Socket.IO API
+│  ├─ src/modules/          auth, user, post, friend, message, match, vote, z4chat
+│  ├─ src/theater/          Watch-together rooms
+│  ├─ prisma/               Schema and migrations
+│  └─ tests/                Unit, browser and live checks
+├─ docs/                    Design notes and images
+└─ render.yaml              Backend service for Render
 ```
 
-## Local Development
+## Getting started
 
-### 1. Prerequisites
-
-- Node.js 20+
-- npm 10+
-- PostgreSQL 14+
-
-### 2. Clone Repository
+**You need** Node.js 20 or newer, npm and PostgreSQL 14 or newer.
 
 ```bash
 git clone https://github.com/Huy-Nguyen-Chualambo/Z4Rum-social-media-app.git
 cd Z4Rum-social-media-app
+
+(cd backend && npm install)
+(cd frontend && npm install)
 ```
 
-### 3. Install Dependencies
-
-```bash
-cd backend
-npm install
-
-cd ../frontend
-npm install
-```
-
-### 4. Configure Environment Variables
-
-Create backend/.env:
+Create `backend/.env`:
 
 ```env
 PORT=4000
 DATABASE_URL=postgresql://postgres:password@localhost:5432/z4rum?schema=public
-JWT_SECRET=replace-with-a-strong-secret
+JWT_SECRET=replace-with-a-long-random-secret
 CLIENT_ORIGIN=http://localhost:3000
 ```
 
-Create frontend/.env.local:
+Create `frontend/.env.local`:
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:4000
 NEXT_PUBLIC_SOCKET_URL=http://localhost:4000
 
-# Z4chat AI providers - at least one key is required for chat to work.
-# Whichever keys are present show up in the model picker; the rest are hidden.
+# Z4chat needs at least one of these
 OPENROUTER_API_KEY=
 GEMINI_API_KEY=
 GROQ_API_KEY=
@@ -122,330 +153,67 @@ DEEPSEEK_API_KEY=
 OPENAI_API_KEY=
 ```
 
-### 5. Setup Database
+Set up the database, then run each app in its own terminal:
 
 ```bash
 cd backend
-npx prisma generate
 npx prisma migrate dev
-```
-
-### 6. Run in Development
-
-Backend:
-
-```bash
-cd backend
 npm run dev
 ```
-
-Frontend:
 
 ```bash
 cd frontend
 npm run dev
 ```
 
-Open http://localhost:3000
+Open <http://localhost:3000>.
 
-## Build Commands
+<details>
+<summary><b>Optional settings</b></summary>
 
-Backend production build:
+| Variable | Where | Enables |
+|---|---|---|
+| `REDIS_URL` | backend | A Redis matching queue. Without it the queue is held in memory |
+| `GOOGLE_CLIENT_ID` | backend | Google sign-in |
+| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | frontend | Google sign-in button |
+| `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` | frontend | Image uploads |
+| `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET` | frontend | Image uploads |
+| `WEATHERAPI_KEY` or `WEATHERSTACK_API_KEY` | frontend | The weather in the top bar |
+| `OPENROUTER_SITE_URL`, `OPENROUTER_SITE_NAME` | frontend | How the app identifies itself to OpenRouter |
 
-```bash
-cd backend
-npm run build
-npm run start
-```
+</details>
 
-Frontend production build:
+## Testing
 
-```bash
-cd frontend
-npm run build
-npm run start
-```
+Run these from `backend/`:
 
-## Backend API Overview
+| Command | What it checks |
+|---|---|
+| `npm test` | Backend unit tests: post moderation and theater rooms |
+| `npm run test:frontend` | Frontend logic: sync, search, film parsing, caching, library |
+| `npm run test:theater:live` | The real film sources still match what the app expects. Needs network access |
+| `npm run test:theater:browser` | Theater flows in Chrome, on desktop and phone sizes |
 
-Base URL (local): http://localhost:4000
+The browser checks need Playwright, Chrome and a production frontend on port 3300 talking to a test server. That server uses in-memory users and never connects to a database. The film sources are replaced with a stand-in, which is why the live check exists. [The steps are in the theater notes](docs/Z4THEATER_PLAN.md#test).
 
-### Auth
+## Deployment
 
-- POST /auth/register
-- POST /auth/login
-- GET /auth/me
+| Part | Host | Settings |
+|---|---|---|
+| **Frontend** | Vercel | Root directory `frontend`, framework preset Next.js |
+| **Backend** | Render | Defined in [`render.yaml`](render.yaml), with `autoDeploy` on |
+| **Database** | Any PostgreSQL | Set `DATABASE_URL` on the backend |
 
-### Users
+> [!IMPORTANT]
+> Pushing to `main` deploys the backend straight away, and rooms in progress close when it restarts.
 
-- GET /users?search=
-- GET /users/:id
-- PUT /users/:id
+> [!NOTE]
+> On Render's free plan the backend sleeps when idle and takes a while to wake. Opening a room waits for it and tells the viewer what is happening.
 
-### Posts
+## About the films
 
-- POST /posts
-- GET /posts?limit=&cursor=&authorId=&search=
-- GET /posts/:id
-- PUT /posts/:id
-- DELETE /posts/:id
-- POST /posts/:id/like
-- GET /posts/:id/comments
-- POST /posts/:id/comments
-
-### Friends
-
-- POST /friends/request/:receiverId
-- POST /friends/accept/:requestId
-- GET /friends
-
-### Messages
-
-- GET /messages
-- GET /messages/:userId
-- POST /messages/:userId
-
-### Match
-
-- POST /match/start
-- POST /match/stop
-
-### Votes
-
-- GET /votes/topics
-- GET /votes/topics/trending
-- GET /votes/topics/:id
-- POST /votes/topics
-- POST /votes/topics/:id/vote
-- GET /votes/topics/:id/comments
-- POST /votes/topics/:id/comments
-
-### Z4chat (AI role-play)
-
-All routes require auth and are scoped to the calling user.
-
-- GET/POST /z4chat/characters
-- GET/PUT/DELETE /z4chat/characters/:id
-- GET/POST /z4chat/stories
-- GET/PUT/DELETE /z4chat/stories/:id
-- GET/POST /z4chat/sessions
-- GET/DELETE /z4chat/sessions/:id
-- POST /z4chat/sessions/:id/messages
-- PUT/DELETE /z4chat/sessions/:id/messages/:mid
-- POST /z4chat/sessions/:id/seen
-- PUT /z4chat/sessions/:id/summary
-- PUT /z4chat/sessions/:id/model
-- GET/POST /z4chat/sessions/:id/memories
-- PUT/DELETE /z4chat/sessions/:id/memories/:mid
-- POST /z4chat/sessions/:id/proactive
-- GET /z4chat/proactive/due
-- GET /z4chat/unread
-
-AI inference lives in the Next.js app instead, so the provider keys never leave
-the frontend host:
-
-- POST /api/z4chat/chat (streaming reply)
-- POST /api/z4chat/summarize
-- POST /api/z4chat/generate (AI-drafted character/story)
-- POST /api/z4chat/proactive
-- GET /api/z4chat/models
-
-Most routes require header:
-
-```http
-Authorization: Bearer <jwt_token>
-```
-
-## Frontend Routes
-
-- /
-- /home
-- /explore
-- /messages
-- /messages/[userId]
-- /match
-- /z4chat
-- /z4chat/[sessionId]
-- /profile
-- /settings
-- /users/[id]
-- /vote
-- /login
-- /register
-
-`/movies` and `/movies/[slug]` now redirect to `/z4chat`.
-
-## Deployment Notes
-
-### Backend on Render
-
-Configured in render.yaml:
-
-- rootDir: backend
-- buildCommand: npm ci --include=dev && npm run build
-- startCommand: npm run start
-
-### Frontend on Vercel
-
-- Project root: frontend
-- Framework preset: Next.js
-- Build command: next build
-
-## Troubleshooting
-
-### 1. JSON parse errors in package.json or package-lock.json
-
-This usually happens after conflict resolution using apply both changes and leaves duplicated JSON blocks.
-
-Fix:
-
-```bash
-cd frontend
-rm -f package-lock.json
-npm install
-```
-
-Then verify build:
-
-```bash
-npm run build
-```
-
-### 2. Multiple lockfile warning in Next.js
-
-If Next.js warns about multiple lockfiles, keep only lockfiles that belong to this project workspace when possible.
-
-### 3. Missing module @vercel/speed-insights/next
-
-Ensure dependency exists in frontend/package.json and run npm install inside frontend.
-
-## Why This Project Matters
-
-This project demonstrates practical full-stack engineering capability:
-
-- Designing and shipping end-to-end user features
-- Building real-time and REST APIs together
-- Managing relational data with Prisma
-- Handling modern frontend state and API cache patterns
-- Preparing applications for cloud deployment workflows
+Z4rum stores no films. Z4theater plays what third-party sources publish, and their licensing has not been verified. Films marked 18+, and films with no category, are hidden.
 
 ## License
 
 This project is for portfolio and learning purposes.
-- GET /api/posts/:id/comments — Get comments for a post
-
-Notifications
-- GET /api/notifications — Get current user's notifications (auth)
-- POST /api/notifications/mark-read — Mark notifications as read
-
-Frontend overview (routes & main components)
-Typical pages:
-- / — Home / feed for logged-in users
-- /explore — Discover posts and users
-- /auth/login — Login page
-- /auth/register — Register page
-- /users/:username — Public profile & posts
-- /posts/:id — Single post view & comments
-- /settings — Profile settings (avatar upload, bio, account settings)
-- /notifications — Notifications list
-
-Components:
-- Auth forms (LoginForm, RegisterForm)
-- PostCard, PostList, PostEditor (create/edit)
-- ProfileHeader, FollowButton
-- CommentList, CommentForm
-- NavBar, MobileNav, SearchBar, NotificationBell
-
-Testing
-- Backend: Jest / Supertest for API tests
-- Frontend: Vitest / React Testing Library for unit & integration tests
-Example commands (customize to your scripts):
-```bash
-# Run backend tests
-cd server
-npm test
-
-# Run frontend tests
-cd client
-npm test
-```
-
-Linting & formatting
-Use ESLint and Prettier to keep code consistent:
-```bash
-# Lint
-npm run lint
-
-# Format
-npm run format
-```
-Husky pre-commit hooks can run lint-staged to format and lint only staged files.
-
-Deployment
-Common deployment patterns:
-- Containerized deployment (build Docker images for server and client, push to Docker Hub, deploy to ECS / DigitalOcean / Render)
-- Serverless frontend (Vercel / Netlify) + hosted backend (Heroku / Render / AWS)
-- Monolithic (server serves static frontend assets) deployed to a VM or platform like Render/Heroku
-
-Example: Deploying frontend to Vercel and backend to Render
-1. Push frontend repo to Vercel — set VITE_API_URL to your backend URL.
-2. Deploy backend to Render or Heroku, configure environment variables (DATABASE_URL, JWT_SECRET, cloudinary keys).
-3. Set CORS on backend to allow frontend domain.
-
-Folder structure
-(Adjust to your project folders — this is a suggested structure)
-```
-/
-├─ client/                   # React frontend
-│  ├─ public/
-│  ├─ src/
-│  │  ├─ components/
-│  │  ├─ pages/
-│  │  ├─ hooks/
-│  │  └─ assets/
-│  ├─ package.json
-│  └─ vite.config.ts
-├─ server/                   # Node + Express backend
-│  ├─ src/
-│  │  ├─ controllers/
-│  │  ├─ services/
-│  │  ├─ middlewares/
-│  │  ├─ routes/
-│  │  ├─ prisma/             # prisma schema & client
-│  │  └─ index.ts
-│  ├─ package.json
-│  └─ prisma/
-├─ .github/
-│  └─ workflows/             # CI workflows
-├─ docker-compose.yml
-├─ README.md
-└─ LICENSE
-```
-
-Contributing
-Contributions are welcome! Please follow these steps:
-1. Fork the repository.
-2. Create a branch: git checkout -b feat/your-feature
-3. Implement your changes and add tests.
-4. Run tests and linters locally.
-5. Commit with descriptive message, push branch to your fork.
-6. Open a Pull Request and describe the change and why it’s needed.
-7. Link issues and keep PRs small and focused.
-
-Guidelines
-- Follow the code style (run npm run format).
-- Add tests for new features/bugs.
-- Use feature branches and descriptive commit messages.
-- Respect maintainers' review comments.
-
-Roadmap (suggested)
-- Real-time notifications using WebSockets
-- Direct messaging (DMs)
-- Reactions & richer comment threads
-- Content moderation tools / admin dashboard
-- Pagination improvecom
-
-Acknowledgments
-Thanks to the open-source community and the many libraries that make building apps faster and more fun.
-
----
