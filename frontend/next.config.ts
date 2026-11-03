@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
     return [
       { source: "/movies", destination: "/z4chat", permanent: false },
       { source: "/movies/:slug", destination: "/z4chat", permanent: false },
+      // Z4world was replaced by Z4theater.
+      { source: "/z4world", destination: "/z4theater", permanent: false },
+      { source: "/z4world/:path*", destination: "/z4theater", permanent: false },
     ];
   },
 };

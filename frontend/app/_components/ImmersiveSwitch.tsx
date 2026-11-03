@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
-import { exitImmersive } from "@/lib/world/immersive";
 
 /** Full-screen routes render without the site's navigation and side columns. */
 export default function ImmersiveSwitch({
@@ -12,9 +11,6 @@ export default function ImmersiveSwitch({
   page: ReactNode;
   shell: ReactNode;
 }) {
-  const immersive = usePathname().startsWith("/z4world/play");
-  useEffect(() => {
-    if (!immersive) exitImmersive();
-  }, [immersive]);
+  const immersive = /^\/z4theater\/[^/]+/.test(usePathname());
   return immersive ? page : shell;
 }

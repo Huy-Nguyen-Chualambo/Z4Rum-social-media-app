@@ -1,0 +1,320 @@
+const CACHE_MS = 5 * 60_000;
+const TIMEOUT_MS = 10_000;
+const CHECKS_AT_ONCE = 4;
+
+export type MovieSource = "phimapi" | "nguonc";
+export const PRIMARY_SOURCE: MovieSource = "phimapi";
+export const otherSource = (source: MovieSource): MovieSource =>
+  source === "phimapi" ? "nguonc" : "phimapi";
+export const shelves = [
+  { key: "latest", label: "Mới cập nhật" },
+  { key: "single", label: "Phim lẻ" },
+  { key: "series", label: "Phim bộ" },
+  { key: "anime", label: "Hoạt hình" },
+] as const;
+export type ShelfKey = (typeof shelves)[number]["key"];
+
+/** `stream` is a direct HLS link we can play and sync; `embed` is a third-party page. */
+export type Episode = {
+  name: string;
+  slug: string;
+  stream: string;
+  embed: string;
+};
+export type MovieServer = { name: string; episodes: Episode[] };
+export type MovieCard = {
+  source: MovieSource;
+  slug: string;
+  name: string;
+  originalName: string;
+  year: string;
+  poster: string;
+  status: string;
+  adult: boolean;
+};
+export type Movie = MovieCard & {
+  quality: string;
+  language: string;
+  time: string;
+  description: string;
+  genres: string[];
+  servers: MovieServer[];
+};
+export type MoviePage = {
+  movies: MovieCard[];
+  page: number;
+  totalPages: number;
+};
+
+type Raw = Record<string, unknown>;
+const text = (value: unknown) =>
+  typeof value === "string" || typeof value === "number"
+    ? String(value).trim()
+    : "";
+const https = (value: unknown) => {
+  try {
+    const url = new URL(text(value));
+    return url.protocol === "https:" ? url.href : "";
+  } catch {
+    return "";
+  }
+};
+/** Descriptions arrive as HTML; React escapes what is left, so this is only tidying. */
+const plain = (value: unknown) =>
+  text(value)
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&quot;/g, '"')
+    .replace(/&#0?39;/g, "'")
+    .replace(/&amp;/g, "&")
+    .replace(/\s+/g, " ")
+    .trim();
+const list = (value: unknown): Raw[] =>
+  Array.isArray(value) ? (value as Raw[]) : [];
+// Rooms are shared with friends: a film we cannot classify stays hidden too.
+const isAdult = (labels: string[]) =>
+  !labels.length || labels.some((label) => /18\s*\+/.test(label));
+
+const IMAGES = "https://phimimg.com/";
+const phimapiImage = (value: unknown) =>
+  https(value) ||
+  (text(value) ? https(IMAGES + text(value).replace(/^\/+/, "")) : "");
+
+function phimapiCard(raw: Raw): MovieCard {
+  return {
+    source: "phimapi",
+    slug: text(raw.slug),
+    name: text(raw.name),
+    originalName: text(raw.origin_name),
+    year: text(raw.year),
+    poster: phimapiImage(raw.poster_url) || phimapiImage(raw.thumb_url),
+    status: text(raw.episode_current),
+    adult: isAdult(list(raw.category).map((item) => text(item.name))),
+  };
+}
+export function phimapiMovie(data: Raw): Movie {
+  const raw = (data.movie ?? {}) as Raw;
+  const genres = list(raw.category).map((item) => text(item.name));
+  return {
+    ...phimapiCard(raw),
+    quality: text(raw.quality),
+    language: text(raw.lang),
+    // The source writes " phút/tập" when it has no duration.
+    time: /\d/.test(text(raw.time)) ? text(raw.time) : "",
+    description: plain(raw.content),
+    genres,
+    servers: list(data.episodes)
+      .map((server) => ({
+        name: text(server.server_name),
+        episodes: list(server.server_data)
+          .map((item) => ({
+            name: text(item.name),
+            slug: text(item.slug),
+            stream: https(item.link_m3u8),
+            embed: https(item.link_embed),
+          }))
+          .filter((item) => item.slug && (item.stream || item.embed)),
+      }))
+      .filter((server) => server.episodes.length),
+  };
+}
+export function nguoncMovie(data: Raw): Movie {
+  const raw = (data.movie ?? {}) as Raw;
+  const groups = Object.values((raw.category ?? {}) as Record<string, Raw>);
+  const genre = groups.find((group) =>
+    /thể loại/i.test(text((group?.group as Raw)?.name)),
+  );
+  return {
+    source: "nguonc",
+    slug: text(raw.slug),
+    name: text(raw.name),
+    originalName: text(raw.original_name),
+    year: text(raw.year),
+    poster:
+      https(raw.thumb_url) ||
+      https(raw.thumb_url_webp) ||
+      https(raw.poster_url) ||
+      https(raw.poster_url_webp),
+    status: text(raw.current_episode),
+    quality: text(raw.quality),
+    language: text(raw.language),
+    time: text(raw.time),
+    description: plain(raw.description),
+    genres: genre ? list(genre.list).map((item) => text(item.name)) : [],
+    adult: isAdult(
+      groups.flatMap((group) =>
+        list(group?.list).map((item) => text(item.name)),
+      ),
+    ),
+    servers: list(raw.episodes)
+      .map((server) => ({
+        name: text(server.server_name),
+        episodes: list(server.items)
+          .map((item) => ({
+            name: text(item.name),
+            slug: text(item.slug),
+            stream: "",
+            embed: https(item.embed),
+          }))
+          .filter((item) => item.slug && item.embed),
+      }))
+      .filter((server) => server.episodes.length),
+  };
+}
+
+const cache = new Map<string, { at: number; data: Promise<Raw> }>();
+function getJson(url: string): Promise<Raw> {
+  const hit = cache.get(url);
+  if (hit && Date.now() - hit.at < CACHE_MS) return hit.data;
+  const data = fetch(url, {
+    headers: { Accept: "application/json" },
+    signal: AbortSignal.timeout(TIMEOUT_MS),
+  })
+    .catch((reason: Error) => {
+      if (reason.name === "TimeoutError") throw reason;
+      throw new Error("Không kết nối được nguồn phim.");
+    })
+    .then(async (response) => {
+    if (response.status === 429)
+      throw new Error("Nguồn phim đang quá tải. Hãy thử lại sau ít phút.");
+    if (!response.ok) throw new Error("Không tải được dữ liệu phim.");
+    return (await response.json()) as Raw;
+  });
+  cache.set(url, { at: Date.now(), data });
+  data.catch(() => cache.delete(url));
+  return data;
+}
+
+const PHIMAPI = "https://phimapi.com";
+const NGUONC = "https://phim.nguonc.com/api";
+const phimapiShelf: Record<ShelfKey, string> = {
+  latest: `${PHIMAPI}/danh-sach/phim-moi-cap-nhat-v3?`,
+  single: `${PHIMAPI}/v1/api/danh-sach/phim-le?limit=24&`,
+  series: `${PHIMAPI}/v1/api/danh-sach/phim-bo?limit=24&`,
+  anime: `${PHIMAPI}/v1/api/danh-sach/hoat-hinh?limit=24&`,
+};
+const nguoncShelf: Record<ShelfKey, string> = {
+  latest: `${NGUONC}/films/phim-moi-cap-nhat?`,
+  single: `${NGUONC}/films/danh-sach/phim-le?`,
+  series: `${NGUONC}/films/danh-sach/phim-bo?`,
+  anime: `${NGUONC}/films/danh-sach/hoat-hinh?`,
+};
+
+export async function getMovie(
+  source: MovieSource,
+  slug: string,
+): Promise<Movie> {
+  const id = encodeURIComponent(slug);
+  const movie =
+    source === "phimapi"
+      ? phimapiMovie(await getJson(`${PHIMAPI}/phim/${id}`))
+      : nguoncMovie(await getJson(`${NGUONC}/film/${id}`));
+  if (!movie.slug) throw new Error("Không tải được dữ liệu phim.");
+  return movie;
+}
+
+async function phimapiPage(url: string): Promise<MoviePage> {
+  const data = await getJson(url);
+  const body = (data.data ?? data) as Raw;
+  if (!Array.isArray(body.items))
+    throw new Error("Không tải được dữ liệu phim.");
+  const paging = ((body.params as Raw)?.pagination ?? body.pagination) as
+    | Raw
+    | undefined;
+  return {
+    movies: list(body.items)
+      .map(phimapiCard)
+      .filter((movie) => movie.slug && !movie.adult),
+    page: Number(paging?.currentPage) || 1,
+    totalPages: Number(paging?.totalPages) || 1,
+  };
+}
+
+/** This source's lists carry no categories, so each film is looked up before it shows. */
+async function nguoncPage(url: string): Promise<MoviePage> {
+  const data = await getJson(url);
+  const items = list(data.items);
+  const found: (Movie | null)[] = new Array(items.length).fill(null);
+  let next = 0;
+  await Promise.all(
+    Array.from({ length: CHECKS_AT_ONCE }, async () => {
+      while (next < items.length) {
+        const index = next++;
+        found[index] = await getMovie("nguonc", text(items[index].slug)).catch(
+          () => null,
+        );
+      }
+    }),
+  );
+  if (items.length && found.every((movie) => !movie))
+    throw new Error("Không tải được dữ liệu phim.");
+  const paginate = (data.paginate ?? {}) as Raw;
+  return {
+    movies: found.filter((movie): movie is Movie =>
+      Boolean(movie && !movie.adult),
+    ),
+    page: Number(paginate.current_page) || 1,
+    totalPages: Number(paginate.total_page) || 1,
+  };
+}
+
+export const listMovies = (source: MovieSource, shelf: ShelfKey, at: number) =>
+  source === "phimapi"
+    ? phimapiPage(`${phimapiShelf[shelf]}page=${at}`)
+    : nguoncPage(`${nguoncShelf[shelf]}page=${at}`);
+export const searchMovies = (
+  source: MovieSource,
+  keyword: string,
+  at: number,
+) => {
+  const query = encodeURIComponent(keyword);
+  return source === "phimapi"
+    ? phimapiPage(
+        `${PHIMAPI}/v1/api/tim-kiem?keyword=${query}&limit=24&page=${at}`,
+      )
+    : nguoncPage(`${NGUONC}/films/search?keyword=${query}&page=${at}`);
+};
+
+const same = (value: string) => value.normalize("NFC").toLowerCase().trim();
+function isSameFilm(a: MovieCard, b: MovieCard) {
+  if (a.year && b.year && a.year !== b.year) return false;
+  const names = (movie: MovieCard) =>
+    [movie.name, ...movie.originalName.split(",")]
+      .map(same)
+      .filter(Boolean);
+  const theirs = names(b);
+  return names(a).some((name) => theirs.includes(name));
+}
+
+/** The same film on another source. Slugs differ, so it is matched by title and year. */
+export async function findOnSource(
+  film: MovieCard,
+  source: MovieSource,
+): Promise<Movie | null> {
+  for (const keyword of [film.name, film.originalName.split(",")[0]]) {
+    if (!keyword?.trim()) continue;
+    const { movies } = await searchMovies(source, keyword.trim(), 1);
+    const match = movies.find((movie) => isSameFilm(film, movie));
+    if (match) {
+      const movie = await getMovie(source, match.slug);
+      return movie.adult ? null : movie;
+    }
+  }
+  return null;
+}
+
+const episodeKey = (name: string) => {
+  const number = name.match(/\d+/);
+  return number ? String(Number(number[0])) : same(name);
+};
+/** Sources name the same episode differently: "Tập 01" and "1". */
+export function matchEpisode(movie: Movie, name: string) {
+  for (const [server, candidate] of movie.servers.entries()) {
+    const episode = candidate.episodes.find(
+      (item) => episodeKey(item.name) === episodeKey(name),
+    );
+    if (episode) return { server, episode };
+  }
+  const first = movie.servers[0]?.episodes[0];
+  return first ? { server: 0, episode: first } : null;
+}

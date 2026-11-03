@@ -10,8 +10,6 @@ import matchRoutes from "./modules/match/match.routes";
 import voteRoutes from "./modules/vote/vote.routes";
 import z4chatRoutes from "./modules/z4chat/z4chat.routes";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
-import { profileRoutes, prismaProfileStore } from './world/profile.routes';
-import { publishAppearance } from './world/appearance';
 import { prisma } from './utils/prisma';
 
 dotenv.config();
@@ -34,7 +32,6 @@ app.use("/messages", messageRoutes);
 app.use("/match", matchRoutes);
 app.use("/votes", voteRoutes);
 app.use("/z4chat", z4chatRoutes);
-app.use('/world', profileRoutes(prismaProfileStore(prisma), publishAppearance));
 
 // Basic landing + health
 app.get("/", (_req, res) => {

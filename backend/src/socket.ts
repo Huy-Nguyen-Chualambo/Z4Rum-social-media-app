@@ -2,7 +2,7 @@ import { Server, Socket } from "socket.io";
 import { PrismaClient } from "@prisma/client";
 import { verifyToken } from "./utils/jwt";
 import { MatchService } from "./services/matchService";
-import { initWorld } from "./world/world";
+import { initTheater } from "./theater/theater";
 
 export function initSocket(io: Server, prisma: PrismaClient) {
   const matchService = new MatchService(prisma);
@@ -21,7 +21,7 @@ export function initSocket(io: Server, prisma: PrismaClient) {
     }
   });
 
-  initWorld(io, prisma);
+  initTheater(io, prisma);
 
   io.on("connection", (socket: Socket) => {
     const userId: string = (socket as any).userId;

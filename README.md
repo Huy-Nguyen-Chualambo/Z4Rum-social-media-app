@@ -6,20 +6,15 @@ This repository contains both frontend and backend code in a monorepo structure.
 
 ## Demo Scope
 
-### Z4world
+### Z4theater
 
-Visit `/z4world` after signing in, then choose "Vào thế giới" to open the game
-at `/z4world/play`. It fills the whole screen on desktop and mobile; phones are
-invited (not forced) to rotate to landscape. Rooms hold up to 20 people, with
-keyboard/touch movement, server-checked collision, proximity chat, emotes, café
-seating and private table chat. Share the room link to meet friends, or tap the cinema
-to pick a film and show it to the room: viewers stay on the host's moment, with
-phim.nguonc.com as a backup source that cannot sync. Positions are authoritative
-on the server.
+Visit `/z4theater` after signing in, pick a film and choose an episode. That opens a
+private room with an invite link: up to 20 people watch the same moment and chat beside
+the picture. The host plays, pauses and seeks for everyone; a viewer can step out and
+rejoin. Films come from phimapi.com, with phim.nguonc.com as a backup that cannot sync.
 
-This version uses one backend process and ephemeral room/game state; only avatar
-appearance is stored in the database. See [Z4WORLD_PLAN.md](./Z4WORLD_PLAN.md) for
-controls, deployment constraints, automated checks and later milestones.
+Rooms live in one backend process and are not stored. See
+[Z4THEATER_PLAN.md](./Z4THEATER_PLAN.md) for how it works and how to test it.
 
 ### Social platform
 
