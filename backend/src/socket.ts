@@ -21,7 +21,18 @@ export function initSocket(io: Server, prisma: PrismaClient) {
     }
   });
 
-  initTheater(io, prisma);
+  // A namespace of its own: guests may watch here but never reach the account events below.
+  const theater = io.of("/theater");
+  theater.use((socket, next) => {
+    try {
+      const token = (socket.handshake.auth as any)?.token;
+      if (typeof token === "string") (socket as any).userId = verifyToken(token).id;
+    } catch {
+      // A stale token only costs the account features: the viewer carries on as a guest.
+    }
+    next();
+  });
+  initTheater(theater, prisma);
 
   io.on("connection", (socket: Socket) => {
     const userId: string = (socket as any).userId;

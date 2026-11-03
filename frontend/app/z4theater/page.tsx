@@ -2,48 +2,40 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import RequireAuth from "../_components/RequireAuth";
-import { useSocketStore } from "@/lib/store/useSocketStore";
+import { useAuthStore } from "@/lib/store/useAuthStore";
+import { createRoom } from "@/lib/theater/roomSocket";
+import { watchPath } from "@/lib/theater/watchLink";
 import MovieBrowser, { quiet } from "./_components/MovieBrowser";
 import MovieDetail, { type EpisodePick } from "./_components/MovieDetail";
 import { usePickMovie } from "./_components/usePickMovie";
 
-const CREATE_TIMEOUT_MS = 8_000;
-
 export default function TheaterPage() {
   const router = useRouter();
-  const socket = useSocketStore((s) => s.socket);
+  const token = useAuthStore((s) => s.token);
   const { movie, opening, notice, pick, clear } = usePickMovie();
   const [creating, setCreating] = useState(false);
   const [problem, setProblem] = useState("");
-  const openRoom = (episode: EpisodePick) => {
-    if (!movie || !socket) {
-      setProblem("Chưa kết nối được. Hãy thử lại sau giây lát.");
-      return;
-    }
+  const watch = async (episode: EpisodePick) => {
+    if (!movie) return;
+    const film = {
+      source: movie.source,
+      slug: movie.slug,
+      server: episode.server,
+      episode: episode.episode.slug,
+    };
+    if (!token) return router.push(watchPath(film));
     setCreating(true);
     setProblem("");
-    socket.timeout(CREATE_TIMEOUT_MS).emit(
-      "theater:create",
-      {
-        source: movie.source,
-        slug: movie.slug,
-        server: episode.server,
-        episode: episode.episode.slug,
-      },
-      (failed: Error | null, reply?: { roomId?: string; error?: string }) => {
-        if (reply?.roomId) return router.push(`/z4theater/${reply.roomId}`);
-        setCreating(false);
-        setProblem(
-          reply?.error ?? (failed && "Không tạo được phòng. Hãy thử lại.") ?? "",
-        );
-      },
-    );
+    try {
+      router.push(`/z4theater/${await createRoom(token, film)}`);
+    } catch (reason) {
+      setCreating(false);
+      setProblem((reason as Error).message);
+    }
   };
   const message = problem || notice;
   return (
     <div>
-      <RequireAuth />
       <section className="border-b border-[#292929] px-4 pb-5 pt-6 sm:px-5">
         <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-neutral-500">
           Rạp phim / Z4theater
@@ -52,8 +44,9 @@ export default function TheaterPage() {
           Z4theater
         </h1>
         <p className="mt-1.5 max-w-md text-sm leading-relaxed text-[#a3a3a3]">
-          Chọn phim, mở phòng riêng và gửi link cho bạn bè. Cả phòng xem cùng
-          một đoạn và trò chuyện ngay cạnh màn hình.
+          Chọn phim là xem được ngay. Đăng nhập khi muốn mở phòng riêng và gửi
+          link cho bạn bè: cả phòng xem cùng một đoạn và trò chuyện cạnh màn
+          hình.
         </p>
       </section>
       <section className="px-4 py-4 sm:px-5">
@@ -71,7 +64,7 @@ export default function TheaterPage() {
               <ArrowLeft size={16} />
               Danh sách phim
             </button>
-            <MovieDetail movie={movie} disabled={creating} onPlay={openRoom} />
+            <MovieDetail movie={movie} disabled={creating} onPlay={watch} />
           </>
         ) : (
           <MovieBrowser busy={opening} onPick={pick} />

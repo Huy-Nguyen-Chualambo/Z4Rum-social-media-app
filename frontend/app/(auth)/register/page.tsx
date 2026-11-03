@@ -1,9 +1,10 @@
 "use client";
-import { useCallback, useState } from "react";
+import { use, useCallback, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useToast } from "@/lib/ui/toast";
+import { safeNext } from "@/lib/utils/nextPath";
 import { GoogleLoginButton } from "../GoogleLoginButton";
 
 const getAuthErrorMessage = (error: unknown, fallback: string) => {
@@ -14,7 +15,12 @@ const getAuthErrorMessage = (error: unknown, fallback: string) => {
   return fallback;
 };
 
-export default function RegisterPage() {
+export default function RegisterPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
+  const next = safeNext(use(searchParams).next);
   const router = useRouter();
   const { register, googleLogin } = useAuthStore();
   const { push } = useToast();
@@ -33,7 +39,7 @@ export default function RegisterPage() {
       setIsLoading(true);
       await googleLogin(credential, gender);
       push("Đăng nhập Google thành công", "success");
-      router.replace("/home");
+      router.replace(next ?? "/home");
     } catch (err: unknown) {
       const message = getAuthErrorMessage(err, "Đăng nhập Google thất bại");
       setError(message);
@@ -41,7 +47,7 @@ export default function RegisterPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [gender, googleLogin, push, router]);
+  }, [gender, googleLogin, push, router, next]);
 
   const handleGoogleError = useCallback((message: string) => {
     setError(message);
@@ -76,7 +82,7 @@ export default function RegisterPage() {
             setIsLoading(true);
             await register(username, email, password, gender);
             push("Tạo tài khoản thành công", "success");
-            router.replace("/home");
+            router.replace(next ?? "/home");
           } catch (err: unknown) {
             const message = getAuthErrorMessage(err, "Đăng ký thất bại");
             setError(message);
@@ -109,7 +115,7 @@ export default function RegisterPage() {
       {error && <div className="mt-3 text-sm text-red-400">{error}</div>}
       <p className="mt-4 text-sm text-[#a3a3a3]">
         Đã có tài khoản?{" "}
-        <Link href="/login" className="text-[#3B82F6] hover:underline">
+        <Link href={next ? `/login?next=${encodeURIComponent(next)}` : "/login"} className="text-[#3B82F6] hover:underline">
           Đăng nhập ngay
         </Link>
       </p>

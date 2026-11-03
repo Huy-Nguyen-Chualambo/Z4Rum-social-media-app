@@ -38,6 +38,11 @@ app.get("/fixture/login/:id", (req, res) => {
   if (!user) return res.sendStatus(404);
   res.json({ token: signToken({ id: user.id }), user });
 });
+app.post("/auth/login", (req, res) => {
+  const user = [...users.values()].find((u) => u.email === req.body?.email);
+  if (!user) return res.status(401).json({ error: "Sai email" });
+  res.json({ token: signToken({ id: user.id }), user });
+});
 app.get("/auth/me", authMiddleware, (req, res) => {
   const user = users.get((req as express.Request & { userId: string }).userId);
   if (!user) return res.sendStatus(401);

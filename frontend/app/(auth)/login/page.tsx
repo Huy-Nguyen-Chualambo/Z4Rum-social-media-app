@@ -1,9 +1,10 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { use, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/store/useAuthStore";
 import { useToast } from "@/lib/ui/toast";
+import { safeNext } from "@/lib/utils/nextPath";
 import { GoogleLoginButton } from "../GoogleLoginButton";
 
 const getAuthErrorMessage = (error: unknown, fallback: string) => {
@@ -14,7 +15,12 @@ const getAuthErrorMessage = (error: unknown, fallback: string) => {
   return fallback;
 };
 
-export default function LoginPage() {
+export default function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
+  const next = safeNext(use(searchParams).next);
   const router = useRouter();
   const { login, googleLogin, token } = useAuthStore();
   const { push } = useToast();
@@ -24,9 +30,9 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (token) {
-      router.replace("/home");
+      router.replace(next ?? "/home");
     }
-  }, [token, router]);
+  }, [token, router, next]);
 
   const [error, setError] = useState<string | null>(null);
 
@@ -53,6 +59,11 @@ export default function LoginPage() {
   return (
     <div className="bg-[#141414] border border-[#303030] rounded-sm p-6">
       <h1 className="text-white text-2xl font-semibold mb-4">Đăng nhập</h1>
+      {next && (
+        <p className="-mt-2 mb-4 text-sm text-[#a3a3a3]">
+          Đăng nhập xong bạn sẽ quay lại đúng chỗ đang xem.
+        </p>
+      )}
       <form
         className="space-y-3"
         onSubmit={async (e) => {
@@ -92,7 +103,7 @@ export default function LoginPage() {
       {error && <div className="mt-3 text-sm text-red-400">{error}</div>}
       <p className="mt-4 text-sm text-[#a3a3a3]">
         Chưa có tài khoản?{" "}
-        <Link href="/register" className="text-[#3B82F6] hover:underline">
+        <Link href={next ? `/register?next=${encodeURIComponent(next)}` : "/register"} className="text-[#3B82F6] hover:underline">
           Đăng ký ngay
         </Link>
       </p>

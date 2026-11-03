@@ -8,6 +8,7 @@ export default function TheaterChat({
   self,
   alone,
   canSend,
+  onLogin,
   onSend,
   onClose,
 }: {
@@ -15,6 +16,8 @@ export default function TheaterChat({
   self: string;
   alone: boolean;
   canSend: boolean;
+  /** Set for a guest, who can read along but must log in to talk. */
+  onLogin?: () => void;
   onSend: (text: string) => boolean;
   onClose: () => void;
 }) {
@@ -57,34 +60,45 @@ export default function TheaterChat({
           ))
         ) : (
           <p className="text-[#858585]">
-            {alone
-              ? "Phòng chỉ có mình bạn. Bấm “Mời bạn” để gửi link cho bạn bè."
-              : "Nói gì đó với cả phòng!"}
+            {onLogin
+              ? "Đăng nhập để trò chuyện cùng cả phòng."
+              : alone
+                ? "Phòng chỉ có mình bạn. Bấm “Mời bạn” để gửi link cho bạn bè."
+                : "Nói gì đó với cả phòng!"}
           </p>
         )}
       </div>
-      <form
-        className="flex shrink-0 gap-1.5"
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (onSend(text)) setText("");
-        }}
-      >
-        <input
-          aria-label="Tin nhắn trong phòng"
-          maxLength={200}
-          value={text}
-          onChange={(event) => setText(event.target.value)}
-          placeholder="Nhắn cho cả phòng…"
-          className="h-10 min-w-0 flex-1 rounded-sm border border-[#303030] bg-[#101010] px-3 text-base placeholder:text-[#858585] focus:border-blue-500 md:text-sm"
-        />
+      {onLogin ? (
         <button
-          disabled={!canSend || !text.trim()}
-          className="h-10 rounded-sm bg-blue-500 px-3 text-sm font-semibold text-white disabled:opacity-40"
+          onClick={onLogin}
+          className="h-10 shrink-0 rounded-sm bg-blue-500 px-3 text-sm font-semibold text-white"
         >
-          Gửi
+          Đăng nhập để trò chuyện
         </button>
-      </form>
+      ) : (
+        <form
+          className="flex shrink-0 gap-1.5"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (onSend(text)) setText("");
+          }}
+        >
+          <input
+            aria-label="Tin nhắn trong phòng"
+            maxLength={200}
+            value={text}
+            onChange={(event) => setText(event.target.value)}
+            placeholder="Nhắn cho cả phòng…"
+            className="h-10 min-w-0 flex-1 rounded-sm border border-[#303030] bg-[#101010] px-3 text-base placeholder:text-[#858585] focus:border-blue-500 md:text-sm"
+          />
+          <button
+            disabled={!canSend || !text.trim()}
+            className="h-10 rounded-sm bg-blue-500 px-3 text-sm font-semibold text-white disabled:opacity-40"
+          >
+            Gửi
+          </button>
+        </form>
+      )}
     </section>
   );
 }

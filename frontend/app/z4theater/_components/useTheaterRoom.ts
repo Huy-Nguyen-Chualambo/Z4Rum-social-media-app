@@ -1,22 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useSocketStore } from "@/lib/store/useSocketStore";
-import type { MovieSource } from "@/lib/theater/movies";
-import type { Playback, RoomMember, RoomMessage } from "@/lib/theater/types";
+import { useEffect, useRef, useState } from "react";
+import type { Socket } from "socket.io-client";
+import { useAuthStore } from "@/lib/store/useAuthStore";
+import { theaterSocket } from "@/lib/theater/roomSocket";
+import type {
+  Playback,
+  RoomMember,
+  RoomMessage,
+  Screening,
+} from "@/lib/theater/types";
 
 type Shared = Omit<Playback, "receivedAt">;
 type Snapshot = {
   roomId: string;
   self: string;
+  guest: boolean;
   members: RoomMember[];
   playback: Shared;
-};
-export type FilmChoice = {
-  source: MovieSource;
-  slug: string;
-  server: number;
-  episode: string;
 };
 const stamped = (value: Shared): Playback => ({
   ...value,
@@ -24,9 +25,11 @@ const stamped = (value: Shared): Playback => ({
 });
 
 /** Owns the realtime connection for one room, from the link to leaving it. */
-export function useTheaterRoom(roomId: string) {
-  const socket = useSocketStore((s) => s.socket);
+export function useTheaterRoom(roomId: string): Screening {
+  const token = useAuthStore((s) => s.token);
+  const link = useRef<Socket | null>(null);
   const [self, setSelf] = useState("");
+  const [guest, setGuest] = useState(false);
   const [members, setMembers] = useState<RoomMember[]>([]);
   const [playback, setPlayback] = useState<Playback | null>(null);
   const [messages, setMessages] = useState<RoomMessage[]>([]);
@@ -34,10 +37,12 @@ export function useTheaterRoom(roomId: string) {
   const [problem, setProblem] = useState("");
 
   useEffect(() => {
-    if (!socket) return;
+    const socket = theaterSocket(token);
+    link.current = socket;
     const join = () => socket.emit("theater:join", { roomId });
     const snapshot = (data: Snapshot) => {
       setSelf(data.self);
+      setGuest(data.guest);
       setMembers(data.members);
       setPlayback(stamped(data.playback));
       setProblem("");
@@ -56,36 +61,32 @@ export function useTheaterRoom(roomId: string) {
     socket.on("theater:chat", chat);
     socket.on("theater:missing", gone);
     socket.on("theater:error", setProblem);
-    if (socket.connected) join();
     return () => {
       socket.emit("theater:leave");
-      socket.off("connect", join);
-      socket.off("disconnect", lost);
-      socket.off("connect_error", lost);
-      socket.off("theater:snapshot", snapshot);
-      socket.off("theater:members", setMembers);
-      socket.off("theater:playback", update);
-      socket.off("theater:chat", chat);
-      socket.off("theater:missing", gone);
-      socket.off("theater:error", setProblem);
+      socket.disconnect();
+      link.current = null;
     };
-  }, [socket, roomId]);
+  }, [token, roomId]);
 
   return {
     self,
+    guest,
+    solo: false,
     members,
     playback,
     messages,
     missing,
     problem,
     isHost: Boolean(playback && playback.hostId === self),
-    sync: (playing: boolean, position: number) =>
-      socket?.emit("theater:sync", { playing, position }),
-    changeFilm: (film: FilmChoice, playing: boolean, position: number) =>
-      socket?.emit("theater:film", { ...film, playing, position }),
-    sendChat: (text: string) => {
+    sync: (playing, position) => {
+      link.current?.emit("theater:sync", { playing, position });
+    },
+    changeFilm: (film, playing, position) => {
+      link.current?.emit("theater:film", { ...film, playing, position });
+    },
+    sendChat: (text) => {
       if (!text.trim()) return false;
-      socket?.emit("theater:chat", text.trim());
+      link.current?.emit("theater:chat", text.trim());
       return true;
     },
   };

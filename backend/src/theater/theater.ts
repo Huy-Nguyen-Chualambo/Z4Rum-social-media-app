@@ -1,4 +1,4 @@
-import type { Server, Socket } from 'socket.io';
+import type { Namespace, Socket } from 'socket.io';
 import type { PrismaClient } from '@prisma/client';
 import { randomBytes } from 'node:crypto';
 
@@ -8,9 +8,10 @@ const MAX_MEMBERS = 20;
 const MAX_ROOMS = 200;
 const MAX_POSITION = 86_400;
 const FILM_CHANGE_MS = 1000;
+const GUEST_NAME = 'Khách';
 
 type Film = { source: string; slug: string; server: number; episode: string };
-type Member = { socket: Socket; userId: string; username: string; chatted: number };
+type Member = { socket: Socket; userId: string; username: string; guest: boolean; chatted: number };
 type Room = {
   id: string;
   channel: string;
@@ -19,6 +20,7 @@ type Room = {
   hostId: string;
   hostName: string;
   hostAway: boolean;
+  seatOpen: boolean;
   playing: boolean;
   position: number;
   at: number;
@@ -39,7 +41,7 @@ function parseFilm(value: unknown): Film | null {
 }
 const livePosition = (room: Room) => room.playing ? room.position + (Date.now() - room.at) / 1000 : room.position;
 
-export function initTheater(io: Server, prisma: PrismaClient, { hostGraceMs = 15_000, emptyRoomMs = 60_000 } = {}) {
+export function initTheater(theater: Namespace, prisma: PrismaClient, { hostGraceMs = 15_000, emptyRoomMs = 60_000 } = {}) {
   const rooms = new Map<string, Room>();
   const memberships = new Map<string, Room>();
   const pending = new Map<string, symbol>();
@@ -48,7 +50,7 @@ export function initTheater(io: Server, prisma: PrismaClient, { hostGraceMs = 15
   /** What viewers receive: the position right now, so a late joiner lands on the right moment. */
   const playback = (room: Room) => ({ ...room.film, hostId: room.hostId, hostName: room.hostName, hostAway: room.hostAway, playing: room.playing, position: livePosition(room) });
   const members = (room: Room) => [...room.members.values()].map(({ userId, username }) => ({ userId, username }));
-  const sendPlayback = (room: Room) => io.to(room.channel).emit('theater:playback', playback(room));
+  const sendPlayback = (room: Room) => theater.to(room.channel).emit('theater:playback', playback(room));
   function close(room: Room) {
     clearTimeout(room.hostTimer);
     clearTimeout(room.closeTimer);
@@ -57,8 +59,14 @@ export function initTheater(io: Server, prisma: PrismaClient, { hostGraceMs = 15
   }
   function passHost(room: Room) {
     clearTimeout(room.hostTimer);
-    const next = room.members.values().next().value;
-    if (!next) return;
+    // Guests never steer: with only guests left the seat waits for the next account to join.
+    const next = [...room.members.values()].find(member => !member.guest);
+    if (!next) {
+      room.seatOpen = true;
+      sendPlayback(room);
+      return;
+    }
+    room.seatOpen = false;
     room.hostId = next.userId;
     room.hostName = next.username;
     room.hostAway = false;
@@ -71,7 +79,7 @@ export function initTheater(io: Server, prisma: PrismaClient, { hostGraceMs = 15
     memberships.delete(socket.id);
     room.members.delete(socket.id);
     socket.leave(room.channel);
-    io.to(room.channel).emit('theater:members', members(room));
+    theater.to(room.channel).emit('theater:members', members(room));
     if (member?.userId === room.hostId) {
       // Nobody can see the host's picture now, so the room waits instead of running on.
       room.position = livePosition(room);
@@ -94,10 +102,13 @@ export function initTheater(io: Server, prisma: PrismaClient, { hostGraceMs = 15
     }
   }
 
-  io.on('connection', socket => {
-    const userId = (socket as Socket & { userId: string }).userId;
+  theater.on('connection', socket => {
+    const account = (socket as Socket & { userId?: string }).userId;
+    const guest = !account;
+    const userId = account ?? `guest:${socket.id}`;
     socket.on('theater:create', async (value: unknown, reply: unknown) => {
       if (typeof reply !== 'function') return;
+      if (guest) return reply({ error: 'Hãy đăng nhập để mở phòng.' });
       const film = parseFilm(value);
       if (!film) return reply({ error: 'Phim không hợp lệ.' });
       if (Date.now() - (created.get(userId) ?? 0) < 2000) return reply({ error: 'Bạn vừa tạo phòng, hãy thử lại sau giây lát.' });
@@ -107,7 +118,8 @@ export function initTheater(io: Server, prisma: PrismaClient, { hostGraceMs = 15
         if (!user) return reply({ error: 'Tài khoản không còn tồn tại. Hãy đăng nhập lại.' });
         created.set(userId, Date.now());
         const id = randomBytes(9).toString('base64url');
-        const room: Room = { id, channel: `theater:${id}`, members: new Map(), film, hostId: userId, hostName: user.username, hostAway: false, playing: false, position: 0, at: Date.now(), changed: 0, synced: 0 };
+        const { position } = record(value);
+        const room: Room = { id, channel: `theater:${id}`, members: new Map(), film, hostId: userId, hostName: user.username, hostAway: false, seatOpen: false, playing: false, position: validPosition(position) ? position : 0, at: Date.now(), changed: 0, synced: 0 };
         // A room nobody ever enters must not linger.
         room.closeTimer = setTimeout(() => close(room), emptyRoomMs);
         rooms.set(id, room);
@@ -124,7 +136,7 @@ export function initTheater(io: Server, prisma: PrismaClient, { hostGraceMs = 15
         const roomId = record(value).roomId;
         const room = typeof roomId === 'string' ? rooms.get(roomId) : undefined;
         if (!room) return void socket.emit('theater:missing');
-        const user = await prisma.user.findUnique({ where: { id: userId }, select: { username: true } });
+        const user = guest ? { username: GUEST_NAME } : await prisma.user.findUnique({ where: { id: userId }, select: { username: true } });
         if (!socket.connected || pending.get(socket.id) !== ticket) return;
         if (!user) return void socket.emit('theater:error', 'Tài khoản không còn tồn tại. Hãy đăng nhập lại.');
         if (!rooms.has(room.id)) return void socket.emit('theater:missing');
@@ -135,16 +147,19 @@ export function initTheater(io: Server, prisma: PrismaClient, { hostGraceMs = 15
           leave(member.socket, other === room);
         }
         if (room.members.size >= MAX_MEMBERS) return void socket.emit('theater:error', 'Phòng đã đủ 20 người.');
-        room.members.set(socket.id, { socket, userId, username: user.username, chatted: 0 });
+        room.members.set(socket.id, { socket, userId, username: user.username, guest, chatted: 0 });
         memberships.set(socket.id, room);
         clearTimeout(room.closeTimer);
-        if (room.hostId === userId) {
+        if (!guest && (room.hostId === userId || room.seatOpen)) {
           clearTimeout(room.hostTimer);
+          room.hostId = userId;
+          room.hostName = user.username;
           room.hostAway = false;
+          room.seatOpen = false;
         }
         await socket.join(room.channel);
         if (memberships.get(socket.id) !== room) return;
-        socket.emit('theater:snapshot', { roomId: room.id, self: userId, members: members(room), playback: playback(room) });
+        socket.emit('theater:snapshot', { roomId: room.id, self: userId, guest, members: members(room), playback: playback(room) });
         socket.to(room.channel).emit('theater:members', members(room));
         if (room.hostId === userId) socket.to(room.channel).emit('theater:playback', playback(room));
       } catch {
@@ -182,9 +197,9 @@ export function initTheater(io: Server, prisma: PrismaClient, { hostGraceMs = 15
     });
     socket.on('theater:chat', (value: unknown) => {
       const room = memberships.get(socket.id), member = room?.members.get(socket.id);
-      if (!room || !member || typeof value !== 'string' || !value.trim() || value.length > 200 || Date.now() - member.chatted < 1000) return;
+      if (guest || !room || !member || typeof value !== 'string' || !value.trim() || value.length > 200 || Date.now() - member.chatted < 1000) return;
       member.chatted = Date.now();
-      io.to(room.channel).emit('theater:chat', { id: `${socket.id}:${member.chatted}`, from: userId, username: member.username, text: value.trim(), at: member.chatted });
+      theater.to(room.channel).emit('theater:chat', { id: `${socket.id}:${member.chatted}`, from: userId, username: member.username, text: value.trim(), at: member.chatted });
     });
   });
 }
