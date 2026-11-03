@@ -67,6 +67,12 @@ export function initWorld(io: Server, prisma: PrismaClient) {
   }
 
   io.on('connection', socket => {
+    socket.on('world:presence', (reply: unknown) => {
+      if (typeof reply !== 'function') return;
+      let players = 0;
+      for (const room of rooms.values()) players += room.members.size;
+      reply({ players });
+    });
     socket.on('world:join', async (payload: unknown) => {
       if (memberships.has(socket.id) || pending.has(socket.id)) return;
       const ticket = Symbol('world join');

@@ -70,7 +70,7 @@ const api = "http://127.0.0.1:4400";
       const page = await context.newPage();
       page.on("pageerror", (e) => errors.push(e.message));
       pages.push(page);
-      await page.goto("http://localhost:3300/z4world");
+      await page.goto("http://localhost:3300/z4world/play");
       await page.locator(`[data-username="Tester${22 + i}"]`).waitFor();
     }
     const [a, b] = pages,

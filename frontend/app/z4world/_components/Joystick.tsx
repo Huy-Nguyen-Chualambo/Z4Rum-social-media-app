@@ -39,7 +39,7 @@ export default function Joystick({
       role="group"
       aria-label="Joystick di chuyển"
       aria-disabled={disabled}
-      className={`relative flex h-28 w-28 scroll-mb-28 scroll-mt-24 touch-none select-none items-center justify-center rounded-full border border-[#7d8e6b] bg-[#abbc9133] ${disabled ? "opacity-40" : ""}`}
+      className={`relative flex h-28 w-28 scroll-mb-28 scroll-mt-24 touch-none select-none items-center justify-center rounded-full border border-white/40 bg-[#2b3226]/45 backdrop-blur-sm ${disabled ? "opacity-40" : ""}`}
       onPointerDown={(e) => {
         if (disabled) return;
         active.current = e.pointerId;
@@ -53,7 +53,7 @@ export default function Joystick({
         if (active.current !== null) reset();
       }}
     >
-      <span className="pointer-events-none absolute text-xs text-[#a6b293]">
+      <span className="pointer-events-none absolute text-xs text-white/60">
         ✥
       </span>
       <span

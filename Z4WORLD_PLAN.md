@@ -23,6 +23,15 @@
 - [x] Real two-browser E2E against isolated backend: chat, seating, full quiz,
   floor movement/elimination, reconnect/reload, mobile controls and room capacity.
 
+## 4. Full-screen play page
+- [x] `/z4world` is a landing page; the game moved to `/z4world/play`, without the
+  site navigation. Old `/z4world?room=` invitations redirect to the game.
+- [x] The camera matches any screen shape, with a floating HUD over the map.
+- [x] Touch: joystick and on-demand chat that stays above the keyboard. Dialogs and
+  the floor board fit short landscape screens.
+- [x] Landscape is suggested, never required: portrait stays playable. Android also
+  tries full screen + landscape lock on entry; refusals are ignored.
+
 ## Later milestones (outside the playable MVP)
 - Friend-specific notifications in addition to shareable room invitations.
 - Rich avatar animations, sound and further camera polish.
@@ -38,7 +47,8 @@ critical review, corrections and visual-approval status.
 
 ## Run and verify
 
-Run the existing backend/frontend development commands and open `/z4world`.
+Run the existing backend/frontend development commands, open `/z4world` and
+choose "Vào thế giới".
 Use two different accounts in separate browsers (one account has one active
 world presence). Confirm both appear in the same room, movement is visible,
 the fountain/buildings block walking, and nearby chat arrives on both screens.
@@ -46,8 +56,8 @@ Separate by more than 250 map units and verify chat no longer arrives remotely.
 Walk both avatars to the area below Game Club at the top right, join quiz,
 submit answers, wait for all five rounds, then compare the final leaderboard.
 Disconnect one browser and verify its avatar is removed; reopen and verify
-rejoin. Mobile checks: hold/release each direction button and type in chat
-without moving the avatar.
+rejoin. Mobile checks: hold/release the joystick, open chat and type without
+moving the avatar, then rotate the phone in both directions.
 
 Deploy frontend and backend together using the existing environment variables.
 The backend must run as one instance: room membership and quiz timers are held
@@ -73,6 +83,9 @@ For browser E2E use three terminals:
 1. Backend: `JWT_SECRET=z4world-local-test-only npm run test:world:fixture`
 2. Frontend: `NEXT_PUBLIC_API_URL=http://127.0.0.1:4400 NEXT_PUBLIC_SOCKET_URL=http://127.0.0.1:4400 npm run dev -- --port 3300 --webpack`
 3. Backend: `NODE_PATH=/path/to/node_modules-containing-playwright npm run test:world:browser`
+
+Check the full-screen layout on five screen sizes with
+`node backend/tests/world.fullscreen.browser.cjs` (set `WORLD_SHOT_DIR` for captures).
 
 The browser script uses `/usr/bin/google-chrome`; set `CHROME_PATH` if needed.
 Playwright must already be installed in that `NODE_PATH` directory.

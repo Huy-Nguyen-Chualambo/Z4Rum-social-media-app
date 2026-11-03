@@ -12,7 +12,7 @@ const partial = process.argv.includes('--partial');
       await context.addInitScript(token => sessionStorage.setItem('z4rum_token', token), login.token);
       const page = await context.newPage();
       page.on('pageerror', e => errors.push(e.message));
-      await page.goto('http://localhost:3300/z4world');
+      await page.goto('http://localhost:3300/z4world/play');
       await page.locator('[data-username="Tester0"]').waitFor();
       await page.locator('[data-testid="world-scene"]').waitFor();
       if (!partial) {
@@ -35,10 +35,14 @@ const partial = process.argv.includes('--partial');
       // Hold an actual pointer on the right control; verify screen-space direction.
       const player = page.locator('[data-username="Tester0"]');
       const before = { x: Number(await player.getAttribute('data-x')), y: Number(await player.getAttribute('data-y')) };
-      const right = page.getByRole('button', { name: 'Di chuyển →', exact: true });
-      await right.scrollIntoViewIfNeeded();
-      const box = await right.boundingBox();
-      await page.mouse.move(box.x+box.width/2, box.y+box.height/2); await page.mouse.down(); await delay(400); await page.mouse.up(); await delay(200);
+      if (name === 'mobile') {
+        const box = await page.getByRole('group', { name: 'Joystick di chuyển' }).boundingBox();
+        await page.mouse.move(box.x+box.width/2, box.y+box.height/2); await page.mouse.down();
+        await page.mouse.move(box.x+box.width-6, box.y+box.height/2); await delay(400); await page.mouse.up(); await delay(200);
+      } else {
+        await page.locator('h1').click();
+        await page.keyboard.down('ArrowRight'); await delay(400); await page.keyboard.up('ArrowRight'); await delay(200);
+      }
       const after = { x: Number(await player.getAttribute('data-x')), y: Number(await player.getAttribute('data-y')) };
       assert.ok(after.x > before.x && after.y < before.y, 'right control must move screen-right');
       assert.ok(Math.abs((after.x+after.y)-(before.x+before.y)) < .01, 'right control must keep projected vertical coordinate');
@@ -47,12 +51,10 @@ const partial = process.argv.includes('--partial');
       if (name === 'mobile') {
         await page.getByRole('button', { name: 'Xem toàn cảnh', exact: true }).waitFor();
         await page.getByRole('button', { name: 'Xem toàn cảnh', exact: true }).click();
-        await page.waitForFunction(() => document.querySelector('[data-testid="world-scene"]').getAttribute('viewBox') === '0 0 1760 1060');
-        assert.equal(await page.locator('[data-testid="world-scene"]').getAttribute('viewBox'), '0 0 1760 1060');
+        await page.waitForFunction(() => Number(document.querySelector('[data-testid="world-scene"]').getAttribute('viewBox').split(' ')[2]) === 1500);
       }
       await page.getByRole('button', { name: 'Theo chân nhân vật', exact: true }).click();
-      await page.waitForFunction(() => Number(document.querySelector('[data-testid="world-scene"]').getAttribute('viewBox').split(' ')[2]) < 900);
-      assert.notEqual(await page.locator('[data-testid="world-scene"]').getAttribute('viewBox'), '0 0 1760 1060');
+      await page.waitForFunction(() => Number(document.querySelector('[data-testid="world-scene"]').getAttribute('viewBox').split(' ')[2]) < 1100);
       await scene.screenshot({ path: `/tmp/z4world-art-${name}-follow.png` });
       if (name === 'desktop') {
         async function goTo(x,y) {

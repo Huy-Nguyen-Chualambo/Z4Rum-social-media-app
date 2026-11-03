@@ -5,6 +5,7 @@ import {
   useEffect,
   useId,
   useRef,
+  useState,
   useSyncExternalStore,
 } from "react";
 import { cafeTables, props, worldAssets } from "@/lib/world/assets";
@@ -58,8 +59,24 @@ export default function WorldScene({
   );
   const me = players[self];
   const local = me ? project(me.x, me.y) : null;
-  const view = cameraView(me?.x ?? 500, me?.y ?? 350, follow && Boolean(me));
   const viewport = useRef<SVGSVGElement>(null);
+  const [screen, setScreen] = useState({ width: 16, height: 9 });
+  useEffect(() => {
+    const element = viewport.current;
+    if (!element) return;
+    const observer = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect;
+      if (width && height) setScreen({ width, height });
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+  const view = cameraView(
+    me?.x ?? 500,
+    me?.y ?? 350,
+    follow && Boolean(me),
+    screen,
+  );
   const currentView = useRef([0, 0, 1760, 1060]);
   useEffect(() => {
     const target = view.split(" ").map(Number);
@@ -97,16 +114,11 @@ export default function WorldScene({
 
   return (
     <figure className={styles.frame}>
-      <div className={styles.sceneTop}>
-        <span className={styles.liveDot} />
-        QUẢNG TRƯỜNG BẢNH{" "}
-        <span className={styles.sceneTopRight}>Gặp nhau một chút.</span>
-      </div>
       <svg
         ref={viewport}
         data-testid="world-scene"
         viewBox="0 0 1760 1060"
-        className={`${styles.scene} ${follow ? styles.follow : ""}`}
+        className={styles.scene}
         role="group"
         aria-label="Z4world isometric: quán cà phê, Game Club và quảng trường với người chơi realtime"
         onClick={(event) => {
@@ -119,7 +131,13 @@ export default function WorldScene({
         }}
       >
         <defs>
-          <radialGradient id={`${uid}-sky`}>
+          <radialGradient
+            id={`${uid}-sky`}
+            gradientUnits="userSpaceOnUse"
+            cx="880"
+            cy="500"
+            r="1300"
+          >
             <stop stopColor="#fff9ec" />
             <stop offset="1" stopColor="#eee9db" />
           </radialGradient>
@@ -154,11 +172,12 @@ export default function WorldScene({
             <path d="M1 1h39" stroke="#f8eacf" strokeWidth="1.2" />
           </pattern>
         </defs>
+        {/* Oversized so tall or wide screens never reveal an edge around the map. */}
         <rect
-          x="0"
-          y="0"
-          width="1760"
-          height="1060"
+          x="-4000"
+          y="-4000"
+          width="9760"
+          height="9060"
           fill={`url(#${uid}-sky)`}
         />
         <ellipse
@@ -487,13 +506,6 @@ export default function WorldScene({
           );
         })}
       </svg>
-      <figcaption className={styles.caption}>
-        <span>
-          <span className={styles.captionDot} /> Một khu phố nhỏ, nhiều chuyện
-          để kể.
-        </span>
-        <span>☀ Chiều ấm áp</span>
-      </figcaption>
     </figure>
   );
 }

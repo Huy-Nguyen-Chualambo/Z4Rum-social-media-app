@@ -25,7 +25,7 @@ const event = (socket, name, trigger) => new Promise((resolve, reject) => {
       await context.addInitScript(token => sessionStorage.setItem('z4rum_token', token), credentials[index].token);
       const page = await context.newPage();
       page.on('pageerror', error => errors.push(error.message));
-      await page.goto(`${base}/z4world`);
+      await page.goto(`${base}/z4world/play`);
       await page.locator(`[data-username="Tester${index}"]`).waitFor();
       return { page, context };
     }
@@ -124,11 +124,10 @@ const event = (socket, name, trigger) => new Promise((resolve, reject) => {
     const mobile = await open(1, true);
     await mobile.page.getByRole('button', { name: 'Xem toàn cảnh' }).click();
     const before = Number(await mobile.page.locator('[data-username="Tester1"]').getAttribute('data-x'));
-    const arrow = mobile.page.getByRole('button', { name: 'Di chuyển →', exact: true });
-    await arrow.scrollIntoViewIfNeeded();
-    const box = await arrow.boundingBox();
-    await mobile.page.mouse.move(box.x+box.width/2, box.y+box.height/2);
+    const stick = await mobile.page.getByRole('group', { name: 'Joystick di chuyển' }).boundingBox();
+    await mobile.page.mouse.move(stick.x+stick.width/2, stick.y+stick.height/2);
     await mobile.page.mouse.down();
+    await mobile.page.mouse.move(stick.x+stick.width-6, stick.y+stick.height/2);
     await delay(350);
     await mobile.page.mouse.up();
     await delay(200);

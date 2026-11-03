@@ -1,0 +1,147 @@
+/* Follows the visible viewport so controls stay above the on-screen keyboard. */
+.stage {
+  position: fixed;
+  inset-inline: 0;
+  top: var(--visible-top, 0px);
+  height: var(--visible-height, 100dvh);
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: #eee9db;
+  color: #f4f1e6;
+  --gutter-top: max(8px, env(safe-area-inset-top));
+  --gutter-right: max(10px, env(safe-area-inset-right));
+  --gutter-bottom: max(10px, env(safe-area-inset-bottom));
+  --gutter-left: max(10px, env(safe-area-inset-left));
+}
+.glass {
+  border: 1px solid rgb(255 255 255 / 0.14);
+  border-radius: 12px;
+  background: rgb(34 39 30 / 0.84);
+  box-shadow: 0 6px 18px rgb(50 45 30 / 0.22);
+  backdrop-filter: blur(8px);
+}
+.top,
+.notices,
+.bottomLeft,
+.bottomRight,
+.hint {
+  position: absolute;
+  pointer-events: none;
+}
+.top > *,
+.notices > *,
+.bottomLeft > *,
+.bottomRight > * {
+  pointer-events: auto;
+}
+.top {
+  top: var(--gutter-top);
+  left: var(--gutter-left);
+  right: var(--gutter-right);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.notices {
+  top: calc(var(--gutter-top) + 52px);
+  left: 50%;
+  display: flex;
+  width: min(480px, calc(100% - 20px));
+  flex-direction: column;
+  gap: 6px;
+  transform: translateX(-50%);
+}
+.bottomLeft {
+  bottom: var(--gutter-bottom);
+  left: var(--gutter-left);
+  display: flex;
+  max-width: calc(100% - var(--gutter-left) - var(--gutter-right));
+  max-height: calc(100% - var(--gutter-top) - var(--gutter-bottom) - 52px);
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.composing {
+  max-height: calc(100% - 16px);
+  bottom: 8px;
+}
+.bottomRight {
+  bottom: var(--gutter-bottom);
+  right: var(--gutter-right);
+  display: flex;
+  max-width: calc(100% - var(--gutter-left) - var(--gutter-right) - 124px);
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+.chat {
+  width: min(360px, 100vw - 20px);
+}
+.chat > [role="log"] {
+  max-height: 170px;
+}
+.hint {
+  bottom: var(--gutter-bottom);
+  left: 50%;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgb(255 253 244 / 0.72);
+  color: #4a5944;
+  font-size: 11px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.iconButton {
+  display: flex;
+  height: 40px;
+  width: 40px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+}
+.iconButton:hover:not(:disabled) {
+  background: rgb(58 66 50 / 0.92);
+}
+.iconButton:disabled {
+  opacity: 0.45;
+}
+.action {
+  min-height: 40px;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+}
+.unread {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  height: 9px;
+  width: 9px;
+  border-radius: 50%;
+  background: #6ee7b7;
+}
+@media (min-width: 768px) and (min-height: 501px) {
+  .iconButton {
+    height: 44px;
+    width: 44px;
+  }
+}
+/* Short landscape phones: side by side would otherwise hide the map. */
+@media (max-height: 500px) {
+  .chat > [role="log"] {
+    max-height: 34dvh;
+  }
+  .notices {
+    top: var(--gutter-top);
+    width: min(320px, calc(100% - 400px));
+  }
+}
+@media (max-height: 500px) and (max-width: 640px) {
+  .notices {
+    top: calc(var(--gutter-top) + 48px);
+    width: calc(100% - 20px);
+  }
+}
