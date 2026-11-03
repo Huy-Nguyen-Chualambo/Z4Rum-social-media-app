@@ -16,6 +16,8 @@ the last commit with Z4world is `50da2fe`, and `/z4world` links redirect here.
 - **Finding films**: genre, country and year filters work on both sources. Search puts the
   best title first and, on the primary source only, widens with shorter wording when few
   films match. The backup is not widened, because it looks up every film it lists.
+- **Suggestions** (`MovieSearchBox.tsx`): from two letters, after a pause in typing, longer
+  on the backup because each of its results costs a lookup. Late answers are ignored.
 - **Library** (`frontend/lib/theater/library.ts`): saved films and "Xem tiếp" live in this
   browser's localStorage, so guests have them too and nothing needs a migration. They do
   not follow an account to another device, and logging out does not clear them.

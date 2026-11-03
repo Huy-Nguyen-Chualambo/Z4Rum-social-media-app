@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Search } from "lucide-react";
 import {
   countries,
   filterMovies,
@@ -16,6 +15,7 @@ import {
   type MovieSource,
   type ShelfKey,
 } from "@/lib/theater/movies";
+import MovieSearchBox from "./MovieSearchBox";
 
 type Browse = { shelf: ShelfKey } | { keyword: string } | { filter: MovieFilter };
 const thisYear = new Date().getFullYear();
@@ -147,30 +147,14 @@ export default function MovieBrowser({
           {notice}
         </p>
       )}
-      <form
-        role="search"
-        className="flex gap-2"
-        onSubmit={(event) => {
-          event.preventDefault();
-          const keyword = query.trim();
-          if (keyword) browse({ keyword });
-        }}
-      >
-        <input
-          aria-label="Tìm phim"
-          value={query}
-          maxLength={100}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Tên phim hoặc tên gốc…"
-          className="h-10 min-w-0 flex-1 rounded-sm border border-[#303030] bg-[#101010] px-3 text-base placeholder:text-[#858585] focus:border-blue-500 md:text-sm"
-        />
-        <button
-          aria-label="Tìm"
-          className="flex h-10 w-11 items-center justify-center rounded-sm bg-blue-500 text-white"
-        >
-          <Search size={18} />
-        </button>
-      </form>
+      <MovieSearchBox
+        source={source}
+        query={query}
+        busy={busy}
+        onQuery={setQuery}
+        onSearch={(keyword) => browse({ keyword })}
+        onPick={onPick}
+      />
       <div className="mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
         <div className="flex min-w-0 gap-1.5 overflow-x-auto pb-1">
           {shelves.map((shelf) => {
