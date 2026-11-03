@@ -10,6 +10,7 @@ export default function WorldChat({
   messages,
   seated,
   scope,
+  alone,
   canSend,
   onScope,
   onSend,
@@ -21,6 +22,7 @@ export default function WorldChat({
   messages: WorldMessage[];
   seated: boolean;
   scope: string;
+  alone: boolean;
   canSend: boolean;
   onScope: (scope: string) => void;
   onSend: (text: string) => boolean;
@@ -47,7 +49,7 @@ export default function WorldChat({
       {messages.length ? (
         messages.map((m) => (
           <p key={m.id} className="break-words py-0.5">
-            <span className="font-semibold text-emerald-300">
+            <span className="font-semibold text-blue-400">
               {m.scope === "table" ? "[Bàn] " : ""}
               {m.username}:{" "}
             </span>
@@ -55,7 +57,11 @@ export default function WorldChat({
           </p>
         ))
       ) : (
-        <p className="text-neutral-400">Lại gần một người và nói lời chào!</p>
+        <p className="text-[#858585]">
+          {alone
+            ? "Sảnh đang vắng. Bấm “Mời bạn” để rủ bạn bè vào cùng."
+            : "Lại gần một người và nói lời chào!"}
+        </p>
       )}
     </div>
   );
@@ -65,7 +71,7 @@ export default function WorldChat({
   return (
     <section
       aria-label="Trò chuyện"
-      className={`${styles.glass} ${styles.chat} flex min-h-0 flex-col p-2.5`}
+      className={`${styles.panel} ${styles.chat} flex min-h-0 flex-col p-2.5`}
     >
       {!composing && (
         <div className="mb-1.5 flex items-center justify-between gap-2">
@@ -79,7 +85,7 @@ export default function WorldChat({
                 aria-label="Kênh trò chuyện"
                 value={scope}
                 onChange={(e) => onScope(e.target.value)}
-                className="rounded border border-white/20 bg-neutral-900 p-1 text-xs"
+                className="rounded-sm border border-[#303030] bg-[#1c1c1c] p-1 text-xs"
               >
                 <option value="nearby">Gần bạn</option>
                 <option value="table">Riêng tại bàn</option>
@@ -88,7 +94,7 @@ export default function WorldChat({
             <button
               aria-label="Đóng trò chuyện"
               onClick={onClose}
-              className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-white/10"
+              className="flex h-8 w-8 items-center justify-center rounded-sm hover:bg-[#292929]"
             >
               <X size={16} />
             </button>
@@ -111,11 +117,11 @@ export default function WorldChat({
           onFocus={() => onComposing(true)}
           onBlur={() => onComposing(false)}
           placeholder="Nói gì đó với anh em…"
-          className="h-10 min-w-0 flex-1 rounded-lg border border-white/20 bg-black/30 px-3 text-base placeholder:text-neutral-400 md:text-sm"
+          className="h-10 min-w-0 flex-1 rounded-sm border border-[#303030] bg-[#101010] focus:border-blue-500 px-3 text-base placeholder:text-[#858585] md:text-sm"
         />
         <button
           disabled={!canSend || !text.trim()}
-          className="h-10 rounded-lg bg-emerald-700 px-3 text-sm font-medium disabled:opacity-40"
+          className="h-10 rounded-sm bg-blue-500 px-3 text-sm font-semibold text-white disabled:opacity-40"
         >
           Gửi
         </button>

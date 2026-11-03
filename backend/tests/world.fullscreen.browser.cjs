@@ -67,7 +67,7 @@ const intersects = (a, b) => a.x < b.x + b.width && b.x < a.x + a.width && a.y <
       assert.deepEqual(await page.evaluate(() => [document.documentElement.scrollWidth > innerWidth, document.documentElement.scrollHeight > innerHeight]), [false, false], `${name}: no page scroll`);
 
       // Every control is on screen, reachable, and none overlap each other.
-      const controls = await page.locator('[data-testid="world-stage"] :is(header, div) > :is(a, button), [role="group"][aria-label="Joystick di chuyển"]').all();
+      const controls = await page.locator('[data-testid="world-stage"] :is(header, div, nav) > :is(a, button), [role="group"][aria-label="Joystick di chuyển"]').all();
       const boxes = [];
       for (const control of controls) {
         const box = await control.boundingBox(), label = await control.getAttribute('aria-label') || await control.innerText();
@@ -81,6 +81,7 @@ const intersects = (a, b) => a.x < b.x + b.width && b.x < a.x + a.width && a.y <
 
       // Pressing a control must not also walk across the map underneath it.
       const before = await player.getAttribute('data-x');
+      await page.getByRole('button', { name: 'Biểu cảm', exact: true }).click();
       await page.getByRole('button', { name: 'Biểu cảm 👋' }).click();
       await delay(350);
       assert.equal(await player.getAttribute('data-x'), before, `${name}: HUD press does not walk`);
@@ -106,7 +107,6 @@ const intersects = (a, b) => a.x < b.x + b.width && b.x < a.x + a.width && a.y <
         await delay(200);
         await page.screenshot({ path: `${shots}/chat-${name}.png` });
         assert.equal(await page.getByRole('group', { name: 'Joystick di chuyển' }).count(), 0);
-        await page.locator('[data-testid="world-scene"]').click({ position: { x: viewport.width - 8, y: 60 } });
         await page.getByRole('button', { name: 'Đóng trò chuyện' }).click();
         await page.getByRole('group', { name: 'Joystick di chuyển' }).waitFor();
       }
@@ -147,6 +147,41 @@ const intersects = (a, b) => a.x < b.x + b.width && b.x < a.x + a.width && a.y <
       await context.close();
     }
 
+    // One tap on a table walks over and sits; the action then appears on the map.
+    {
+      const { context, page } = await open({ width: 1440, height: 900 }, {});
+      await page.goto(`${base}/z4world/play`);
+      const me = page.locator('[data-username="Tester10"]');
+      await me.waitFor();
+      await page.getByRole('button', { name: 'Ngồi cafe-1', exact: true }).click();
+      await page.waitForFunction(() => document.querySelector('[data-username="Tester10"] [data-animation]')?.getAttribute('data-animation') === 'sit', null, { timeout: 15000 });
+      await page.getByRole('button', { name: 'Đứng dậy', exact: true }).waitFor();
+      const long = 'Tối nay quán đông vui quá, anh em ghé làm ly cà phê rồi ngồi tám chuyện cho hết buổi tối nha';
+      await page.getByRole('textbox', { name: 'Tin nhắn gần bạn' }).fill(long);
+      await page.getByRole('button', { name: 'Gửi', exact: true }).click();
+      await page.getByRole('log').getByText(long, { exact: false }).waitFor();
+      await delay(300);
+      const bubbleWords = await page.locator('[data-testid="world-scene"] text').allTextContents();
+      assert.ok(bubbleWords.join(' ').includes('buổi tối nha'), 'a long bubble wraps instead of being cut off');
+      await page.screenshot({ path: `${shots}/seated-desktop.png` });
+      await page.getByRole('button', { name: 'Đứng dậy', exact: true }).click();
+      const sit = page.getByRole('button', { name: 'Ngồi bàn cà phê', exact: true });
+      await sit.waitFor();
+      await delay(250);
+      await page.screenshot({ path: `${shots}/near-table-desktop.png` });
+      // Walking away by hand cancels a pending one-tap action.
+      await page.getByRole('button', { name: 'Vào Game Club', exact: true }).first().click();
+      await delay(150);
+      await page.locator('h1').click();
+      await page.keyboard.down('ArrowLeft'); await delay(200); await page.keyboard.up('ArrowLeft');
+      await delay(3500);
+      assert.equal(await page.getByRole('dialog').count(), 0, 'manual movement cancels the arrival action');
+      assert.equal(await page.locator('[data-ambient]').count(), 3);
+      assert.equal(await page.locator('[data-player]').count(), 1, 'passers-by are not counted as players');
+      console.log('PASS one-tap seating, on-map action, wrapped bubble and cancel by hand');
+      await context.close();
+    }
+
     // The full-screen button works, and leaving the game always releases it.
     {
       const { context, page } = await open({ width: 1440, height: 900 }, {});
@@ -177,12 +212,9 @@ const intersects = (a, b) => a.x < b.x + b.width && b.x < a.x + a.width && a.y <
         players.push({ context, page });
       }
       for (const { page } of players) {
-        await page.getByRole('button', { name: 'Đi tới Game Club', exact: true }).click();
-        // The map's own Game Club prop always has this label; wait for the HUD button.
-        const club = page.locator('button', { hasText: 'Vào Game Club' });
-        await club.waitFor({ timeout: 15000 });
-        await club.click();
-        await page.getByRole('dialog', { name: 'Game Club' }).waitFor();
+        // One tap on the building: the avatar walks over and the club opens.
+        await page.getByRole('button', { name: 'Vào Game Club', exact: true }).first().click();
+        await page.getByRole('dialog', { name: 'Game Club' }).waitFor({ timeout: 20000 });
       }
       await players[0].page.screenshot({ path: `${shots}/club-phone-landscape.png` });
       for (const { page } of players) await page.getByRole('button', { name: 'Chơi sàn biến mất', exact: true }).click();

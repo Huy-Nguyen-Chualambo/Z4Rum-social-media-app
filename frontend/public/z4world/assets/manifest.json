@@ -1,6 +1,6 @@
 {
   "generator": "Built-in image_gen; approved-study.png style reference",
-  "totalBytes": 2088310,
+  "totalBytes": 2078358,
   "assets": [
     {
       "name": "cafe",
@@ -8,10 +8,11 @@
       "sourceWidth": 1254,
       "sourceHeight": 1254,
       "sourceSha256": "a9e780c16d6fe167a17f685b7524ee29a9bd28aff4d3f80117fd9ef34a82598d",
-      "runtime": "/z4world/assets/cafe.webp",
+      "runtime": "/z4world/assets/cafe-night.webp",
+      "grade": "night-v1",
       "width": 768,
       "height": 768,
-      "bytes": 121120,
+      "bytes": 116524,
       "transparent": true
     },
     {
@@ -20,10 +21,11 @@
       "sourceWidth": 1254,
       "sourceHeight": 1254,
       "sourceSha256": "ceb5a51afda45e5584cbf85fbd644bfd111798541265ac624fa1f26db006df4b",
-      "runtime": "/z4world/assets/game-club.webp",
+      "runtime": "/z4world/assets/game-club-night.webp",
+      "grade": "night-v1",
       "width": 768,
       "height": 768,
-      "bytes": 124554,
+      "bytes": 117244,
       "transparent": true
     },
     {
@@ -32,10 +34,11 @@
       "sourceWidth": 1254,
       "sourceHeight": 1254,
       "sourceSha256": "ef1675bbda62d24fd30df1173bb140a7490aae4e825e649b823dd82a9026590d",
-      "runtime": "/z4world/assets/fountain.webp",
+      "runtime": "/z4world/assets/fountain-night.webp",
+      "grade": "night-v1",
       "width": 512,
       "height": 512,
-      "bytes": 57674,
+      "bytes": 54298,
       "transparent": true
     },
     {
@@ -44,10 +47,11 @@
       "sourceWidth": 1254,
       "sourceHeight": 1254,
       "sourceSha256": "744ef25d031fb6ad0b9acddd7e3e6db21591c012ef6d2d686748d9356740aeee",
-      "runtime": "/z4world/assets/tree.webp",
+      "runtime": "/z4world/assets/tree-night.webp",
+      "grade": "night-v1",
       "width": 384,
       "height": 384,
-      "bytes": 30326,
+      "bytes": 30730,
       "transparent": true
     },
     {
@@ -56,10 +60,11 @@
       "sourceWidth": 1254,
       "sourceHeight": 1254,
       "sourceSha256": "c6f580119dbdd58c54df7911afecb473d80fa033f3bc227b60ec3576c49deae5",
-      "runtime": "/z4world/assets/bench.webp",
+      "runtime": "/z4world/assets/bench-night.webp",
+      "grade": "night-v1",
       "width": 384,
       "height": 384,
-      "bytes": 30196,
+      "bytes": 33064,
       "transparent": true
     },
     {
@@ -68,10 +73,11 @@
       "sourceWidth": 1254,
       "sourceHeight": 1254,
       "sourceSha256": "c40c661bd52a0015d968309b6a2c97b8fa099bb3758e87e4d4bab6110aa3110e",
-      "runtime": "/z4world/assets/table.webp",
+      "runtime": "/z4world/assets/table-night.webp",
+      "grade": "night-v1",
       "width": 256,
       "height": 256,
-      "bytes": 9680,
+      "bytes": 10336,
       "transparent": true
     },
     {
@@ -80,10 +86,11 @@
       "sourceWidth": 1254,
       "sourceHeight": 1254,
       "sourceSha256": "f3dfb898fd3055d636c7dcc783ef5895ec9bfce08999e48927129505bbbd659b",
-      "runtime": "/z4world/assets/chair.webp",
+      "runtime": "/z4world/assets/chair-night.webp",
+      "grade": "night-v1",
       "width": 256,
       "height": 256,
-      "bytes": 11180,
+      "bytes": 12296,
       "transparent": true
     },
     {
@@ -92,10 +99,11 @@
       "sourceWidth": 1254,
       "sourceHeight": 1254,
       "sourceSha256": "1afb86aa3cc5fbbc12320036e9a37da86e42e366c46e78f5f3ec2d530ea855e5",
-      "runtime": "/z4world/assets/lamp.webp",
+      "runtime": "/z4world/assets/lamp-night.webp",
+      "grade": "night-v1",
       "width": 256,
       "height": 256,
-      "bytes": 6870,
+      "bytes": 7156,
       "transparent": true
     },
     {

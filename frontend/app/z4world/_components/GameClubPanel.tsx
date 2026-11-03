@@ -32,9 +32,9 @@ export default function GameClubPanel({
   return (
     <>
       {!inFloorRound && (
-        <section className="mb-3 rounded-xl border border-violet-900 bg-violet-950/20 p-4">
+        <section className="mb-3 rounded-sm border border-[#303030] bg-[#181818] p-4">
           <div className="flex items-center justify-between gap-2">
-            <h2 className="font-bold text-violet-300">
+            <h2 className="font-bold text-[#ededed]">
               Game Club · Đố vui anh em
             </h2>
             <span className="text-xs text-neutral-400">
@@ -60,14 +60,14 @@ export default function GameClubPanel({
                         answer: i,
                       })
                     }
-                    className="rounded-lg border border-violet-700 p-3 text-left text-sm hover:bg-violet-900 disabled:opacity-50"
+                    className="rounded-sm border border-[#383838] p-3 text-left text-sm hover:bg-[#292929] disabled:opacity-50"
                   >
                     {option}
                   </button>
                 ))}
               </div>
               {answered && (
-                <p role="status" className="mt-2 text-sm text-emerald-300">
+                <p role="status" className="mt-2 text-sm text-blue-400">
                   Đã nhận đáp án. Chờ câu tiếp theo!
                 </p>
               )}
@@ -97,7 +97,7 @@ export default function GameClubPanel({
                   (game.phase === "waiting" && participating)
                 }
                 onClick={() => socket?.emit("world:quiz:join")}
-                className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold disabled:opacity-40"
+                className="rounded-sm bg-blue-500 text-white px-4 py-2 text-sm font-semibold disabled:opacity-40"
               >
                 {!inLobby
                   ? "Đi tới Game Club ở góc phải phía trên"
@@ -118,9 +118,9 @@ export default function GameClubPanel({
         </section>
       )}
       {!inQuizRound && (
-        <section className="mb-3 rounded-xl border border-amber-900 bg-amber-950/20 p-4 [@media(max-height:500px)]:mb-1 [@media(max-height:500px)]:p-3 [@media(max-height:500px)]:grid [@media(max-height:500px)]:grid-cols-[minmax(0,1fr)_auto] [@media(max-height:500px)]:gap-x-4">
+        <section className="mb-3 rounded-sm border border-[#303030] bg-[#181818] p-4 [@media(max-height:500px)]:mb-1 [@media(max-height:500px)]:p-3 [@media(max-height:500px)]:grid [@media(max-height:500px)]:grid-cols-[minmax(0,1fr)_auto] [@media(max-height:500px)]:gap-x-4">
           <div>
-            <h2 className="font-bold text-amber-300">
+            <h2 className="font-bold text-[#ededed]">
               Game Club · Sàn biến mất
             </h2>
             <p className="my-2 text-sm text-neutral-400">
@@ -128,7 +128,7 @@ export default function GameClubPanel({
               sót đến cuối để thắng!
             </p>
             {floor.phase === "running" && (
-              <p className="mb-2 text-xs text-amber-200">
+              <p className="mb-2 text-xs text-[#a3a3a3]">
                 Vòng {floor.round}/8 ·{" "}
                 {Math.max(0, Math.ceil((floor.endsAt - now) / 1000))}s{" "}
                 {floor.pieces[self]?.alive === false ? "· Bạn đã bị loại" : ""}
@@ -161,7 +161,7 @@ export default function GameClubPanel({
                     gone
                   }
                   onClick={() => socket?.emit("world:floor:move", cell)}
-                  className={`relative aspect-square min-h-9 rounded-md [@media(max-height:500px)]:min-h-0 border text-xs ${gone ? "border-neutral-900 bg-neutral-950" : floor.warning.includes(cell) ? "border-amber-300 bg-amber-400 text-black" : "border-emerald-700 bg-emerald-900"} ${adjacent && mine?.alive && !gone ? "ring-1 ring-white/60" : ""}`}
+                  className={`relative aspect-square min-h-9 rounded-md [@media(max-height:500px)]:min-h-0 border text-xs ${gone ? "border-neutral-900 bg-neutral-950" : floor.warning.includes(cell) ? "border-amber-300 bg-amber-400 text-black" : "border-[#383838] bg-[#232323]"} ${adjacent && mine?.alive && !gone ? "ring-1 ring-white/60" : ""}`}
                 >
                   {occupants.map(([id]) => (
                     <span
@@ -178,7 +178,7 @@ export default function GameClubPanel({
           </div>
           <div>
             {floor.phase === "results" && (
-              <p role="status" className="my-3 text-sm text-amber-200">
+              <p role="status" className="my-3 text-sm text-[#a3a3a3]">
                 Kết quả:{" "}
                 {Object.entries(floor.pieces)
                   .filter(([, p]) => p.alive)
@@ -197,7 +197,7 @@ export default function GameClubPanel({
                   floorMember
                 }
                 onClick={() => socket?.emit("world:floor:join")}
-                className="mt-3 rounded-lg bg-amber-700 px-4 py-2 text-sm disabled:opacity-40"
+                className="mt-3 rounded-sm bg-blue-500 text-white font-semibold px-4 py-2 text-sm disabled:opacity-40"
               >
                 {floorMember
                   ? "Đang chờ người chơi thứ hai…"

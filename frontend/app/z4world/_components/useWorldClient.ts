@@ -88,6 +88,9 @@ export function useWorldClient() {
   const [destination, setDestination] = useState<Point | null>(null);
   const [panel, setPanel] = useState<"games" | "wardrobe" | null>(null);
   const paused = useRef(false);
+  /** Tapping a place walks there and then acts, instead of asking for a second tap. */
+  const arrival = useRef<string | null>(null);
+  const [hasWalked, setHasWalked] = useState(false);
   const interaction = useRef<() => void>(() => {});
   const me = players[self];
   const inLobby = Boolean(me && me.x >= 650 && me.y <= 300);
@@ -100,6 +103,7 @@ export function useWorldClient() {
     keys.current.clear();
     touch.current = { dx: 0, dy: 0 };
     route.current = [];
+    arrival.current = null;
     setDestination(null);
   };
   const open = (value: "games" | "wardrobe" | null) => {
@@ -125,7 +129,7 @@ export function useWorldClient() {
       if (inLobby) open("games");
       else {
         navigate({ x: 805, y: 250 });
-        setNotice("Đang đi tới Game Club. Tới nơi hãy bấm “Vào Game Club”.");
+        arrival.current = id;
       }
       return;
     }
@@ -136,7 +140,7 @@ export function useWorldClient() {
         socket?.emit("world:sit", id);
       } else {
         navigate(table);
-        setNotice("Đang đi tới bàn. Tới gần hãy chọn “Ngồi bàn cà phê”.");
+        arrival.current = id;
       }
       return;
     }
@@ -205,6 +209,7 @@ export function useWorldClient() {
       const dx = x - previous.x,
         dy = y - previous.y;
       if (dx || dy) {
+        if (id === identity.current) setHasWalked(true);
         setMotions((m) => ({
           ...m,
           [id]: {
@@ -347,6 +352,26 @@ export function useWorldClient() {
     const tick = setInterval(() => {
       const actor = positions.current[identity.current];
       if (paused.current || !actor || actor.table || !socket?.connected) return;
+      const goal = arrival.current;
+      if (goal === "club" && actor.x >= 650 && actor.y <= 300) {
+        arrival.current = null;
+        clear();
+        paused.current = true;
+        setPanel("games");
+        return;
+      }
+      const goalTable = tables.find((t) => t.id === goal);
+      if (
+        goalTable &&
+        Math.hypot(actor.x - goalTable.x, actor.y - goalTable.y) <= 85
+      ) {
+        arrival.current = null;
+        clear();
+        socket.emit("world:sit", goalTable.id);
+        return;
+      }
+      // Walking away by hand, or a blocked route, cancels the pending action.
+      if (goal && !route.current.length) arrival.current = null;
       const k = keys.current;
       const dx =
         Number(k.has("ArrowRight") || k.has("d")) -
@@ -476,6 +501,7 @@ export function useWorldClient() {
     participating,
     nearTable,
     floorMember,
+    hasWalked,
     open,
     stop,
     navigate,

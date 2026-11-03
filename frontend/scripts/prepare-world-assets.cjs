@@ -15,6 +15,31 @@ const specs = {
   "avatar-peach-actions": 1280,
   "avatar-lavender-actions": 1280,
 };
+// Bump to regenerate. Scenery is graded for the site's dark theme; avatars stay
+// natural so people remain the brightest thing in the scene.
+const NIGHT_GRADE = "night-v1";
+const isNight = (name) => !name.startsWith("avatar-");
+function gradeNight(data) {
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i],
+      g = data[i + 1],
+      b = data[i + 2];
+    // Warm, bright pixels are windows and lanterns: they stay lit. Terracotta
+    // roofs are warm too but have a much lower green channel, so they don't.
+    const warmth = Math.min(1, Math.max(0, (r - b - 60) / 70));
+    const bright = Math.min(1, Math.max(0, (g - 145) / 50));
+    const lit = warmth * bright;
+    const luma = 0.3 * r + 0.59 * g + 0.11 * b;
+    const dusk = [
+      (r * 0.72 + luma * 0.28) * 0.48,
+      (g * 0.72 + luma * 0.28) * 0.52,
+      (b * 0.72 + luma * 0.28) * 0.74,
+    ];
+    data[i] = Math.min(255, dusk[0] + (r * 1.05 - dusk[0]) * lit);
+    data[i + 1] = Math.min(255, dusk[1] + (g * 0.95 - dusk[1]) * lit);
+    data[i + 2] = Math.min(255, dusk[2] + (b * 0.72 - dusk[2]) * lit);
+  }
+}
 (async () => {
   const fs = await import("node:fs");
   const path = await import("node:path");
@@ -50,24 +75,38 @@ const specs = {
       .createHash("sha256")
       .update(fs.readFileSync(input))
       .digest("hex");
-    const output = path.join(outputDir, `${name}.webp`);
+    const runtimeName = isNight(name) ? `${name}-night` : name;
+    const grade = isNight(name) ? NIGHT_GRADE : undefined;
+    const output = path.join(outputDir, `${runtimeName}.webp`);
     if (
       !fs.existsSync(output) ||
       !previous.some(
         (p) =>
           p.name === name &&
           p.sourceSha256 === sourceSha256 &&
+          p.grade === grade &&
           p.width === size &&
           p.height === height,
       )
     ) {
-      await sharp(input)
-        .resize(size, height, {
-          fit: "contain",
-          background: { r: 0, g: 0, b: 0, alpha: 0 },
-        })
-        .webp({ quality: 87, alphaQuality: 100, effort: 6 })
-        .toFile(output);
+      const resized = sharp(input).resize(size, height, {
+        fit: "contain",
+        background: { r: 0, g: 0, b: 0, alpha: 0 },
+      });
+      if (grade) {
+        const { data, info } = await resized
+          .ensureAlpha()
+          .raw()
+          .toBuffer({ resolveWithObject: true });
+        gradeNight(data);
+        await sharp(data, { raw: info })
+          .webp({ quality: 87, alphaQuality: 100, effort: 6 })
+          .toFile(output);
+      } else {
+        await resized
+          .webp({ quality: 87, alphaQuality: 100, effort: 6 })
+          .toFile(output);
+      }
     }
     const bytes = fs.statSync(output).size;
     if (name.startsWith("avatar-")) {
@@ -148,7 +187,8 @@ const specs = {
       sourceWidth: metadata.width,
       sourceHeight: metadata.height,
       sourceSha256,
-      runtime: `/z4world/assets/${name}.webp`,
+      runtime: `/z4world/assets/${runtimeName}.webp`,
+      ...(grade ? { grade } : {}),
       width: size,
       height,
       bytes,

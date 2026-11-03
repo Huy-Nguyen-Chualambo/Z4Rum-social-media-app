@@ -51,10 +51,10 @@ export default function Wardrobe({
     <div className="[@media(max-height:500px)]:grid [@media(max-height:500px)]:grid-cols-[auto_minmax(0,1fr)] [@media(max-height:500px)]:items-start [@media(max-height:500px)]:gap-x-4">
       <svg
         viewBox="-55 -90 110 110"
-        className="mx-auto h-52 w-52 rounded-full bg-[#e8e5cd] [@media(max-height:500px)]:sticky [@media(max-height:500px)]:top-0 [@media(max-height:500px)]:h-36 [@media(max-height:500px)]:w-36"
+        className="mx-auto h-52 w-52 rounded-full border border-[#303030] bg-[#1c1c1c] [@media(max-height:500px)]:sticky [@media(max-height:500px)]:top-0 [@media(max-height:500px)]:h-36 [@media(max-height:500px)]:w-36"
         aria-label="Xem trước ngoại hình"
       >
-        <ellipse cy="2" rx="22" ry="8" fill="#9aab83" />
+        <ellipse cy="2" rx="22" ry="8" fill="#000" opacity=".4" />
         <AvatarSprite appearance={draft} />
       </svg>
       <div>
@@ -63,7 +63,7 @@ export default function Wardrobe({
             key={group.key}
             className="my-4 [@media(max-height:500px)]:mb-3 [@media(max-height:500px)]:mt-0"
           >
-            <legend className="mb-2 text-sm text-neutral-300">
+            <legend className="mb-2 text-sm text-[#a3a3a3]">
               {group.label}
             </legend>
             <div className="flex flex-wrap gap-2">
@@ -72,7 +72,7 @@ export default function Wardrobe({
                   key={option.id}
                   disabled={saving}
                   aria-pressed={draft[group.key] === option.id}
-                  className={`min-h-11 rounded-lg border px-3 text-sm ${draft[group.key] === option.id ? "border-emerald-300 bg-emerald-900" : "border-neutral-600"}`}
+                  className={`min-h-11 rounded-sm border px-3 text-sm ${draft[group.key] === option.id ? "border-blue-500 bg-blue-500/15 text-white" : "border-[#303030] text-[#dedede] hover:bg-[#292929]"}`}
                   onClick={() =>
                     setDraft((value) => ({ ...value, [group.key]: option.id }))
                   }
@@ -93,7 +93,7 @@ export default function Wardrobe({
         </p>
         <button
           disabled={saving}
-          className="min-h-11 rounded-lg bg-emerald-700 px-4 disabled:opacity-50"
+          className="min-h-11 rounded-sm bg-blue-500 px-4 font-semibold text-white disabled:opacity-50"
           onClick={async () => {
             setSaving(true);
             setError("");

@@ -12,8 +12,8 @@ Visit `/z4world` after signing in, then choose "Vào thế giới" to open the g
 at `/z4world/play`. It fills the whole screen on desktop and mobile; phones are
 invited (not forced) to rotate to landscape. Rooms hold up to 20 people, with
 keyboard/touch movement, server-checked collision, proximity chat, emotes, café
-seating and private table chat. Share the room link to meet friends, then walk
-to Game Club for multiplayer quiz or disappearing floor. Scores and positions are
+seating and private table chat. Share the room link to meet friends, or tap Game Club
+to walk there for multiplayer quiz or disappearing floor. Scores and positions are
 authoritative on the server.
 
 This version uses one backend process and ephemeral room/game state; only avatar

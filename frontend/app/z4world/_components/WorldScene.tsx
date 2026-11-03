@@ -1,15 +1,15 @@
 "use client";
 
 import {
-  Fragment,
   useEffect,
   useId,
   useRef,
   useState,
   useSyncExternalStore,
 } from "react";
+import { ambientPosition, ambientWalkers } from "@/lib/world/ambient";
 import { cafeTables, props, worldAssets } from "@/lib/world/assets";
-import { cameraView, groundPolygon, project } from "@/lib/world/projection";
+import { cameraView, project } from "@/lib/world/projection";
 import type {
   Motion,
   WorldEmote,
@@ -19,12 +19,40 @@ import type {
 import type { Point } from "@/lib/world/projection";
 import { unproject } from "@/lib/world/navigation";
 import AvatarSprite from "./AvatarSprite";
+import WorldBackdrop from "./WorldBackdrop";
 import styles from "./world-scene.module.css";
 const subscribeReduced = (change: () => void) => {
   const media = window.matchMedia("(prefers-reduced-motion: reduce)");
   media.addEventListener("change", change);
   return () => media.removeEventListener("change", change);
 };
+
+/** The one thing the player can do right now, always just below their name. */
+export type SceneAction = { label: string; run: () => void };
+const MONO = '"SFMono-Regular", Consolas, monospace';
+// Bubbles wrap instead of truncating; the server caps messages at 200 characters.
+function wrapBubble(text: string, width = 30, maxLines = 4) {
+  const lines: string[] = [];
+  let line = "";
+  for (const word of text.split(/\s+/)) {
+    let rest = word;
+    while (rest.length > width) {
+      if (line) lines.push(line);
+      line = "";
+      lines.push(rest.slice(0, width));
+      rest = rest.slice(width);
+    }
+    if (line && line.length + rest.length + 1 > width) {
+      lines.push(line);
+      line = rest;
+    } else line = line ? `${line} ${rest}` : rest;
+  }
+  if (line) lines.push(line);
+  if (lines.length <= maxLines) return lines;
+  const kept = lines.slice(0, maxLines);
+  kept[maxLines - 1] = `${kept[maxLines - 1].slice(0, width - 1)}…`;
+  return kept;
+}
 
 type SceneProps = {
   players: Record<string, WorldPlayer>;
@@ -37,6 +65,8 @@ type SceneProps = {
   onDestination: (point: Point) => void;
   onInteract: (id: string) => void;
   destination: Point | null;
+  action: SceneAction | null;
+  showKeyHint: boolean;
 };
 
 export default function WorldScene({
@@ -50,6 +80,8 @@ export default function WorldScene({
   onDestination,
   onInteract,
   destination,
+  action,
+  showKeyHint,
 }: SceneProps) {
   const uid = useId().replace(/:/g, "");
   const reduced = useSyncExternalStore(
@@ -110,6 +142,16 @@ export default function WorldScene({
       depth: player.x + player.y,
       player,
     })),
+    ...ambientWalkers.map((walker) => {
+      const position = ambientPosition(walker, reduced ? 0 : now);
+      return {
+        kind: "ambient" as const,
+        key: walker.key,
+        depth: position.x + position.y,
+        walker,
+        position,
+      };
+    }),
   ].sort((a, b) => a.depth - b.depth || a.key.localeCompare(b.key));
 
   return (
@@ -130,125 +172,7 @@ export default function WorldScene({
           onDestination(unproject(p.x, p.y));
         }}
       >
-        <defs>
-          <radialGradient
-            id={`${uid}-sky`}
-            gradientUnits="userSpaceOnUse"
-            cx="880"
-            cy="500"
-            r="1300"
-          >
-            <stop stopColor="#fff9ec" />
-            <stop offset="1" stopColor="#eee9db" />
-          </radialGradient>
-          <pattern
-            id={`${uid}-grass`}
-            width="48"
-            height="48"
-            patternUnits="userSpaceOnUse"
-          >
-            <rect width="48" height="48" fill="#b7cb9b" />
-            <path
-              d="m9 12 2-3 2 3m22 22 2-3 2 3"
-              fill="none"
-              stroke="#a4bc87"
-              strokeWidth="1.6"
-            />
-            <circle cx="30" cy="12" r="1.2" fill="#cedbb2" />
-          </pattern>
-          <pattern
-            id={`${uid}-paving`}
-            width="42"
-            height="28"
-            patternUnits="userSpaceOnUse"
-          >
-            <rect width="42" height="28" fill="#ead7b7" />
-            <path
-              d="M0 0h42v28H0zm21 0v28"
-              fill="none"
-              stroke="#d9c4a4"
-              strokeWidth="1"
-            />
-            <path d="M1 1h39" stroke="#f8eacf" strokeWidth="1.2" />
-          </pattern>
-        </defs>
-        {/* Oversized so tall or wide screens never reveal an edge around the map. */}
-        <rect
-          x="-4000"
-          y="-4000"
-          width="9760"
-          height="9060"
-          fill={`url(#${uid}-sky)`}
-        />
-        <ellipse
-          cx="885"
-          cy="765"
-          rx="660"
-          ry="155"
-          fill="#82775c"
-          opacity=".07"
-        />
-        <polygon
-          points={groundPolygon(0, 0, 1000, 700)}
-          transform="translate(0 14)"
-          fill="#8fa97a"
-          stroke="#8fa97a"
-          strokeWidth="10"
-          strokeLinejoin="round"
-        />
-        <g transform="matrix(.8 .4 -.8 .4 760 220)">
-          <rect
-            width="1000"
-            height="700"
-            rx="12"
-            fill={`url(#${uid}-grass)`}
-            stroke="#d4debd"
-            strokeWidth="10"
-          />
-          <path
-            d="M0 230H1000V285H0ZM320 0H390V700H320ZM610 0H675V700H610ZM0 560H1000V625H0Z"
-            fill={`url(#${uid}-paving)`}
-          />
-          <rect
-            x="300"
-            y="275"
-            width="400"
-            height="230"
-            rx="95"
-            fill={`url(#${uid}-paving)`}
-            stroke="#f4e5c9"
-            strokeWidth="7"
-          />
-          <rect
-            x="85"
-            y="220"
-            width="205"
-            height="240"
-            rx="24"
-            fill="#ddcaa9"
-            stroke="#f0dfc0"
-            strokeWidth="7"
-          />
-          <rect
-            x="700"
-            y="220"
-            width="210"
-            height="75"
-            rx="14"
-            fill="#c9bbd4"
-            stroke="#e8ddec"
-            strokeWidth="6"
-          />
-          {[70, 930].flatMap((x) =>
-            [250, 445, 575].map((y) => (
-              <g key={`${x}-${y}`}>
-                <ellipse cx={x} cy={y} rx="15" ry="10" fill="#9ebc84" />
-                <circle cx={x - 5} cy={y - 2} r="4" fill="#edb5b3" />
-                <circle cx={x + 4} cy={y + 2} r="4" fill="#f3d9a9" />
-              </g>
-            )),
-          )}
-        </g>
+        <WorldBackdrop uid={uid} />
         {destination && (
           <g
             pointerEvents="none"
@@ -257,15 +181,37 @@ export default function WorldScene({
             <ellipse
               rx="14"
               ry="7"
-              fill="#fff3c5"
-              fillOpacity=".5"
-              stroke="#578962"
+              fill="#3b82f6"
+              fillOpacity=".25"
+              stroke="#3b82f6"
               strokeWidth="2"
             />
-            <path d="M-5 0h10M0-3v6" stroke="#578962" />
           </g>
         )}
         {ordered.map((item) => {
+          if (item.kind === "ambient") {
+            const p = project(item.position.x, item.position.y);
+            return (
+              <g
+                key={item.key}
+                data-ambient={item.key}
+                pointerEvents="none"
+                opacity=".88"
+                style={{
+                  transform: `translate(${p.x}px,${p.y}px)`,
+                  transition: reduced ? undefined : "transform 100ms linear",
+                }}
+              >
+                <ellipse cy="2" rx="13" ry="6" fill="#000" opacity=".35" />
+                <AvatarSprite
+                  appearance={item.walker.appearance}
+                  facing={item.position.facing}
+                  action={reduced ? "idle" : "walk"}
+                  now={now}
+                />
+              </g>
+            );
+          }
           if (item.kind === "prop") {
             const prop = item.prop,
               asset = worldAssets[prop.asset],
@@ -288,7 +234,7 @@ export default function WorldScene({
               <g
                 key={item.key}
                 opacity={occluded ? 0.35 : 1}
-                className={styles.prop}
+                className={`${styles.prop} ${interactive ? styles.interactive : ""}`}
                 role={interactive ? "button" : undefined}
                 tabIndex={interactive ? 0 : undefined}
                 aria-label={
@@ -300,7 +246,6 @@ export default function WorldScene({
                         : `Ngồi ${prop.key}`
                     : undefined
                 }
-                style={{ cursor: interactive ? "pointer" : undefined }}
                 onClick={
                   interactive
                     ? (event) => {
@@ -336,7 +281,7 @@ export default function WorldScene({
                     rx="37"
                     ry="11"
                     fill="none"
-                    stroke="#f1ffff"
+                    stroke="#bfe4ff"
                     strokeWidth="1.7"
                     className={styles.ripple}
                   />
@@ -363,14 +308,14 @@ export default function WorldScene({
                 transition: "transform 65ms linear",
               }}
             >
-              <ellipse cy="2" rx="13" ry="6" fill="#67573b" opacity=".18" />
+              <ellipse cy="2" rx="13" ry="6" fill="#000" opacity=".35" />
               {id === self && (
                 <ellipse
                   cy="2"
                   rx="17"
                   ry="8"
                   fill="none"
-                  stroke="#fff7df"
+                  stroke="#3b82f6"
                   strokeWidth="2.5"
                 />
               )}
@@ -419,17 +364,18 @@ export default function WorldScene({
                 y="12"
                 width="108"
                 height="22"
-                rx="11"
-                fill={id === self ? "#fff8e8" : "#fffdf4"}
-                fillOpacity=".94"
+                rx="3"
+                fill="#141414"
+                fillOpacity=".92"
+                stroke={id === self ? "#3b82f6" : "#303030"}
               />
-              <circle cx="-42" cy="23" r="3" fill={player.color} />
+              <circle cx="-43" cy="23" r="3" fill={player.color} />
               <text
                 y="27"
                 textAnchor="middle"
-                fill="#4a5944"
+                fill="#ededed"
                 fontSize="12"
-                fontWeight="650"
+                fontWeight="600"
               >
                 {player.username.slice(0, 12)}
                 {id === self ? " · bạn" : ""}
@@ -439,72 +385,116 @@ export default function WorldScene({
                   {emoji}
                 </text>
               )}
-              {bubble && (
-                <g className={styles.bubble}>
-                  <rect
-                    x="-110"
-                    y="-108"
-                    width="220"
-                    height="30"
-                    rx="13"
-                    fill="#fffdf6"
-                    stroke="#e4d5bb"
-                  />
-                  <text
-                    y="-88"
-                    textAnchor="middle"
-                    fill="#4c5348"
-                    fontSize="13"
-                  >
-                    {bubble.scope === "table" ? "☕ " : ""}
-                    {bubble.text.slice(0, 27)}
-                    {bubble.text.length > 27 ? "…" : ""}
-                  </text>
-                </g>
-              )}
+              {bubble &&
+                (() => {
+                  const lines = wrapBubble(
+                    `${bubble.scope === "table" ? "☕ " : ""}${bubble.text}`,
+                  );
+                  const widest = Math.max(...lines.map((l) => l.length));
+                  const width = Math.max(64, widest * 7.1 + 24);
+                  const height = lines.length * 18 + 14;
+                  return (
+                    <g className={styles.bubble}>
+                      <rect
+                        x={-width / 2}
+                        y={-78 - height}
+                        width={width}
+                        height={height}
+                        rx="4"
+                        fill="#1c1c1c"
+                        stroke="#383838"
+                      />
+                      {lines.map((line, i) => (
+                        <text
+                          key={i}
+                          y={-78 - height + 21 + i * 18}
+                          textAnchor="middle"
+                          fill="#ededed"
+                          fontSize="13"
+                        >
+                          {line}
+                        </text>
+                      ))}
+                    </g>
+                  );
+                })()}
             </g>
           );
         })}
-        {cafeTables.map((t, i) => {
-          const p = project(t.x, t.y);
-          return (
-            <text
-              key={t.id}
-              x={p.x}
-              y={p.y + 48}
-              textAnchor="middle"
-              fontSize="13"
-              fill="#6f7057"
-            >
-              Bàn {i + 1}
-            </text>
-          );
-        })}
-        {[
-          { text: "CÀ PHÊ HÓNG CHUYỆN", x: 165, y: 245 },
-          { text: "GAME CLUB", x: 810, y: 255 },
-          { text: "CÔNG VIÊN ANH EM", x: 500, y: 650 },
-        ].map((label) => {
-          const p = project(label.x, label.y);
-          return (
-            <Fragment key={label.text}>
-              <text
-                x={p.x}
-                y={p.y}
-                textAnchor="middle"
-                fontSize="14"
-                letterSpacing="1.5"
-                fontWeight="700"
-                fill="#736c5e"
-                stroke="#fff5dc"
-                strokeWidth="4"
-                paintOrder="stroke"
+        {action &&
+          local &&
+          (() => {
+            const width = action.label.length * 7.6 + (showKeyHint ? 62 : 34);
+            return (
+              <g
+                role="button"
+                tabIndex={0}
+                aria-label={action.label}
+                className={styles.actionPill}
+                transform={`translate(${local.x},${local.y + 62})`}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  action.run();
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    action.run();
+                  }
+                }}
               >
-                {label.text}
-              </text>
-            </Fragment>
-          );
-        })}
+                {/* Larger invisible area: the pill alone is small on a phone. */}
+                <rect
+                  x={-width / 2 - 8}
+                  y="-32"
+                  width={width + 16}
+                  height="64"
+                  fill="transparent"
+                />
+                <rect
+                  data-face
+                  x={-width / 2}
+                  y="-19"
+                  width={width}
+                  height="38"
+                  rx="4"
+                  fill="#3b82f6"
+                />
+                <text
+                  x={showKeyHint ? 13 : 0}
+                  y="5"
+                  textAnchor="middle"
+                  fill="#fff"
+                  fontSize="14"
+                  fontWeight="700"
+                >
+                  {action.label}
+                </text>
+                {showKeyHint && (
+                  <g transform={`translate(${-width / 2 + 11} -11)`}>
+                    <rect
+                      width="22"
+                      height="22"
+                      rx="3"
+                      fill="#fff"
+                      fillOpacity=".22"
+                    />
+                    <text
+                      x="11"
+                      y="15.5"
+                      textAnchor="middle"
+                      fill="#fff"
+                      fontFamily={MONO}
+                      fontSize="12"
+                      fontWeight="700"
+                    >
+                      E
+                    </text>
+                  </g>
+                )}
+              </g>
+            );
+          })()}
       </svg>
     </figure>
   );

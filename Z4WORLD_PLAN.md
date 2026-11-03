@@ -32,6 +32,18 @@
 - [x] Landscape is suggested, never required: portrait stays playable. Android also
   tries full screen + landscape lock on entry; refusals are ignored.
 
+## 5. Night restyle to match the site
+- [x] Scenery graded for the site's dark theme by `prepare-world-assets.cjs`; lit
+  windows stay warm. Original PNGs are untouched.
+- [x] HUD, dialogs and landing use the site's palette, square corners and blue accent.
+- [x] One dock for chat, emotes, wardrobe, invite and camera.
+- [x] One tap on a table or Game Club walks there and acts; manual movement cancels.
+  The current action appears under the player's name, with E on desktop.
+- [x] Surrounding city, lamp light and three decorative passers-by. They are local
+  only: not players, not synced, not counted in the room.
+- Mini games are deferred: they still work, reached by tapping Game Club, and only
+  received the new colors. Their redesign is a later milestone.
+
 ## Later milestones (outside the playable MVP)
 - Friend-specific notifications in addition to shareable room invitations.
 - Rich avatar animations, sound and further camera polish.

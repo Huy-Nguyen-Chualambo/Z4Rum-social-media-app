@@ -41,7 +41,7 @@ export default function RotateHint() {
   return (
     <div
       role="status"
-      className={`${styles.glass} flex items-center gap-2 py-1.5 pl-3 pr-1.5 text-xs`}
+      className={`${styles.panel} flex items-center gap-2 py-1.5 pl-3 pr-1.5 text-xs`}
     >
       <Smartphone size={16} className="shrink-0 rotate-90" aria-hidden />
       <span className="min-w-0 flex-1">Xoay ngang để chơi rộng hơn</span>
@@ -51,7 +51,7 @@ export default function RotateHint() {
             void enterImmersive(true);
             dismiss();
           }}
-          className="h-8 shrink-0 rounded-lg bg-emerald-700 px-2.5 font-medium"
+          className="h-8 shrink-0 rounded-sm bg-blue-500 px-2.5 text-white font-medium"
         >
           Xoay ngay
         </button>
@@ -59,7 +59,7 @@ export default function RotateHint() {
       <button
         aria-label="Đóng gợi ý xoay màn hình"
         onClick={dismiss}
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg hover:bg-white/10"
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm hover:bg-[#292929]"
       >
         <X size={16} />
       </button>

@@ -46,16 +46,16 @@ export default function WorldDialog({
         }
       }}
       aria-label={title}
-      className="m-auto max-h-[85dvh] w-[min(620px,calc(100%-24px))] overflow-y-auto rounded-2xl border border-neutral-700 bg-[#191b18] p-4 pt-0 text-neutral-100 shadow-2xl backdrop:bg-black/65 sm:p-6 sm:pt-0 [@media(max-height:500px)]:max-h-[96dvh] [@media(max-height:500px)]:w-[min(720px,calc(100%-24px))] [@media(max-height:500px)]:px-3 [@media(max-height:500px)]:pb-2"
+      className="m-auto max-h-[85dvh] w-[min(620px,calc(100%-24px))] overflow-y-auto rounded-md border border-[#303030] bg-[#141414] p-4 pt-0 text-neutral-100 shadow-2xl backdrop:bg-black/70 sm:p-6 sm:pt-0 [@media(max-height:500px)]:max-h-[96dvh] [@media(max-height:500px)]:w-[min(720px,calc(100%-24px))] [@media(max-height:500px)]:px-3 [@media(max-height:500px)]:pb-2"
     >
-      <header className="sticky top-0 z-10 flex items-center justify-between gap-3 bg-[#191b18] py-3 sm:pt-5 [@media(max-height:500px)]:py-1.5">
+      <header className="sticky top-0 z-10 flex items-center justify-between gap-3 bg-[#141414] py-3 sm:pt-5 [@media(max-height:500px)]:py-1.5">
         <h2 className="text-xl font-bold [@media(max-height:500px)]:text-base">
           {title}
         </h2>
         <button
           autoFocus
           onClick={onClose}
-          className="min-h-11 rounded-lg border border-neutral-600 px-3 text-sm [@media(max-height:500px)]:min-h-9"
+          className="min-h-11 rounded-sm border border-[#303030] px-3 hover:bg-[#292929] text-sm [@media(max-height:500px)]:min-h-9"
           aria-label="Đóng cửa sổ"
         >
           Đóng ×

@@ -184,6 +184,7 @@ const api = "http://127.0.0.1:4400";
       await actor.locator("[data-animation]").getAttribute("data-animation"),
       "idle",
     );
+    await a.getByRole("button", { name: "Biểu cảm", exact: true }).click();
     await a.getByRole("button", { name: "Biểu cảm 👋" }).click();
     await a.waitForFunction(
       () =>
@@ -224,9 +225,10 @@ const api = "http://127.0.0.1:4400";
     await clickGround(a, 650, 350);
     await arrive(a, "Tester22", 650, 350);
     console.log("PASS real ground clicks and obstacle-aware fountain route");
-    await a
-      .getByRole("button", { name: "Đi tới Game Club", exact: true })
-      .click();
+    const clubBuilding = a
+      .getByRole("button", { name: "Vào Game Club", exact: true })
+      .first();
+    await clubBuilding.click();
     await a.keyboard.down("ArrowLeft");
     await delay(250);
     await a.keyboard.up("ArrowLeft");
@@ -238,14 +240,14 @@ const api = "http://127.0.0.1:4400";
       overridden,
       "keyboard cancels route even when its opener button has focus",
     );
+    // One tap: the avatar walks over and the club opens on arrival.
+    await clubBuilding.click();
     await a
-      .getByRole("button", { name: "Đi tới Game Club", exact: true })
-      .click();
-    await arrive(a, "Tester22", 805, 250);
-    await a
-      .getByRole("button", { name: "Vào Game Club", exact: true })
-      .first()
-      .click();
+      .getByRole("dialog", { name: "Game Club", exact: true })
+      .waitFor({ timeout: 15000 });
+    await a.keyboard.press("Escape");
+    assert.equal(await a.getByRole("dialog").count(), 0);
+    await clubBuilding.click();
     await a.getByRole("dialog", { name: "Game Club", exact: true }).waitFor();
     await a.keyboard.press("Escape");
     assert.equal(await a.getByRole("dialog").count(), 0);

@@ -1,8 +1,15 @@
-.frame { position: absolute; inset: 0; margin: 0; overflow: hidden; background: #eee9db; }
+.frame { position: absolute; inset: 0; margin: 0; overflow: hidden; background: #101010; }
 .scene { display: block; width: 100%; height: 100%; touch-action: none; -webkit-tap-highlight-color: transparent; }
 .prop { transition: opacity 180ms ease; }
+.interactive { cursor: pointer; outline: none; }
+.interactive image { transition: filter 140ms ease; }
+.interactive:hover image, .interactive:focus-visible image { filter: brightness(1.28) drop-shadow(0 0 7px #3b82f6); }
+.actionPill { cursor: pointer; outline: none; animation: appear 140ms ease-out; }
+.actionPill:hover rect[data-face], .actionPill:focus-visible rect[data-face] { fill: #2563eb; }
+.firefly { animation: firefly 4.2s ease-in-out infinite; }
 .bubble { animation: appear 140ms ease-out; }
 .ripple { animation: ripple 2400ms ease-out infinite; transform-box: fill-box; transform-origin: center; }
 @keyframes appear { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes firefly { 0%, 100% { opacity: 0; transform: translateY(0); } 50% { opacity: .9; transform: translateY(-16px); } }
 @keyframes ripple { from { opacity: .65; transform: scale(.75); } to { opacity: 0; transform: scale(1.1); } }
-@media (prefers-reduced-motion: reduce) { .bubble, .ripple { animation: none; } .prop { transition: none; } .scene [data-player] { transition: none !important; } }
+@media (prefers-reduced-motion: reduce) { .bubble, .ripple, .actionPill { animation: none; } .firefly { animation: none; opacity: .5; } .interactive image { transition: none; } .prop { transition: none; } .scene [data-player] { transition: none !important; } }

@@ -4,17 +4,17 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
-  Gamepad2,
   LocateFixed,
   Map as MapIcon,
   Maximize,
   MessageCircle,
   Minimize,
   Shirt,
+  Smile,
   UserPlus,
 } from "lucide-react";
 import RequireAuth from "../../_components/RequireAuth";
-import WorldScene from "../_components/WorldScene";
+import WorldScene, { type SceneAction } from "../_components/WorldScene";
 import WorldDialog from "../_components/WorldDialog";
 import Wardrobe from "../_components/Wardrobe";
 import Joystick from "../_components/Joystick";
@@ -62,6 +62,7 @@ export default function WorldPlayPage() {
   const follow = cameraChoice ?? compact;
   const [chatChoice, setChatChoice] = useState<boolean | null>(null);
   const chatOpen = chatChoice ?? !compact;
+  const [emotesOpen, setEmotesOpen] = useState(false);
   const [typing, setTyping] = useState(false);
   const composing = compact && chatOpen && typing;
   const [seenMessage, setSeenMessage] = useState("");
@@ -81,6 +82,22 @@ export default function WorldPlayPage() {
   // A compact chat takes the bottom of the screen, like a messaging app.
   const compactChat = compact && chatOpen;
   const movementDisabled = !me || Boolean(panel) || Boolean(me?.table);
+  const playerCount = Object.keys(players).length;
+  const action: SceneAction | null = !me
+    ? null
+    : me.table
+      ? { label: "Đứng dậy", run: world.stand }
+      : nearTable
+        ? {
+            label: "Ngồi bàn cà phê",
+            run: () => world.sit(nearTable.id),
+          }
+        : inLobby
+          ? {
+              label: "Vào Game Club",
+              run: () => world.interact("club"),
+            }
+          : null;
   const matchLabel =
     game.phase === "question"
       ? `Câu ${game.question?.number ?? ""}`
@@ -104,6 +121,8 @@ export default function WorldPlayPage() {
         onDestination={world.navigate}
         onInteract={world.interact}
         destination={world.destination}
+        action={panel ? null : action}
+        showKeyHint={!compact}
       />
 
       {!composing && (
@@ -113,69 +132,39 @@ export default function WorldPlayPage() {
               href="/z4world"
               aria-label="Thoát Z4world"
               title="Thoát"
-              className={`${styles.glass} ${styles.iconButton}`}
+              className={`${styles.panel} ${styles.iconButton}`}
             >
               <ArrowLeft size={18} />
             </Link>
-            <div className={`${styles.glass} min-w-0 px-3 py-1`}>
+            <div className={`${styles.panel} min-w-0 px-3 py-1`}>
               <h1 className="truncate text-xs font-bold leading-[18px]">
-                Quảng trường Bảnh
+                Z4world
               </h1>
-              <p className="truncate text-[10px] leading-[14px] text-neutral-300">
-                {room
-                  ? `${Object.keys(players).length}/20 người · Sảnh ${room.split(":")[1]}`
-                  : "Đang kết nối"}
+              <p className="truncate text-[10px] leading-[14px] text-[#969696]">
+                {room ? `${playerCount}/20 người trong sảnh` : "Đang kết nối"}
               </p>
             </div>
           </div>
-          <div className="flex shrink-0 gap-1">
+          {fullscreen.supported && (
             <button
-              disabled={!me}
-              aria-label="Tủ đồ"
-              title="Tủ đồ"
-              className={`${styles.glass} ${styles.iconButton}`}
-              onClick={() => open("wardrobe")}
+              aria-label={
+                fullscreen.active ? "Thoát toàn màn hình" : "Toàn màn hình"
+              }
+              title={
+                fullscreen.active ? "Thoát toàn màn hình" : "Toàn màn hình"
+              }
+              className={`${styles.panel} ${styles.iconButton}`}
+              onClick={() =>
+                fullscreen.active ? exitImmersive() : enterImmersive(phone)
+              }
             >
-              <Shirt size={18} />
+              {fullscreen.active ? (
+                <Minimize size={18} />
+              ) : (
+                <Maximize size={18} />
+              )}
             </button>
-            <button
-              disabled={!room}
-              aria-label="Mời bạn vào sảnh"
-              title="Mời bạn vào sảnh"
-              className={`${styles.glass} ${styles.iconButton}`}
-              onClick={world.invite}
-            >
-              <UserPlus size={18} />
-            </button>
-            <button
-              aria-label={follow ? "Xem toàn cảnh" : "Theo chân nhân vật"}
-              title={follow ? "Xem toàn cảnh" : "Theo chân nhân vật"}
-              className={`${styles.glass} ${styles.iconButton}`}
-              onClick={() => setCameraChoice(!follow)}
-            >
-              {follow ? <MapIcon size={18} /> : <LocateFixed size={18} />}
-            </button>
-            {fullscreen.supported && (
-              <button
-                aria-label={
-                  fullscreen.active ? "Thoát toàn màn hình" : "Toàn màn hình"
-                }
-                title={
-                  fullscreen.active ? "Thoát toàn màn hình" : "Toàn màn hình"
-                }
-                className={`${styles.glass} ${styles.iconButton}`}
-                onClick={() =>
-                  fullscreen.active ? exitImmersive() : enterImmersive(phone)
-                }
-              >
-                {fullscreen.active ? (
-                  <Minimize size={18} />
-                ) : (
-                  <Maximize size={18} />
-                )}
-              </button>
-            )}
-          </div>
+          )}
         </header>
       )}
 
@@ -185,10 +174,13 @@ export default function WorldPlayPage() {
           {status && (
             <div
               role="status"
-              className={`${styles.glass} px-3 py-2 text-sm text-amber-200`}
+              className={`${styles.panel} px-3 py-2 text-sm text-[#dedede]`}
             >
               {status}{" "}
-              <button className="underline" onClick={world.retry}>
+              <button
+                className="font-semibold text-blue-400 underline"
+                onClick={world.retry}
+              >
                 Thử lại
               </button>
             </div>
@@ -196,11 +188,12 @@ export default function WorldPlayPage() {
           {notice && (
             <p
               role="status"
-              className={`${styles.glass} break-words px-3 py-2 text-sm text-emerald-200`}
+              className={`${styles.panel} break-words px-3 py-2 text-sm text-[#dedede]`}
             >
               {notice}{" "}
               <button
                 aria-label="Đóng thông báo"
+                className="px-1 text-[#969696]"
                 onClick={() => world.setNotice("")}
               >
                 ×
@@ -210,14 +203,16 @@ export default function WorldPlayPage() {
         </div>
       )}
 
-      {!compact && (
+      {me && !world.hasWalked && !compactChat && !panel && (
         <p className={styles.hint}>
-          WASD / phím mũi tên hoặc bấm vào đất để đi · E để tương tác
+          {compact
+            ? "Kéo joystick hoặc chạm đất để đi. Chạm vào quán để ghé."
+            : "WASD hoặc bấm vào đất để đi. Bấm vào quán để ghé."}
         </p>
       )}
 
       <div
-        className={`${styles.bottomLeft} ${composing ? styles.composing : ""}`}
+        className={`${styles.bottomLeft} ${composing ? styles.composing : ""} ${compactChat ? styles.chatFull : ""}`}
       >
         <WorldChat
           open={chatOpen}
@@ -225,6 +220,7 @@ export default function WorldPlayPage() {
           messages={messages}
           seated={Boolean(me?.table)}
           scope={me?.table ? scope : "nearby"}
+          alone={playerCount <= 1}
           canSend={Boolean(me)}
           onScope={world.setScope}
           onSend={world.sendChat}
@@ -234,17 +230,6 @@ export default function WorldPlayPage() {
             if (value) world.stop();
           }}
         />
-        {!chatOpen && (
-          <button
-            aria-label="Mở trò chuyện"
-            title="Trò chuyện"
-            className={`${styles.glass} ${styles.iconButton} relative`}
-            onClick={() => toggleChat(true)}
-          >
-            <MessageCircle size={18} />
-            {unread && <span className={styles.unread} />}
-          </button>
-        )}
         {compact && !compactChat && (
           <Joystick
             key={`${Boolean(panel)}-${Boolean(me)}`}
@@ -259,49 +244,79 @@ export default function WorldPlayPage() {
           {(participating || Boolean(floor.pieces[self])) &&
             panel !== "games" && (
               <button
-                className={`${styles.action} rounded-xl bg-violet-800 shadow-lg`}
+                className={styles.matchButton}
                 onClick={() => open("games")}
               >
                 Mở lại trận đấu · {matchLabel}
               </button>
             )}
-          {me?.table ? (
-            <button
-              className={`${styles.action} rounded-xl bg-amber-700 shadow-lg`}
-              onClick={world.stand}
-            >
-              Đứng dậy
-            </button>
-          ) : (
-            nearTable && (
-              <button
-                className={`${styles.action} rounded-xl bg-amber-700 shadow-lg`}
-                onClick={() => world.sit(nearTable.id)}
-              >
-                Ngồi bàn cà phê
-              </button>
-            )
+          {emotesOpen && (
+            <div className={`${styles.panel} ${styles.emotes}`}>
+              {EMOTES.map((emoji) => (
+                <button
+                  key={emoji}
+                  aria-label={`Biểu cảm ${emoji}`}
+                  onClick={() => {
+                    world.sendEmote(emoji);
+                    setEmotesOpen(false);
+                  }}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
           )}
-          <button
-            disabled={!me}
-            className={`${styles.action} ${styles.glass} flex items-center gap-1.5 disabled:opacity-45`}
-            onClick={() => world.interact("club")}
+          <nav
+            aria-label="Công cụ Z4world"
+            className={`${styles.panel} ${styles.dock}`}
           >
-            <Gamepad2 size={16} aria-hidden />
-            {inLobby ? "Vào Game Club" : "Đi tới Game Club"}
-          </button>
-          <div className="flex gap-1">
-            {EMOTES.map((emoji) => (
-              <button
-                key={emoji}
-                aria-label={`Biểu cảm ${emoji}`}
-                onClick={() => world.sendEmote(emoji)}
-                className={`${styles.glass} ${styles.iconButton} text-lg`}
-              >
-                {emoji}
-              </button>
-            ))}
-          </div>
+            <button
+              aria-label={chatOpen ? "Đóng trò chuyện" : "Mở trò chuyện"}
+              aria-pressed={chatOpen}
+              className={`${styles.dockItem} ${chatOpen ? styles.dockItemActive : ""}`}
+              onClick={() => toggleChat(!chatOpen)}
+            >
+              <MessageCircle size={20} />
+              <span>Chat</span>
+              {unread && <span className={styles.unread} />}
+            </button>
+            <button
+              aria-label="Biểu cảm"
+              aria-expanded={emotesOpen}
+              disabled={!me}
+              className={`${styles.dockItem} ${emotesOpen ? styles.dockItemActive : ""}`}
+              onClick={() => setEmotesOpen(!emotesOpen)}
+            >
+              <Smile size={20} />
+              <span>Biểu cảm</span>
+            </button>
+            <button
+              aria-label="Tủ đồ"
+              disabled={!me}
+              className={styles.dockItem}
+              onClick={() => open("wardrobe")}
+            >
+              <Shirt size={20} />
+              <span>Tủ đồ</span>
+            </button>
+            <button
+              aria-label="Mời bạn vào sảnh"
+              disabled={!room}
+              className={styles.dockItem}
+              onClick={world.invite}
+            >
+              <UserPlus size={20} />
+              <span>Mời bạn</span>
+            </button>
+            <button
+              aria-label={follow ? "Xem toàn cảnh" : "Theo chân nhân vật"}
+              className={styles.dockItem}
+              onClick={() => setCameraChoice(!follow)}
+            >
+              {follow ? <MapIcon size={20} /> : <LocateFixed size={20} />}
+              <span>{follow ? "Toàn cảnh" : "Theo chân"}</span>
+            </button>
+          </nav>
         </div>
       )}
 
