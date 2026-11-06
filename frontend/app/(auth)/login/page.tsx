@@ -35,12 +35,14 @@ export default function LoginPage({
   }, [token, router, next]);
 
   const [error, setError] = useState<string | null>(null);
+  // On by default: most people sign in on their own phone. Untick on a shared computer.
+  const [remember, setRemember] = useState(true);
 
   const handleGoogleCredential = useCallback(async (credential: string) => {
     try {
       setError(null);
       setIsLoading(true);
-      await googleLogin(credential);
+      await googleLogin(credential, undefined, remember);
       push("Đăng nhập Google thành công", "success");
     } catch (err: unknown) {
       const message = getAuthErrorMessage(err, "Đăng nhập Google thất bại");
@@ -49,7 +51,7 @@ export default function LoginPage({
     } finally {
       setIsLoading(false);
     }
-  }, [googleLogin, push]);
+  }, [googleLogin, push, remember]);
 
   const handleGoogleError = useCallback((message: string) => {
     setError(message);
@@ -79,7 +81,7 @@ export default function LoginPage({
           try {
             setError(null);
             setIsLoading(true);
-            await login(email, password);
+            await login(email, password, remember);
             push("Đăng nhập thành công", "success");
           } catch (err: unknown) {
             const message = getAuthErrorMessage(err, "Đăng nhập thất bại");
@@ -92,6 +94,10 @@ export default function LoginPage({
       >
         <input className="w-full bg-transparent border border-[#303030] rounded-lg px-3 py-2 text-[#dedede] placeholder:text-[#858585]" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
         <input className="w-full bg-transparent border border-[#303030] rounded-lg px-3 py-2 text-[#dedede] placeholder:text-[#858585]" placeholder="Mật khẩu" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        <label className="flex items-center gap-2 text-sm text-[#a3a3a3]">
+          <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} className="h-4 w-4 accent-blue-500" />
+          Ghi nhớ đăng nhập
+        </label>
         <button type="submit" className="w-full py-2 rounded-lg bg-blue-500 text-white font-semibold">Đăng nhập</button>
       </form>
       <div className="my-4 flex items-center gap-3 text-xs uppercase text-[#969696]">

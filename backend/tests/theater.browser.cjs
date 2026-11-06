@@ -219,6 +219,25 @@ const PLAYER = '[title^="Trình phát"]';
     await reg.context.close();
     console.log('PASS signing up returns to the film as well');
 
+    // Remembering the login is on by default and survives a new tab; untick it and it does not.
+    for (const remember of [true, false]) {
+      const r = await open(null, '/login');
+      const box = r.page.getByLabel('Ghi nhớ đăng nhập');
+      assert.equal(await box.isChecked(), true, 'remembering is ticked by default');
+      if (!remember) await box.uncheck();
+      await r.page.getByPlaceholder('Email').fill('theater-test-19@example.test');
+      await r.page.getByPlaceholder('Mật khẩu').fill('matkhau123');
+      await r.page.locator('button[type=submit]').click();
+      await until(async () => (await r.page.evaluate(() => sessionStorage.getItem('z4rum_token') || localStorage.getItem('z4rum_token'))) !== null, 'logged in');
+      const tab = await r.context.newPage();
+      await tab.goto(`${base}/z4theater`);
+      await button(tab, 'Xem phim Phim Một').click();
+      await button(tab, 'Xem Tập 01').click();
+      await tab.waitForURL(remember ? /\/z4theater\/[\w-]{12}$/ : /\/z4theater\/watch\?/);
+      await r.context.close();
+    }
+    console.log('PASS remembering the login keeps it in a new tab, and unticking does not');
+
     // A link cannot use the login page to send people elsewhere.
     const evil = await open(null, '/login?next=https%3A%2F%2Fevil.example');
     await evil.page.getByPlaceholder('Email').waitFor();
@@ -514,6 +533,32 @@ const PLAYER = '[title^="Trình phát"]';
     await d.page.getByRole('heading', { name: 'Phim Hai · Tập 01' }).waitFor();
     await d.context.close();
     console.log('PASS the change-film dialog suggests films');
+
+    // In fullscreen, keys keep working after focus leaves the video so Chrome can hide its controls.
+    const k = await open(null, '/z4theater/watch?source=phimapi&slug=phim-mot&server=0&episode=tap-01');
+    const kv = k.page.locator(`video${PLAYER}`);
+    await until(async () => (await time(k.page)) > 1, 'the film plays');
+    const kb = await kv.boundingBox();
+    await k.page.mouse.click(kb.x + kb.width / 2, kb.y + kb.height / 2);
+    await k.page.mouse.click(kb.x + kb.width / 2, kb.y + kb.height / 2);
+    await kv.evaluate(e => e.requestFullscreen());
+    await until(() => k.page.evaluate(() => Boolean(document.fullscreenElement)), 'fullscreen');
+    await k.page.keyboard.press(' ');
+    await until(() => paused(k.page), 'Space pauses');
+    await k.page.keyboard.press(' ');
+    await until(async () => !(await paused(k.page)), 'Space resumes');
+    await until(() => k.page.evaluate(() => document.activeElement === document.body), 'focus leaves the video once playing');
+    await k.page.keyboard.press('k');
+    await until(() => paused(k.page), 'K still pauses');
+    await k.page.keyboard.press('k');
+    const before = await time(k.page);
+    await k.page.keyboard.press('ArrowRight');
+    await until(async () => (await time(k.page)) >= before + 4, 'the right arrow seeks');
+    await k.page.keyboard.press('m');
+    assert.equal(await kv.evaluate(e => e.muted), true, 'M mutes');
+    await k.page.keyboard.press('Escape');
+    await k.context.close();
+    console.log('PASS fullscreen keys keep working while the controls are free to hide');
 
     // A long series on a small phone: the chat box stays reachable.
     const small = await open(17, '/z4theater', { viewport: { width: 320, height: 568 }, isMobile: true, hasTouch: true });

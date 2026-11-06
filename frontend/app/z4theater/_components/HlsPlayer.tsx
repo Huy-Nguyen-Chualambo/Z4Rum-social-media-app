@@ -19,6 +19,7 @@ const HEARTBEAT_MS = 5_000; // Repairs drift from the host's own buffering.
 const REPORT_DELAY_MS = 200; // Dragging the seek bar fires many events in a row.
 const TICK_MS = 500;
 const USER_SEEK = 3; // hls.js makes tiny jumps over gaps; those are not the viewer.
+const SEEK_KEY_SECONDS = 5;
 
 export default function HlsPlayer(props: Props) {
   const video = useRef<HTMLVideoElement>(null);
@@ -193,6 +194,55 @@ export default function HlsPlayer(props: Props) {
       // The host left the player: the room should not run on without a picture.
       if (latest.current.role === "host")
         latest.current.onReport(false, element.currentTime);
+    };
+  }, []);
+
+  // Chrome keeps its controls on screen while the video holds keyboard focus, so after
+  // Space or K in fullscreen they never hide. Focus goes back to the page once playing,
+  // and the usual keys are answered here instead.
+  useEffect(() => {
+    const element = video.current;
+    if (!element) return;
+    const fullscreen = () => document.fullscreenElement === element;
+    const release = () => {
+      if (fullscreen() && document.activeElement === element) element.blur();
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (
+        !fullscreen() ||
+        document.activeElement === element ||
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey
+      )
+        return;
+      switch (event.key) {
+        case " ":
+        case "k":
+        case "K":
+          if (element.paused) element.play().catch(() => {});
+          else element.pause();
+          break;
+        case "ArrowLeft":
+          element.currentTime = Math.max(0, element.currentTime - SEEK_KEY_SECONDS);
+          break;
+        case "ArrowRight":
+          element.currentTime += SEEK_KEY_SECONDS;
+          break;
+        case "m":
+        case "M":
+          element.muted = !element.muted;
+          break;
+        default:
+          return;
+      }
+      event.preventDefault();
+    };
+    element.addEventListener("play", release);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      element.removeEventListener("play", release);
+      document.removeEventListener("keydown", onKey);
     };
   }, []);
 

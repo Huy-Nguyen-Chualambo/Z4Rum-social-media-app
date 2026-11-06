@@ -6,38 +6,37 @@ type User = { id: string; username: string; email: string; avatarUrl?: string; b
 type AuthState = {
   user: User;
   token: string | null;
-  login: (email: string, password: string) => Promise<void>;
-  googleLogin: (credential: string, gender?: "male" | "female") => Promise<void>;
+  /** `remember` keeps the login after the browser closes; otherwise it ends with the tab. */
+  login: (email: string, password: string, remember?: boolean) => Promise<void>;
+  googleLogin: (credential: string, gender?: "male" | "female", remember?: boolean) => Promise<void>;
   register: (username: string, email: string, password: string, gender: "male" | "female") => Promise<void>;
   loadMe: () => Promise<void>;
   logout: () => void;
 };
 
+const TOKEN_KEY = "z4rum_token";
+function keepToken(token: string, remember: boolean) {
+  if (typeof window === "undefined") return;
+  (remember ? localStorage : sessionStorage).setItem(TOKEN_KEY, token);
+  (remember ? sessionStorage : localStorage).removeItem(TOKEN_KEY);
+}
+
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   token: typeof window !== "undefined" ? (sessionStorage.getItem("z4rum_token") || localStorage.getItem("z4rum_token")) : null,
-  async login(email, password) {
+  async login(email, password, remember = true) {
     const { token, user } = await authApi.login({ email, password });
-    if (typeof window !== "undefined") {
-      sessionStorage.setItem("z4rum_token", token);
-      localStorage.removeItem("z4rum_token");
-    }
+    keepToken(token, remember);
     set({ token, user });
   },
-  async googleLogin(credential, gender) {
+  async googleLogin(credential, gender, remember = true) {
     const { token, user } = await authApi.googleLogin({ credential, gender });
-    if (typeof window !== "undefined") {
-      sessionStorage.setItem("z4rum_token", token);
-      localStorage.removeItem("z4rum_token");
-    }
+    keepToken(token, remember);
     set({ token, user });
   },
   async register(username, email, password, gender) {
     const { token, user } = await authApi.register({ username, email, password, gender });
-    if (typeof window !== "undefined") {
-      sessionStorage.setItem("z4rum_token", token);
-      localStorage.removeItem("z4rum_token");
-    }
+    keepToken(token, true);
     set({ token, user });
   },
   async loadMe() {
